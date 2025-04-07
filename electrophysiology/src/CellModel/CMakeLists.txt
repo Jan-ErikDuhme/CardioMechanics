@@ -44,6 +44,7 @@ kaMakeObject ( Parameters
     OHaraRudyParameters.cpp
     OHaraRudyIsoParameters.cpp
     TomekParameters.cpp
+    TWorldParameters.cpp
     MitchellSchaefferParameters.cpp
     FitzhughNagumoParameters.cpp
 )
@@ -65,6 +66,7 @@ kaMakeObject( CellModels
     OHaraRudy.cpp
     OHaraRudyIso.cpp
     Tomek.cpp
+    TWorld.cpp
     MitchellSchaeffer.cpp
     FitzhughNagumo.cpp
     )
