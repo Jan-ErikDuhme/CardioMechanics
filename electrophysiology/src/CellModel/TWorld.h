@@ -12,8 +12,8 @@
  */
 
 
-#ifndef TOMEK
-#define TOMEK
+#ifndef TWORLD
+#define TWORLD
 
 #include <TWorldParameters.h>
 
@@ -109,4 +109,4 @@ class TWorld : public vbElphyModel<ML_CalcType> {
   virtual void GetParameterNames(vector<string> &getpara);
   virtual void GetLongParameterNames(vector<string> &getpara);
 };  // class TWorld
-#endif  // ifndef TOMEK
+#endif  // ifndef TWORLD

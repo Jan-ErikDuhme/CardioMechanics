@@ -12,8 +12,8 @@
  */
 
 
-#ifndef TOMEKPARAMETERS_H
-#define TOMEKPARAMETERS_H
+#ifndef TWORLDPARAMETERS_H
+#define TWORLDPARAMETERS_H
 
 /// TWorld model variations.
 /// Stretch avtivated channel by Pueyo et al. 2016 Implemented by Albert Dasi
@@ -241,4 +241,4 @@ class TWorldParameters : public vbNewElphyParameters {
   ML_CalcType x_Kb[RTDT];
 };  // class TWorldParameters
 
-#endif  // ifndef TOMEKPARAMETERS_H
+#endif  // ifndef TWORLDPARAMETERS_H
