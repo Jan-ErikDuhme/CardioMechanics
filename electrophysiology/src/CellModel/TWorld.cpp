@@ -370,19 +370,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Transient outward current (Ito)
   ////////////////////////////////////////////////////////////////////////////////////////
-  
-  if (v(VT_celltype) == 1.0) { // epi
-      double G_to_slow = 0.02036 * v(VT_Ito_slow_Multiplier);
-      double G_to_fast = 0.29856 * v(VT_Ito_fast_Multiplier);
-  } else if (v(VT_celltype) == 2.0) { // mid
-      double G_to_slow = 0.04632 * v(VT_Ito_slow_Multiplier);
-      double G_to_fast = 0.14928 * v(VT_Ito_fast_Multiplier);
-  } else if (v(VT_celltype) == 0.0) { //endo
-      double G_to_slow = 0.07210 * v(VT_Ito_slow_Multiplier);
-      double G_to_fast = 0.01276 * v(VT_Ito_fast_Multiplier);
-  }
-    
-    // activation (a gate)
+  // activation (a gate)
   const ML_CalcType a_inf = 1.0 / (1.0 + exp(-(V_m - 19.0) / 13.0));; //Info: changed x -> a and y -> i to better match Tomek and OHara syntax
   const ML_CalcType tau_a_slow = 9.0 / (1.0 + exp((V_m + 3.0) / 15.0)) + 0.5;
   a_slow = a_inf - (a_inf - a_slow) * exp(-tinc / tau_a_slow);
@@ -411,40 +399,58 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   i_p_fast = i_inf - (i_inf - i_p_fast) * exp(-tinc / tau_i_p_fast);
     
   // Putting together the channels behavior and fraction
+  if (v(VT_celltype) == 1.0) { // epi
+      double G_to_slow = 0.02036 * v(VT_Ito_slow_Multiplier);
+      double G_to_fast = 0.29856 * v(VT_Ito_fast_Multiplier);
+  } else if (v(VT_celltype) == 2.0) { // mid
+      double G_to_slow = 0.04632 * v(VT_Ito_slow_Multiplier);
+      double G_to_fast = 0.14928 * v(VT_Ito_fast_Multiplier);
+  } else if (v(VT_celltype) == 0.0) { //endo
+      double G_to_slow = 0.07210 * v(VT_Ito_slow_Multiplier);
+      double G_to_fast = 0.01276 * v(VT_Ito_fast_Multiplier);
+  }
   const ML_CalcType phi_Ito_CaMK = phi_INa_CaMK; //TODO: Hierbei bin ich mir unsicher aus Tomek übernommen (MATLAB -> fItop = camk_f_RyR)
   I_to_slow = v(VT_Ito_Multiplier) * G_to_slow * (V_m - E_K) * ((1.0 - phi_Ito_CaMK) * a_slow * i_slow + phi_Ito_CaMK * a_p_slow * i_p_slow);
   I_to_fast = v(VT_Ito_Multiplier) * G_to_fast * (V_m - E_K) * ((1.0 - phi_Ito_CaMK) * a_fast * i_fast + phi_Ito_CaMK * a_p_fast * i_p_fast);
   I_to = I_to_slow + I_to_fast;
 
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Rapid delayed rectifier current (IKr)
+  ////////////////////////////////////////////////////////////////////////////////////////
+  const ML_CalcType alpha_Kr = 0.1161 * exp(0.299 * VFoverRT);
+  const ML_CalcType beta_Kr = 0.2442 * exp(-1.604 * VFoverRT);
+  double alpha_Kr_1 = 1.25 * 0.1235;
+  double beta_Kr_1 = 0.1911;
+  const ML_CalcType alpha_Kr_2 = 0.0578 * exp(0.971 * VFoverRT);
+  const ML_CalcType beta_Kr_2 = 0.349e-3 * exp(-1.062 * VFoverRT);
+  const ML_CalcType alpha_Kr_i = 0.2533 * exp(0.5953 * VFoverRT);
+  const ML_CalcType beta_Kr_i = 0.04568 * exp(-0.8209 * VFoverRT);
+  const ML_CalcType alpha_C2_to_I = 0.52e-4 * exp(1.525 * VFoverRT);
+  const ML_CalcType beta_I_to_C2 = (beta_Kr_2 * beta_Kr_i * alpha_C2_to_I) / (alpha_Kr_2 * alpha_Kr_i);
+  const ML_CalcType dC_0 = C_1 * beta_Kr - C_0 * alpha_Kr;
+  C_0 += tinc * dC_0;
+  const ML_CalcType dC_1 = C_0 * alpha_Kr + C_2 * beta_Kr_1 - C_1 * (beta_Kr + alpha_Kr_1);
+  C_1 += tinc * dC_1;
+  const ML_CalcType dC_2 = C_1 * alpha_Kr_1 + O * beta_Kr_2 + I * beta_I_to_C2 - C_2 * (beta_Kr_1 + alpha_Kr_2 + alpha_C2_to_I);
+  C_2 += tinc * dC_2;
+  const ML_CalcType dO = (((alpha_Kr_2 * C_2) + (beta_Kr_i * I)) - ((beta_Kr_2 + alpha_Kr_i) * O));
+  O += tinc * dO;
+  const ML_CalcType dI = (((alpha_C2_to_I * C_2) + (alpha_Kr_i * O)) - ((beta_I_to_C2 + beta_Kr_i) * I));
+  I += tinc * dI;
     
-//  //////////////////////// Rapid delayed rectifier current (IKr) ////////////////////////
-//
-//    /// calculate I_Kr
-//    const ML_CalcType alpha_Kr = 0.1161 * exp(0.299 * VFoverRT);
-//    const ML_CalcType beta_Kr = 0.2442 * exp(-1.604 * VFoverRT);
-//    double alpha_Kr_1 = 1.25 * 0.1235;
-//    double beta_Kr_1 = 0.1911;
-//    const ML_CalcType alpha_Kr_2 = 0.0578 * exp(0.971 * VFoverRT);
-//    const ML_CalcType beta_Kr_2 = 0.349e-3 * exp(-1.062 * VFoverRT);
-//    const ML_CalcType alpha_Kr_i = 0.2533 * exp(0.5953 * VFoverRT);
-//    const ML_CalcType beta_Kr_i = 0.06525 * exp(-0.8209 * VFoverRT);
-//    const ML_CalcType alpha_C2_to_I = 0.52e-4 * exp(1.525 * VFoverRT);
-//    const ML_CalcType beta_I_to_C2 = (beta_Kr_2 * beta_Kr_i * alpha_C2_to_I) / (alpha_Kr_2 * alpha_Kr_i);
-//    const ML_CalcType dC_0 = C_1 * beta_Kr - C_0 * alpha_Kr;
-//    C_0 += tinc * dC_0;
-//    const ML_CalcType dC_1 = C_0 * alpha_Kr + C_2 * beta_Kr_1 - C_1 * (beta_Kr + alpha_Kr_1);
-//    C_1 += tinc * dC_1;
-//    const ML_CalcType dC_2 = C_1 * alpha_Kr_1 + O * beta_Kr_2 + I * beta_I_to_C2 - C_2 * (beta_Kr_1 + alpha_Kr_2 + alpha_C2_to_I);
-//    C_2 += tinc * dC_2;
-//    const ML_CalcType dO = (((alpha_Kr_2 * C_2) + (beta_Kr_i * I)) - ((beta_Kr_2 + alpha_Kr_i) * O));
-//    O += tinc * dO;
-//    const ML_CalcType dI = (((alpha_C2_to_I * C_2) + (alpha_Kr_i * O)) - ((beta_I_to_C2 + beta_Kr_i) * I));
-//    I += tinc * dI;
-//    double G_Kr = 0.0321;
-//
-//    I_Kr = v(VT_IKr_Multiplier) * G_Kr * sqrt(v(VT_K_o) / 5.0) * O * (V_m - E_K);
-//    
-  //////////////////////// Slow delayed rectifier current (IKs) ////////////////////////
+  // Putting together the channels behavior and fraction
+  double G_Kr = 0.043 * sqrt(v(VT_K_o) / 5.0) * v(VT_IKr_Multiplier);
+  if (v(VT_celltype) == 1.0) { // epi
+      G_Kr = G_Kr * 1.25;
+  } else if (v(VT_celltype) == 2.0) { // mid
+      G_Kr = G_Kr * 0.7;
+  }
+  I_Kr = G_Kr * O * (V_m - E_K);
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Slow delayed rectifier current (IKs)
+  ////////////////////////////////////////////////////////////////////////////////////////
+   
     
 //    /// calculate I_Ks
 //    const ML_CalcType x_s1_inf = 1.0/(1.0 + exp(-(V_m + 11.6) / 8.932));
