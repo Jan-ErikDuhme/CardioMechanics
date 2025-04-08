@@ -671,10 +671,83 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   ///        Calcium release from SR (Jrel, Jleak)
   ////////////////////////////////////////////////////////////////////////////////////////
     
+    double ks = 26.6 * v(VT_Jrel_Multiplier);
+    double koCa = 23.87221;
+    double kom = 0.16219;
+    double kiCa = 0.39871;
+    double kim = 0.04311;
+    double ec50SR = 0.75385;
+    double steepnessCaSR = 5.09473;
+    double caExpFactor = 0.68655 ;
+    double caTransFactor = 0.94428 ;
+    double caExpFactor2 = 2.06273 ;
+    double caTransFactor2 = 0.52967 ;
+
+    ///////////// calculate directly I_CaL-coupled RyRy //////////
     
+    // inactivation
+    
+    // slower inactivation
+    
+    
+    
+    ///////////// Main Ca-sensitive RyRs //////////
+    
+    
+    // not phosphorylated by CaMKII
+    
+    
+    // And also a version of phosphorylated
+    
+    
+    // Total release
+    
+    
+    // Additional leak
+    
+    
+    
+    
+    
+//    /// SR Calcuim release flux J_rel
+//    double K_inf_rel = 1.7;
+//    ML_CalcType J_rel_NP_inf = (v(VT_alpha_rel) * (-I_CaL)) / (1.0 + pow((K_inf_rel/ Ca_jsr), 8.0));
+//    ML_CalcType J_rel_CaMK_inf = (v(VT_alpha_rel_CaMK) * (-I_CaL)) / (1.0 + pow((K_inf_rel/ Ca_jsr), 8.0));
+//    if (v(VT_celltype) == 2.0) {
+//      J_rel_NP_inf   *= 1.7;
+//      J_rel_CaMK_inf *= 1.7;
+//    }
+//    const ML_CalcType tau_rel_NP_b = v(VT_beta_tau) / (1.0 + (0.0123 / Ca_jsr));
+//    const ML_CalcType tau_rel_NP   = tau_rel_NP_b < 0.001 ? 0.001 : tau_rel_NP_b;
+//    J_rel_NP = J_rel_NP_inf - (J_rel_NP_inf - J_rel_NP) * exp(-tinc / tau_rel_NP);
+//    
+//    const ML_CalcType tau_rel_CaMK_b = v(VT_beta_tau_CaMK) / (1.0 + (0.0123 / Ca_jsr));
+//    const ML_CalcType tau_rel_CaMK   = tau_rel_CaMK_b < 0.001 ? 0.001 : tau_rel_CaMK_b;
+//    J_rel_CaMK = J_rel_CaMK_inf - (J_rel_CaMK_inf - J_rel_CaMK) * exp(-tinc / tau_rel_CaMK);
+//    
+//    const ML_CalcType phi_rel_CaMK = phi_INa_CaMK;
+//    J_rel        = 1.5378 * (1.0 - phi_rel_CaMK) * J_rel_NP + phi_rel_CaMK * J_rel_CaMK;
+//
+//    /// J_up
+//    ML_CalcType J_up_NP   = (0.005425 * Ca_i) / (0.00092 + Ca_i);
+//    ML_CalcType J_up_CaMK = (2.75 * 0.005425 * Ca_i) / (0.00092 - 0.00017 + Ca_i);
+//    if (v(VT_celltype) == 1.0) {
+//      J_up_NP   *= 1.3;
+//      J_up_CaMK *= 1.3;
+//    }
+//    const ML_CalcType phi_up_CaMK = (1.0 /(1.0 + (KmCaMK / CaMK_active)));
+//    J_leak      = (0.0048825 * Ca_nsr) / 15.0;
+//
 
     
-  //////////////////////// Calcium reuptake to the SR (Jup) ////////////////////////
+    
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Calcium reuptake to the SR (Jup)
+  ////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+    //    J_up = ((1.0 - phi_up_CaMK) * J_up_NP + (phi_up_CaMK * J_up_CaMK) - J_leak);
     
   //////////////////////// Sarcolemmal calcium pump (pCa) ////////////////////////
     
@@ -688,30 +761,10 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-  /// stretch activated channel
- #ifdef ISAC
-  I_SAC = v(VT_G_sac) * (V_m - v(VT_E_sac)) / (1. + v(VT_K_sac) * exp(-v(VT_alpha) * (stretch - 1.)));
-  I_SAC *= v(VT_ISAC_SWITCH);
- #endif  // ifdef ISAC
-
   /// I_tot
    cur_I_tot =
     I_Na + I_Na_late + I_to + I_CaL + I_CaNa + I_CaK + I_Kr + I_Ks + I_K1 + I_NaCa_i + I_NaCa_ss + I_NaK +
-    I_Nab + I_Cab + I_Kb + I_pCa + I_Clb + I_CaCl 
-  #ifdef ISAC
-    + I_SAC
-  #endif  // ifdef ISAC
+    I_Nab + I_Cab + I_Kb + I_pCa + I_Clb + I_CaCl
     + i_external;
   I_tot = -cur_I_tot;
 
@@ -723,36 +776,6 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   J_diff_Ca = (Ca_ss - Ca_i) / tau_diff_Ca;
   J_diff_K  = (K_ss - K_i) / tau_diff_K;
 
-  /// SR Calcuim release flux J_rel
-  double K_inf_rel = 1.7;
-  ML_CalcType J_rel_NP_inf = (v(VT_alpha_rel) * (-I_CaL)) / (1.0 + pow((K_inf_rel/ Ca_jsr), 8.0));
-  ML_CalcType J_rel_CaMK_inf = (v(VT_alpha_rel_CaMK) * (-I_CaL)) / (1.0 + pow((K_inf_rel/ Ca_jsr), 8.0));
-  if (v(VT_celltype) == 2.0) {
-    J_rel_NP_inf   *= 1.7;
-    J_rel_CaMK_inf *= 1.7;
-  }
-  const ML_CalcType tau_rel_NP_b = v(VT_beta_tau) / (1.0 + (0.0123 / Ca_jsr));
-  const ML_CalcType tau_rel_NP   = tau_rel_NP_b < 0.001 ? 0.001 : tau_rel_NP_b;
-  J_rel_NP = J_rel_NP_inf - (J_rel_NP_inf - J_rel_NP) * exp(-tinc / tau_rel_NP);
-  
-  const ML_CalcType tau_rel_CaMK_b = v(VT_beta_tau_CaMK) / (1.0 + (0.0123 / Ca_jsr));
-  const ML_CalcType tau_rel_CaMK   = tau_rel_CaMK_b < 0.001 ? 0.001 : tau_rel_CaMK_b;
-  J_rel_CaMK = J_rel_CaMK_inf - (J_rel_CaMK_inf - J_rel_CaMK) * exp(-tinc / tau_rel_CaMK);
-  
-  const ML_CalcType phi_rel_CaMK = phi_INa_CaMK;
-  J_rel        = 1.5378 * (1.0 - phi_rel_CaMK) * J_rel_NP + phi_rel_CaMK * J_rel_CaMK;
-
-  /// J_up
-  ML_CalcType J_up_NP   = (0.005425 * Ca_i) / (0.00092 + Ca_i);
-  ML_CalcType J_up_CaMK = (2.75 * 0.005425 * Ca_i) / (0.00092 - 0.00017 + Ca_i);
-  if (v(VT_celltype) == 1.0) {
-    J_up_NP   *= 1.3;
-    J_up_CaMK *= 1.3;
-  }
-  const ML_CalcType phi_up_CaMK = (1.0 /(1.0 + (KmCaMK / CaMK_active)));
-  J_leak      = (0.0048825 * Ca_nsr) / 15.0;
-
-  J_up = ((1.0 - phi_up_CaMK) * J_up_NP + (phi_up_CaMK * J_up_CaMK) - J_leak);
 
 
   /// J_tr
