@@ -650,25 +650,29 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Background currents (INab, ICab, IKb)
   ////////////////////////////////////////////////////////////////////////////////////////
+  // calculate I_Nab
+  double G_Nab = 2.0 * 0.297e-03 * v(VT_INab_Multiplier);
+  I_Nab_junc = Fjunc * G_Nab * (V_m - E_Na_junc);
+  I_Nab_sl = Fsl * G_Nab * (V_m - E_Na_sl);
+  I_Nab = I_Nab_junc + I_Nab_sl;
+    
+  // calculate I_Kb
+  double G_Kb = 0.010879 * v(VT_IKb_Multiplier);
+  const ML_CalcType x_Kb = 1.0 / (1.0 + exp(-(V_m - 10.8968) / (23.9871)));
+  I_Kb = G_Kb * x_Kb * (V_m - E_K);
+    
+  // calculate I_Cab
+  double G_Cab = 5.15575e-04 * v(VT_ICab_Multiplier);
+  I_Cab_junc = Fjunc * G_Cab * (V_m - E_ca_junc);
+  I_Cab_sl = Fsl * G_Cab * (V_m - E_ca_sl);
+  I_Cab = I_Cab_junc + I_Cab_sl;
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Calcium release from SR (Jrel, Jleak)
+  ////////////////////////////////////////////////////////////////////////////////////////
+    
+    
 
-    
-    
-//    /// calculate I_Kb
-//    const ML_CalcType x_Kb = 1.0 / (1.0 + exp(-(V_m - 10.8968) / (23.9871)));
-//    double G_Kb            = 0.0189;
-//    I_Kb = v(VT_IKb_Multiplier) * G_Kb * x_Kb * (V_m - E_K);
-//
-//    /// calculate I_Nab
-//    double P_Nab = 1.9239e-9;
-//    I_Nab = v(VT_INab_Multiplier) * P_Nab * z_Na * z_Na * VFFoverRT *
-//      ((Na_i * exp_z_Na - v(VT_Na_o)) / (exp_z_Na - 1.0));
-//
-//    /// calculate I_Cab
-//    double P_Cab = 5.9194e-8;
-//    I_Cab = v(VT_ICab_Multiplier) * P_Cab * z_Ca * z_Ca * VFFoverRT *
-//      ((gamma_Ca_i * Ca_i * exp_z_Ca - gamma_Ca_o * v(VT_Ca_o)) / (exp_z_Ca - 1.0));
-    
-  //////////////////////// Calcium release from SR (Jrel, Jleak) ////////////////////////
     
   //////////////////////// Calcium reuptake to the SR (Jup) ////////////////////////
     
