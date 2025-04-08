@@ -247,51 +247,73 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   I_NaL = I_NaL_junc+I_NaL_sl;
     
     
-  //////////////////////// L-type calcium current (ICaL) ////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        L-type calcium current (I_CaL, I_CaNa, I_CaK)
+  ////////////////////////////////////////////////////////////////////////////////////////
+    const ML_CalcType phi_ICaL_CaMK = ; //TODO: unklar was genau hier hin
+    const ML_CalcType phi_ICaL_PKA = ; //TODO: unklar was genau hier hin
+  
+    // d gate
+    const ML_CalcType d_inf = min(1.0763*exp((-1.007*exp((-0.0829*(V_m+3.62483))))), 1.0);
+    const ML_CalcType tau_d = 1.5 + 1.0 / (exp(-0.05 * (V_m + 6.0)) + exp(0.09 * (V_m + 14.0)));
+    d = d_inf - (d_inf -d) * exp(-tinc / tau_d);
+    
+    // f gate
+    const ML_CalcType f_inf = 1.0 / (1.0 + exp((V_m + 19.58) / 3.696));
+    const ML_CalcType tau_f_fast = 6.17111 + 1.0 / (0.00126 * exp(-(V_m + 26.63596) / 9.69961) + 0.00126 * exp((V_m + 26.63596) / 9.69961));
+    const ML_CalcType tau_f_slow = 2719.22489 + 1.0 / (7.19411e-05 * exp(-(V_m + 5.74631) / 10.87690) + 7.19411e-05 * exp((V_m + 5.74631) / 16.31535));
+    
+    const ML_CalcType A_f_fast = 0.52477; //TODO: can be replaced by using v()
+    const ML_CalcType A_f_slow = 1.0 - A_f_fast; //TODO: can be replaced by using v()
+    f_fast = f_inf - (f_inf - f_fast) * exp(-tinc / tau_f_fast);
+    f_slow = f_inf - (f_inf - f_slow) * exp(-tinc / tau_f_slow);
+    const ML_CalcType f = A_f_fast * f_fast + A_f_slow * f_slow;
+   //TODO: other option -> const ML_CalcType f = v(VT_A_f_fast) * f_fast + v(VT_A_f_slow) * f_slow
+    
+    const ML_CalcType f_Ca_inf      = f_inf;
+    const ML_CalcType tau_f_Ca_fast = 13.50673 + 1.0 / (0.15420 * exp(-(V_m - 1.31611) / 11.33960) + 0.15420 * exp((V_m - 1.31611) / 11.33960));
+    const ML_CalcType tau_f_Ca_slow = 177.95813 + 1.0 / (4.73955e-04 * exp((-V_m+0.79049) / 0.81777) + 4.73955e-04 * exp((V_m+2.40474) /1.90812));
+    const ML_CalcType A_f_Ca_fast = 0.3 + 0.6 / (1.0 + exp((V_m - 9.24247) / 27.96201));
+    const ML_CalcType A_f_Ca_slow = 1.0 - A_f_Ca_fast;
+    f_Ca_fast = f_Ca_inf - (f_Ca_inf - f_Ca_fast) * exp(-tinc / tau_f_Ca_fast);
+    f_Ca_slow = f_Ca_inf - (f_Ca_inf - f_Ca_slow) * exp(-tinc / tau_f_Ca_slow);
+    const ML_CalcType f_Ca        = A_f_Ca_fast * f_Ca_fast + A_f_Ca_slow * f_Ca_slow;
+    
+    // j gate
+    double tau_j_Ca = 66.0;
+    const ML_CalcType j_Ca_inf = 1. / (1 + exp((V_m + 17.66945) / (3.21501)));
+    j_Ca = j_Ca_inf - (j_Ca_inf - j_Ca) * exp(-tinc / tau_j_Ca);
+    
+    // gating CaMK-P
+    const ML_CalcType tau_f_p_fast = 2.5 * tau_f_fast;
+    const ML_CalcType f_p_inf = f_inf;
+    f_p_fast = f_p_inf - (f_p_inf - f_p_fast) * exp(-tinc / tau_f_p_fast);
+    const ML_CalcType f_p = A_f_fast * f_p_fast + A_f_slow * f_slow;
+    //TODO: Alternative -> const ML_CalcType f_p = v(VT_A_f_fast) * f_p_fast + v(VT_A_f_slow) * f_slow;
+    
+    const ML_CalcType tau_f_Ca_p_fast = 2.5 * tau_f_Ca_fast;
+    const ML_CalcType f_Ca_p_inf = f_inf;
+    f_Ca_p_fast = f_Ca_p_inf - (f_Ca_p_inf - f_Ca_p_fast) * exp(-tinc / tau_f_Ca_p_fast);
+    const ML_CalcType f_Ca_p = A_f_Ca_fast * f_Ca_p_fast + A_f_Ca_slow * f_Ca_slow;
+    
+    // SS nca
+    double Kmn = 0.00222;
+    double k2n = 957.85903;
+    const ML_CalcType k_m2_n = j_Ca * 0.84191;
+    const ML_CalcType alpha_n_Ca_junc   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_junc)), 3.80763)); //TODO: Ca_junc does not exist yet
+    n_junc = alpha_n_Ca_junc * (k2n / k_m2_n) - (alpha_n_Ca_junc * (k2n / k_m2_n) - n_ss) * exp(-k_m2_n * tinc); //TODO: Ist noch falsch
+    
+    // myoplasmic nca
+    const ML_CalcType alpha_n_Ca_sl   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_sl)), 3.80763)); //TODO: Ca_sl does not exist yet
+    n_sl = alpha_n_Ca_sl * (k2n / k_m2_n) - (alpha_n_Ca_junc * (k2n / k_m2_n) - n_ss) * exp(-k_m2_n * tinc); //TODO: Ist noch falsch
+    
+    // SS driving force
+    
     
 //    /// calculate I_CaL, I_CaNa, I_CaK
-//    ML_CalcType d_inf = 1.0763*exp((-1.007*exp((-0.0829*V_m))));
-//    if (V_m > 31.4978)
-//    {
-//      d_inf = 1.0;
-//    }
-//    const ML_CalcType tau_d = 0.6 + 1.0 / (exp(-0.05 * (V_m + 6.0)) + exp(0.09 * (V_m + 14.0)));
-//    d = d_inf - (d_inf -d) * exp(-tinc / tau_d);
-//    const ML_CalcType f_inf = 1.0 / (1.0 + exp((V_m + 19.58) / 3.696));
-//    const ML_CalcType tau_f_fast = 7.0 + 1.0 / (0.0045 * exp(-(V_m + 20.0) / 10.0) + 0.0045 * exp((V_m + 20.0) / 10.0));
-//    const ML_CalcType tau_f_slow = 1000.0 + 1.0 / (3.5e-05 * exp(-(V_m + 5.0) / 4.0) + 3.5e-05 * exp((V_m + 5.0) / 6.0));
-//    const ML_CalcType A_f_Ca_fast = 0.3 + 0.6 / (1.0 + exp((V_m - 10.0) / 10.0));
-//    const ML_CalcType A_f_Ca_slow = 1.0 - A_f_Ca_fast;
-//    f_fast = f_inf - (f_inf - f_fast) * exp(-tinc / tau_f_fast);
-//    f_slow = f_inf - (f_inf - f_slow) * exp(-tinc / tau_f_slow);
-//    const ML_CalcType f             = v(VT_A_f_fast) * f_fast + v(VT_A_f_slow) * f_slow;
-//    const ML_CalcType f_Ca_inf      = f_inf;
-//    const ML_CalcType tau_f_Ca_fast = 7.0 + 1.0 / (0.04 * exp(-(V_m - 4.0) / 7.0) + 0.04 * exp((V_m - 4.0) / 7.0));
-//    const ML_CalcType tau_f_Ca_slow = 100.0 + 1.0 / (0.00012 * exp(-V_m / 3.0) + 0.00012 * exp(V_m /7.0));
-//    
-//    f_Ca_fast = f_Ca_inf - (f_Ca_inf - f_Ca_fast) * exp(-tinc / tau_f_Ca_fast);
-//    f_Ca_slow = f_Ca_inf - (f_Ca_inf - f_Ca_slow) * exp(-tinc / tau_f_Ca_slow);
-//    const ML_CalcType f_Ca        = A_f_Ca_fast * f_Ca_fast + A_f_Ca_slow * f_Ca_slow;
-//    const ML_CalcType j_Ca_inf = 1. / (1 + exp((V_m + 18.08) / (2.7916)));
-//    double tau_j_Ca               = 75.0;
-//    j_Ca = j_Ca_inf - (j_Ca_inf - j_Ca) * exp(-tinc / tau_j_Ca);
+
 //
-//    const ML_CalcType tau_f_CaMK_fast = 2.5 * tau_f_fast;
-//    const ML_CalcType f_CaMK_inf      = f_inf;
-//    f_CaMK_fast = f_CaMK_inf - (f_CaMK_inf - f_CaMK_fast) * exp(-tinc / tau_f_CaMK_fast);
-//
-//    const ML_CalcType f_CaMK             = v(VT_A_f_fast) * f_CaMK_fast + v(VT_A_f_slow) * f_slow;
-//
-//    const ML_CalcType tau_f_Ca_CaMK_fast = 2.5 * tau_f_Ca_fast;
-//    const ML_CalcType f_Ca_CaMK_inf      = f_inf;
-//    f_Ca_CaMK_fast = f_Ca_CaMK_inf - (f_Ca_CaMK_inf - f_Ca_CaMK_fast) * exp(-tinc / tau_f_Ca_CaMK_fast);
-//
-//    const ML_CalcType f_Ca_CaMK = A_f_Ca_fast * f_Ca_CaMK_fast + A_f_Ca_slow * f_Ca_slow;
-//    const ML_CalcType k_m2_n    = j_Ca * 1.0;
-//    double Kmn                  = 0.002;
-//    double k2n                  = 500.0;
-//    const ML_CalcType alpha_n_Ca_ss   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_ss)), 4.0));
-//    n_ss = alpha_n_Ca_ss * (k2n / k_m2_n) - (alpha_n_Ca_ss * (k2n / k_m2_n) - n_ss) * exp(-k_m2_n * tinc);
+
 //
 //    const ML_CalcType I_o = (0.5*(v(VT_Na_o)+v(VT_K_o)+v(VT_Cl_o)+(4.*v(VT_Ca_o)))/1000.);
 //    const ML_CalcType I_ss = ((0.5*(Na_ss+K_ss+Cl_i+(4.*Ca_ss)))/1000.);
@@ -343,42 +365,58 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
 //    I_CaL = I_CaL_ss + I_CaL_i;
 //    I_CaNa = I_CaNa_ss + I_CaNa_i;
 //    I_CaK = I_CaK_ss + I_CaK_i;
+  
     
-  //////////////////////// Transient outward current (Ito) ////////////////////////
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Transient outward current (Ito)
+  ////////////////////////////////////////////////////////////////////////////////////////
+  
+  if (v(VT_celltype) == 1.0) { // epi
+      double G_to_slow = 0.02036 * v(VT_Ito_slow_Multiplier);
+      double G_to_fast = 0.29856 * v(VT_Ito_fast_Multiplier);
+  } else if (v(VT_celltype) == 2.0) { // mid
+      double G_to_slow = 0.04632 * v(VT_Ito_slow_Multiplier);
+      double G_to_fast = 0.14928 * v(VT_Ito_fast_Multiplier);
+  } else if (v(VT_celltype) == 0.0) { //endo
+      double G_to_slow = 0.07210 * v(VT_Ito_slow_Multiplier);
+      double G_to_fast = 0.01276 * v(VT_Ito_fast_Multiplier);
+  }
     
-//    /// calculate I_to
-//    const ML_CalcType a_inf = 1.0 / (1.0 + exp(-(V_m - 14.34) / 14.82));
-//    const ML_CalcType tau_a = 1.0515 /
-//      (1.0/(1.2089*(1.0 + exp(-(V_m - 18.4099) / 29.3814))) + 3.5/(1.0 + exp((V_m + 100.0) / 29.3814)));
-//    a = a_inf - (a_inf - a) * exp(-tinc / tau_a);
-//    const ML_CalcType i_inf           = 1.0 / (1.0 + exp((V_m + 43.94) / 5.711));
-//    const ML_CalcType delta_epi       = v(VT_celltype) == 1.0 ? (1.0 - 0.95 / (1.0 + exp((V_m + 70.0) / 5.0))) : 1.0;
-//    const ML_CalcType tau_i_fast_base =  4.562 + 1.0 /
-//      (0.3933 * exp(-(V_m + 100.0) / 100.0) + 0.08004 * exp((V_m + 50.0) / 16.59));
-//    const ML_CalcType tau_i_slow_base = 23.62 + 1.0 /
-//      (0.001416 * exp(-(V_m + 96.52) / 59.05) + 1.780e-08 * exp((V_m + 114.1) / 8.079));
-//    const ML_CalcType tau_i_fast = tau_i_fast_base * delta_epi;
-//    const ML_CalcType tau_i_slow = tau_i_slow_base * delta_epi;
-//    i_fast = i_inf - (i_inf - i_fast) * exp(-tinc / tau_i_fast);
-//    i_slow = i_inf - (i_inf - i_slow) * exp(-tinc / tau_i_slow);
-//    const ML_CalcType A_i_fast   = 1.0 / (1.0 + exp((V_m - 213.6) / 151.2));
-//    const ML_CalcType A_i_slow   = 1.0 - A_i_fast;
-//    const ML_CalcType i          = A_i_fast * i_fast + A_i_slow * i_slow;
-//    const ML_CalcType a_CaMK_inf = 1.0 / (1.0 + exp(-(V_m - 24.34) / 14.82));
-//    const ML_CalcType tau_a_CaMK = tau_a;
-//    a_CaMK = a_CaMK_inf - (a_CaMK_inf - a_CaMK) * exp(-tinc / tau_a_CaMK);
-//    const ML_CalcType i_CaMK_inf         = i_inf;
-//    const ML_CalcType delta_CaMK_develop = 1.354 + 1.0e-04 / (exp((V_m - 167.4) / 15.89) + exp(-(V_m - 12.23) / 0.2154));
-//    const ML_CalcType delta_CaMK_recover = 1.0 - 0.5 / (1.0 + exp((V_m + 70.0) / 20.0));
-//    const ML_CalcType tau_i_CaMK_fast    = tau_i_fast * delta_CaMK_develop * delta_CaMK_recover;
-//    const ML_CalcType tau_i_CaMK_slow    = tau_i_slow * delta_CaMK_develop * delta_CaMK_recover;
-//    i_CaMK_fast = i_CaMK_inf - (i_CaMK_inf - i_CaMK_fast) * exp(-tinc / tau_i_CaMK_fast);
-//    i_CaMK_slow = i_CaMK_inf - (i_CaMK_inf - i_CaMK_slow) * exp(-tinc / tau_i_CaMK_slow);
-//    const ML_CalcType i_CaMK       = A_i_fast * i_CaMK_fast + A_i_slow * i_CaMK_slow;
-//    const ML_CalcType phi_Ito_CaMK = phi_INa_CaMK;
-//    double G_to                    = 0.16;
-//    I_to = v(VT_Ito_Multiplier) * G_to * (V_m - E_K) * ((1.0 - phi_Ito_CaMK) * a * i + phi_Ito_CaMK * a_CaMK * i_CaMK);
-//    
+    // activation (a gate)
+  const ML_CalcType a_inf = 1.0 / (1.0 + exp(-(V_m - 19.0) / 13.0));; //Info: changed x -> a and y -> i to better match Tomek and OHara syntax
+  const ML_CalcType tau_a_slow = 9.0 / (1.0 + exp((V_m + 3.0) / 15.0)) + 0.5;
+  a_slow = a_inf - (a_inf - a_slow) * exp(-tinc / tau_a_slow);
+    
+  const ML_CalcType tau_a_fast = 8.5 * exp(-pow(((V_m + 45.0) / 50.0), 2)) + 0.5;
+  a_fast = a_inf - (a_inf - a_fast) * exp(-tinc / tau_a_fast);
+    
+  // inactivation (i gate)
+  const ML_CalcType i_inf = 1.0 / (1.0 + exp((V_m + 19.5) / 5.0));
+  const ML_CalcType tau_i_slow = 800.0 / (1.0 +exp((V_m + 60.0) / 10.0)) + 30.0;
+  i_slow = i_inf - (i_inf - i_slow) * exp(-tinc / tau_i_slow);
+    
+  const ML_CalcType tau_i_fast = 85.0 * exp(-pow((V_m+40), 2/220)) + 7.0;
+  i_fast = i_inf - (i_inf - i_fast) * exp(-tinc / tau_i_fast);
+    
+  // gating CaMK-P
+  const ML_CalcType a_p_inf = 1.0 / (1.0 + exp(-(V_m - 29.0) / 13.0));
+  a_p_slow = a_p_inf - (a_p_inf - a_p_slow) * exp(-tinc / tau_a_slow);
+  a_p_fast = a_p_inf - (a_p_inf - a_p_fast) * exp(-tinc / tau_a_fast);
+    
+  const ML_CalcType delta_p_develop = 1.354 + 1.0e-04 / (exp((V_m - 167.4) / 15.89) + exp(-(V_m - 12.23) / 0.2154));
+  const ML_CalcType delta_p_recover = 1.0 - 0.5 / (1.0 + exp((V_m + 70.0) / 20.0));
+  const ML_CalcType tau_i_p_slow = tau_i_slow * delta_p_develop * delta_p_recover;
+  const ML_CalcType tau_i_p_fast = tau_i_fast * delta_p_develop * delta_p_recover;
+  i_p_slow = i_inf - (i_inf - i_p_slow) * exp(-tinc / tau_i_p_slow);
+  i_p_fast = i_inf - (i_inf - i_p_fast) * exp(-tinc / tau_i_p_fast);
+    
+  // Putting together the channels behavior and fraction
+  const ML_CalcType phi_Ito_CaMK = phi_INa_CaMK; //TODO: Hierbei bin ich mir unsicher aus Tomek übernommen (MATLAB -> fItop = camk_f_RyR)
+  I_to_slow = v(VT_Ito_Multiplier) * G_to_slow * (V_m - E_K) * ((1.0 - phi_Ito_CaMK) * a_slow * i_slow + phi_Ito_CaMK * a_p_slow * i_p_slow);
+  I_to_fast = v(VT_Ito_Multiplier) * G_to_fast * (V_m - E_K) * ((1.0 - phi_Ito_CaMK) * a_fast * i_fast + phi_Ito_CaMK * a_p_fast * i_p_fast);
+  I_to = I_to_slow + I_to_fast;
+
+    
 //  //////////////////////// Rapid delayed rectifier current (IKr) ////////////////////////
 //
 //    /// calculate I_Kr
