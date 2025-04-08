@@ -509,68 +509,107 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Sodium-calcium exchanger (INaCa)
   ////////////////////////////////////////////////////////////////////////////////////////
+    double z_Ca = 2.0;
+    double kna1 = 11.9712;
+    double kna2 = 2.76;
+    double kna3 = 88.767;
+    double kasymm = 19.4258;
+    double wna  = 3.2978e+04;
+    double wca = 5.1756e+04;
+    double wnaca  = 2.7763e+03;
+    double kcaon = 3.4164e+06;
+    double kcaoff = 3.8532e+03;
+    double qna = 0.6718;
+    double qca  = 0.0955;
+    const ML_CalcType h_Ca = exp(qca * (V_m - 8.3117) * VFoverRT);
+    const ML_CalcType h_Na = exp(qna * (V_m - 8.3117) * VFoverRT);
+    
+    // calculate I_NaCa_i
+    const ML_CalcType h_1_i = 1.0 + (Na_i * (1.0 + h_Na)) / kna3;
+    const ML_CalcType h_2_i = (Na_i * h_Na) / (kna3 * h_1_i);
+    const ML_CalcType h_3_i = 1.0 / h_1_i;
+    const ML_CalcType h_4_i = 1.0 + (Na_i * (1.0 + Na_i / kna2)) / kna1;
+    const ML_CalcType h_5_i = (Na_i * Na_i) / (h_4_i * kna1 * kna2);
+    const ML_CalcType h_6_i = 1.0 / h_4_i;
+    const ML_CalcType h_7_i = 1.0 + (v(VT_Na_o) * (1.0 + 1.0 / h_Na)) / kna3;
+    const ML_CalcType h_8_i = v(VT_Na_o) / (kna3 * h_Na * h_7_i);
+    const ML_CalcType h_9_i = 1.0 / h_7_i;
+    const ML_CalcType h_10_i = kasymm + 1.0 + v(VT_Na_o) / kna1 * (1.0 + v(VT_Na_o) / kna2);
+    const ML_CalcType h_11_i = v(VT_Na_o) * v(VT_Na_o) / (h_10_i * kna1 * kna2);
+    const ML_CalcType h_12_i = 1.0 / h_10_i;
+    
+    const ML_CalcType k_1_i = h_12_i * v(VT_Ca_o) * kcaon;
+    const ML_CalcType k_2_i = kcaoff;
+    const ML_CalcType k_3_d_i = h_9_i * wca;
+    const ML_CalcType k_3_dd_i = h_8_i * wnaca;
+    const ML_CalcType k_3_i = k_3_d_i + k_3_dd_i;
+    const ML_CalcType k_4_d_i = (h_3_i * wca) / h_Ca;
+    const ML_CalcType k_4_dd_i = h_2_i * wnaca;
+    const ML_CalcType k_4_i = k_4_d_i + k_4_dd_i;
+    const ML_CalcType k_5_i = kcaoff;
+    const ML_CalcType k_6_i = h_6_i * Ca_i * kcaon;
+    const ML_CalcType k_7_i = h_5_i * h_2_i * wna;
+    const ML_CalcType k_8_i = h_8_i * h_11_i * wna;
+ 
+    const ML_CalcType x_1_i = k_2_i * k_4_i * (k_7_i + k_6_i) + k_5_i * k_7_i * (k_2_i + k_3_i);
+    const ML_CalcType x_2_i = k_1_i * k_7_i * (k_4_i + k_5_i) + k_4_i * k_6_i * (k_1_i + k_8_i);
+    const ML_CalcType x_3_i = k_1_i * k_3_i * (k_7_i + k_6_i) + k_8_i * k_6_i * (k_2_i + k_3_i);
+    const ML_CalcType x_4_i = k_2_i * k_8_i * (k_4_i + k_5_i) + k_3_i * k_5_i * (k_1_i + k_8_i);
+    
+    const ML_CalcType E_1_i = x_1_i / (x_1_i + x_2_i + x_3_i + x_4_i);
+    const ML_CalcType E_2_i = x_2_i / (x_1_i + x_2_i + x_3_i + x_4_i);
+    const ML_CalcType E_3_i = x_3_i / (x_1_i + x_2_i + x_3_i + x_4_i);
+    const ML_CalcType E_4_i = x_4_i / (x_1_i + x_2_i + x_3_i + x_4_i);
+    
+    double KmCaAct = 150.0e-6;
+    const ML_CalcType allo_i = 1.0 / (1.0 + ((KmCaAct / Ca_i) * (KmCaAct / Ca_i)));
+    double z_Na = 1.0;
+    const ML_CalcType J_NaCa_Na_i = 3.0 * (E_4_i * k_7_i - E_1_i * k_8_i) + E_3_i * k_4_dd_i - E_2_i * k_3_dd_i;
+    const ML_CalcType J_NaCa_Ca_i = E_2_i * k_2_i - E_1_i * k_1_i;
+    double G_NaCa = 0.00179 * v(VT_INaCa_Multiplier);
+    
+    I_NaCa_i = G_NaCa * allo_i * (z_Na * J_NaCa_Na_i + z_Ca * J_NaCa_Ca_i) * (1-INaCa_fractionSS); //TODO: Was ist INaCa_fractionSS
+    
+    // calculate I_NaCa_ss
+    const ML_CalcType h_1_ss =
+    const ML_CalcType h_2_ss =
+    const ML_CalcType h_3_ss =
+    const ML_CalcType h_4_ss =
+    const ML_CalcType h_5_ss =
+    const ML_CalcType h_6_ss =
+    const ML_CalcType h_7_ss =
+    const ML_CalcType h_8_ss =
+    const ML_CalcType h_9_ss =
+    const ML_CalcType h_10_ss =
+    const ML_CalcType h_11_ss =
+    const ML_CalcType h_12_ss =
     
     
+    h1=1+nasl/kna3*(1+hna);
+    h2=(nasl*hna)/(kna3*h1);
+    h3=1.0/h1;
+    h4=1.0+nasl/kna1*(1+nasl/kna2);
+    h5=nasl*nasl/(h4*kna1*kna2);
+    h6=1.0/h4;
+    h7=1.0+nao/kna3*(1.0+1.0/hna);
+    h8=nao/(kna3*hna*h7);
+    h9=1.0/h7;
+    h10=kasymm+1.0+nao/kna1*(1+nao/kna2);
+    h11=nao*nao/(h10*kna1*kna2);
+    h12=1.0/h10;
+    
+    //    const ML_CalcType h_1_ss       = 1.0 + (Na_ss * (1.0 + h_Na)) / kna3;
+    //    const ML_CalcType h_2_ss       = (Na_ss * h_Na) / (kna3 * h_1_ss);
+    //    const ML_CalcType h_3_ss       = 1.0 / h_1_ss;
+    //    const ML_CalcType h_4_ss       = 1.0 + (Na_ss * (1.0 + Na_ss / v(VT_k_Na2))) / v(VT_k_Na1);
+    //    const ML_CalcType h_5_ss       = (Na_ss * Na_ss) / (h_4_ss * v(VT_k_Na1) * v(VT_k_Na2));
+    //    const ML_CalcType h_6_ss       = 1.0 / h_4_ss;
     
     
-    
-    
-//    /// calculate I_NaCa_i
-//    double kna3                   = 88.12;
-//    double wna                    = 6.0e4;
-//    double wca                    = 6.0e4;
-//    double wnaca                  = 5.0e3;
-//    double qna                    = 0.5224;
-//    double qca                    = 0.1670;
-//    double z_Ca                   = 2.0;
-//    double z_Na                   = 1.0;
-//    double z_K                    = 1.0;
-//    const ML_CalcType exp_z_Ca    = exp(z_Ca * VFoverRT);
-//    const ML_CalcType exp_z_Na    = exp(z_Na * VFoverRT);
-//    const ML_CalcType exp_z_K     = exp(z_K * VFoverRT);
-//    const ML_CalcType h_Ca        = exp(qca * VFoverRT);
-//    const ML_CalcType h_Na        = exp(qna * VFoverRT);
-//    const ML_CalcType h_1_i       = 1.0 + (Na_i * (1.0 + h_Na)) / kna3;
-//    const ML_CalcType h_2_i       = (Na_i * h_Na) / (kna3 * h_1_i);
-//    const ML_CalcType h_3_i       = 1.0 / h_1_i;
-//    const ML_CalcType h_4_i       = 1.0 + (Na_i * (1.0 + Na_i / v(VT_k_Na2))) / v(VT_k_Na1);
-//    const ML_CalcType h_5_i       = (Na_i * Na_i) / (h_4_i * v(VT_k_Na1) * v(VT_k_Na2));
-//    const ML_CalcType h_6_i       = 1.0 / h_4_i;
-//    const ML_CalcType h_7         = 1.0 + (v(VT_Na_o) * (1.0 + 1.0 / h_Na)) / kna3;
-//    const ML_CalcType h_8         = v(VT_Na_o) / (kna3 * h_Na * h_7);
-//    const ML_CalcType h_9         = 1.0 / h_7;
-//    const ML_CalcType k_3_d       = h_9 * wca;
-//    const ML_CalcType k_3_dd      = h_8 * wnaca;
-//    const ML_CalcType k_3         = k_3_d + k_3_dd;
-//    const ML_CalcType k_4_d_i     = (h_3_i * wca) / h_Ca;
-//    const ML_CalcType k_4_dd_i    = h_2_i * wnaca;
-//    const ML_CalcType k_4_i       = k_4_d_i + k_4_dd_i;
-//    const ML_CalcType k_6_i       = h_6_i * Ca_i * v(VT_k_Ca_on);
-//    const ML_CalcType k_7_i       = h_5_i * h_2_i * wna;
-//    const ML_CalcType k_8         = h_8 * v(VT_h_11) * wna;
-//    const ML_CalcType x_1_i       = v(VT_k_2) * k_4_i * (k_7_i + k_6_i) + v(VT_k_5) * k_7_i * (v(VT_k_2) + k_3);
-//    const ML_CalcType x_2_i       = v(VT_k_1) * k_7_i * (k_4_i + v(VT_k_5)) + k_4_i * k_6_i * (v(VT_k_1) + k_8);
-//    const ML_CalcType x_3_i       = v(VT_k_1) * k_3 * (k_7_i + k_6_i) + k_8 * k_6_i * (v(VT_k_2) + k_3);
-//    const ML_CalcType x_4_i       = v(VT_k_2) * k_8 * (k_4_i + v(VT_k_5)) + k_3 * v(VT_k_5) * (v(VT_k_1) + k_8);
-//    const ML_CalcType E_1_i       = x_1_i / (x_1_i + x_2_i + x_3_i + x_4_i);
-//    const ML_CalcType E_2_i       = x_2_i / (x_1_i + x_2_i + x_3_i + x_4_i);
-//    const ML_CalcType E_3_i       = x_3_i / (x_1_i + x_2_i + x_3_i + x_4_i);
-//    const ML_CalcType E_4_i       = x_4_i / (x_1_i + x_2_i + x_3_i + x_4_i);
-//    double KmCaAct                = 150.0e-6;
-//    const ML_CalcType allo_i      = 1.0 / (1.0 + ((KmCaAct / Ca_i) * (KmCaAct / Ca_i)));
-//    const ML_CalcType J_NaCa_Na_i = 3.0 * (E_4_i * k_7_i - E_1_i * k_8) + E_3_i * k_4_dd_i - E_2_i * k_3_dd;
-//    const ML_CalcType J_NaCa_Ca_i = E_2_i * v(VT_k_2) - E_1_i * v(VT_k_1);
-//    double G_NaCa                 = 0.0034;
-//    I_NaCa_i = v(VT_INaCa_Multiplier)
-//      * G_NaCa * 0.65 * allo_i * (z_Na * J_NaCa_Na_i + z_Ca * J_NaCa_Ca_i);
+
 
 //    /// calculate I_NaCa_ss
-//    const ML_CalcType h_1_ss       = 1.0 + (Na_ss * (1.0 + h_Na)) / kna3;
-//    const ML_CalcType h_2_ss       = (Na_ss * h_Na) / (kna3 * h_1_ss);
-//    const ML_CalcType h_3_ss       = 1.0 / h_1_ss;
-//    const ML_CalcType h_4_ss       = 1.0 + (Na_ss * (1.0 + Na_ss / v(VT_k_Na2))) / v(VT_k_Na1);
-//    const ML_CalcType h_5_ss       = (Na_ss * Na_ss) / (h_4_ss * v(VT_k_Na1) * v(VT_k_Na2));
-//    const ML_CalcType h_6_ss       = 1.0 / h_4_ss;
+
 //    const ML_CalcType k_4_d_ss     = (h_3_ss * wca) / h_Ca;
 //    const ML_CalcType k_4_dd_ss    = h_2_ss * wnaca;
 //    const ML_CalcType k_4_ss       = k_4_d_ss + k_4_dd_ss;
