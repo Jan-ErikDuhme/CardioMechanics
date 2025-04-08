@@ -450,18 +450,46 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Slow delayed rectifier current (IKs)
   ////////////////////////////////////////////////////////////////////////////////////////
-   
+    // gating
+    const ML_CalcType k_PKA = phi_IKs_PKA; //TODO: No idea what that is
+    const ML_CalcType V_h_0 = -1.0 - 10.0 * k_PKA;
+    const ML_CalcType V_h_max = -12.0 - 9.0 * k_PKA;
+    const ML_CalcType tau_0 = 26.0 + 9.0 * k_PKA;
+    const ML_CalcType tau_max = 40.0 + 4.0 * k_PKA;
     
-//    /// calculate I_Ks
-//    const ML_CalcType x_s1_inf = 1.0/(1.0 + exp(-(V_m + 11.6) / 8.932));
-//    const ML_CalcType tau_x_s1 = 817.3 + 1.0 /
-//      (2.326e-04 * exp((V_m + 48.28) / 17.80)+ 0.001292 * exp(-(V_m + 210.0) / 230.0));
-//    x_s1 = x_s1_inf - (x_s1_inf - x_s1) * exp(-tinc / tau_x_s1);
-//    const ML_CalcType x_s2_inf = x_s1_inf;
-//    const ML_CalcType tau_x_s2 = 1.0 / (0.01 * exp((V_m - 50.0) / 20.0) + 0.0193 * exp(-(V_m + 66.54) / 31.0));
-//    x_s2 = x_s2_inf - (x_s2_inf - x_s2) * exp(-tinc / tau_x_s2);
-//    double G_Ks = 0.0011;
-//    I_Ks = v(VT_IKs_Multiplier) * G_Ks * (1.0 + (0.6 / (1.0 + pow((3.8e-05 / (Ca_i)), 1.4)))) * x_s1 * x_s2 * (V_m - E_Ks);
+    const ML_CalcType V_junc = V_h_0 + (V_h_max - V_h_0) / (1.0 + pow((350e-06 / Ca_junc), 4.0)); // Regulated by PKA
+    const ML_CalcType xs_junc_inf = 1.0 / (1.0 + exp(-(V_m - V_junc) / 25.0));
+    const ML_CalcType V_tau_junc = tau_0 + (tau_max - tau_0) / (1.0 + pow((150e-06/Ca_junc), 3.0)); // Regulated by PKA
+    const ML_CalcType tau_xs_junc = 2.0 * (50.0 + (50.0 + 350.0 * exp(-(pow((V_m + 30.0), 2.0)) / 4000.0)) * 1.0 / (1.0 + exp(-(V_m + V_tau_junc) / 10.0)));
+    xs_junc = xs_junc_inf - (xs_junc_inf - xs_junc) * exp(-tinc / tau_xs_junc);
+    
+    const ML_CalcType V_sl = V_h_0 + (V_h_max - V_h_0) / (1.0 + pow((350e-06 / Ca_sl), 4.0)); // Regulated by PKA
+    const ML_CalcType xs_sl_inf = 1.0 / (1.0 + exp(-(V_m - V_sl) / 25.0));
+    const ML_CalcType V_tau_sl = tau_0 + (tau_max - tau_0) / (1.0 + pow((150e-06/Ca_sl), 3.0)); // Regulated by PKA
+    const ML_CalcType tau_xs_sl = 2.0 * (50.0 + (50.0 + 350.0 * exp(-(pow((V_m + 30.0), 2.0)) / 4000.0)) * 1.0 / (1.0 + exp(-(V_m + V_tau_sl) / 10.0)));
+    xs_sl = xs_sl_inf - (xs_sl_inf - xs_sl) * exp(-tinc / tau_xs_sl);
+    
+    // conductances
+    double G_Ks_factor_SA = 2.97002 * v(VT_IKs_Multiplier);
+    if (v(VT_celltype) == 2.0) { // mid
+        G_Ks_factor_SA = 0.5 * G_Ks_factor_SA;
+    }
+    double G_Ks_factor = 0.01;
+    const ML_CalcType G_Ks_0 = G_Ks_factor * (0.2 + 0.2 * k_PKA);
+    const ML_CalcType G_Ks_max = G_Ks_factor * (0.8 + 7.0 * k_PKA);
+    const ML_CalcType G_Ks_junc = G_Ks_0 + (G_Ks_max - G_Ks_0) / (1.0 + pow((150e-06 / Ca_junc), 1.3)); // Regulated by PKA
+    const ML_CalcType G_Ks_sl = G_Ks_0 + (G_Ks_max - G_Ks_0) / (1.0 + pow((150e-06 / Ca_sl), 1.3)); // Regulated by PKA
+    
+    // Nernst potential
+    double pNaK = 0.01833;
+    const ML_CalcType E_Ks = v(VT_RToverF) * log((v(VT_K_o) + pNaK * v(VT_Na_o)) / (K_i + pNaK * Na_i));
+    
+    // Putting together the channels behavior and fraction
+    I_Ks_junc = Fjunc * G_Ks_factor_SA * G_Ks_junc * xs_junc * xs_junc * (V_m - E_Ks); //TODO: Fjunc was?
+    I_Ks_sl = Fsl * G_Ks_factor_SA * G_Ks_sl * xs_sl * xs_sl * (V_m - E_Ks); //TODO: Fsl was?
+    I_Ks = I_Ks_junc + I_Ks_sl;
+    
+
     
   //////////////////////// Inward rectifier current (IK1) ////////////////////////
     
