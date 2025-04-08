@@ -635,18 +635,23 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Chloride currents (ICaCl, IClb)
   ////////////////////////////////////////////////////////////////////////////////////////
+  // calculate I_CaCl
+  double G_CaCl = 0.01615 * v(VT_ICaCl_Multiplier);
+  double Kd_CaCl = 100e-03;
     
+  I_CaCl_junc = 0.5 * Fjunc * G_CaCl / (1.0 + Kd_CaCl / Ca_junc)*(V_m - E_Cl);
+  I_CaCl_sl = 0.5 * Fsl * G_CaCl / (1.0 + Kd_CaCl / Ca_sl)*(V_m - E_Cl);
+  I_ClCa = I_ClCa_junc+I_ClCa_sl;
     
-//    /// Calculate I_CaCl
-//    I_CaCl_junc = (0.2843 * (V_m - E_Cl)) / (1. + (0.1/Ca_ss));
-//    I_CaCl_sl = (0 * 0.2843 * (V_m - E_Cl)) / (1. + (0.1/Ca_i));
-//    I_CaCl = I_CaCl_junc + I_CaCl_sl;
-//    
-//    /// calculate I_Clb
-//    double P_Clb = 1.98e-3;
-//    I_Clb = P_Clb * (V_m - E_Cl);
+  // calculate I_Clb
+  double G_Clb = 0.00241 * v(VT_IClb_Multiplier);
+  I_Clb = G_Clb * (V_m - E_Cl);
+  
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Background currents (INab, ICab, IKb)
+  ////////////////////////////////////////////////////////////////////////////////////////
+
     
-  //////////////////////// Background currents (INab, ICab, IKb) ////////////////////////
     
 //    /// calculate I_Kb
 //    const ML_CalcType x_Kb = 1.0 / (1.0 + exp(-(V_m - 10.8968) / (23.9871)));
