@@ -509,166 +509,133 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Sodium-calcium exchanger (INaCa)
   ////////////////////////////////////////////////////////////////////////////////////////
-    double z_Ca = 2.0;
-    double kna1 = 11.9712;
-    double kna2 = 2.76;
-    double kna3 = 88.767;
-    double kasymm = 19.4258;
-    double wna  = 3.2978e+04;
-    double wca = 5.1756e+04;
-    double wnaca  = 2.7763e+03;
-    double kcaon = 3.4164e+06;
-    double kcaoff = 3.8532e+03;
-    double qna = 0.6718;
-    double qca  = 0.0955;
-    const ML_CalcType h_Ca = exp(qca * (V_m - 8.3117) * VFoverRT);
-    const ML_CalcType h_Na = exp(qna * (V_m - 8.3117) * VFoverRT);
+  double z_Ca = 2.0;
+  double kna1 = 11.9712;
+  double kna2 = 2.76;
+  double kna3 = 88.767;
+  double kasymm = 19.4258;
+  double wna  = 3.2978e+04;
+  double wca = 5.1756e+04;
+  double wnaca  = 2.7763e+03;
+  double kcaon = 3.4164e+06;
+  double kcaoff = 3.8532e+03;
+  double qna = 0.6718;
+  double qca  = 0.0955;
+  const ML_CalcType h_Ca = exp(qca * (V_m - 8.3117) * VFoverRT);
+  const ML_CalcType h_Na = exp(qna * (V_m - 8.3117) * VFoverRT);
     
-    // calculate I_NaCa_i
-    const ML_CalcType h_1_i = 1.0 + (Na_i * (1.0 + h_Na)) / kna3;
-    const ML_CalcType h_2_i = (Na_i * h_Na) / (kna3 * h_1_i);
-    const ML_CalcType h_3_i = 1.0 / h_1_i;
-    const ML_CalcType h_4_i = 1.0 + (Na_i * (1.0 + Na_i / kna2)) / kna1;
-    const ML_CalcType h_5_i = (Na_i * Na_i) / (h_4_i * kna1 * kna2);
-    const ML_CalcType h_6_i = 1.0 / h_4_i;
-    const ML_CalcType h_7_i = 1.0 + (v(VT_Na_o) * (1.0 + 1.0 / h_Na)) / kna3;
-    const ML_CalcType h_8_i = v(VT_Na_o) / (kna3 * h_Na * h_7_i);
-    const ML_CalcType h_9_i = 1.0 / h_7_i;
-    const ML_CalcType h_10_i = kasymm + 1.0 + v(VT_Na_o) / kna1 * (1.0 + v(VT_Na_o) / kna2);
-    const ML_CalcType h_11_i = v(VT_Na_o) * v(VT_Na_o) / (h_10_i * kna1 * kna2);
-    const ML_CalcType h_12_i = 1.0 / h_10_i;
+  // calculate I_NaCa_i
+  const ML_CalcType h_1_i = 1.0 + (Na_i * (1.0 + h_Na)) / kna3;
+  const ML_CalcType h_2_i = (Na_i * h_Na) / (kna3 * h_1_i);
+  const ML_CalcType h_3_i = 1.0 / h_1_i;
+  const ML_CalcType h_4_i = 1.0 + (Na_i * (1.0 + Na_i / kna2)) / kna1;
+  const ML_CalcType h_5_i = (Na_i * Na_i) / (h_4_i * kna1 * kna2);
+  const ML_CalcType h_6_i = 1.0 / h_4_i;
+  const ML_CalcType h_7_i = 1.0 + (v(VT_Na_o) * (1.0 + 1.0 / h_Na)) / kna3;
+  const ML_CalcType h_8_i = v(VT_Na_o) / (kna3 * h_Na * h_7_i);
+  const ML_CalcType h_9_i = 1.0 / h_7_i;
+  const ML_CalcType h_10_i = kasymm + 1.0 + v(VT_Na_o) / kna1 * (1.0 + v(VT_Na_o) / kna2);
+  const ML_CalcType h_11_i = v(VT_Na_o) * v(VT_Na_o) / (h_10_i * kna1 * kna2);
+  const ML_CalcType h_12_i = 1.0 / h_10_i;
     
-    const ML_CalcType k_1_i = h_12_i * v(VT_Ca_o) * kcaon;
-    const ML_CalcType k_2_i = kcaoff;
-    const ML_CalcType k_3_d_i = h_9_i * wca;
-    const ML_CalcType k_3_dd_i = h_8_i * wnaca;
-    const ML_CalcType k_3_i = k_3_d_i + k_3_dd_i;
-    const ML_CalcType k_4_d_i = (h_3_i * wca) / h_Ca;
-    const ML_CalcType k_4_dd_i = h_2_i * wnaca;
-    const ML_CalcType k_4_i = k_4_d_i + k_4_dd_i;
-    const ML_CalcType k_5_i = kcaoff;
-    const ML_CalcType k_6_i = h_6_i * Ca_i * kcaon;
-    const ML_CalcType k_7_i = h_5_i * h_2_i * wna;
-    const ML_CalcType k_8_i = h_8_i * h_11_i * wna;
+  const ML_CalcType k_1_i = h_12_i * v(VT_Ca_o) * kcaon;
+  const ML_CalcType k_2_i = kcaoff;
+  const ML_CalcType k_3_d_i = h_9_i * wca;
+  const ML_CalcType k_3_dd_i = h_8_i * wnaca;
+  const ML_CalcType k_3_i = k_3_d_i + k_3_dd_i;
+  const ML_CalcType k_4_d_i = (h_3_i * wca) / h_Ca;
+  const ML_CalcType k_4_dd_i = h_2_i * wnaca;
+  const ML_CalcType k_4_i = k_4_d_i + k_4_dd_i;
+  const ML_CalcType k_5_i = kcaoff;
+  const ML_CalcType k_6_i = h_6_i * Ca_i * kcaon;
+  const ML_CalcType k_7_i = h_5_i * h_2_i * wna;
+  const ML_CalcType k_8_i = h_8_i * h_11_i * wna;
  
-    const ML_CalcType x_1_i = k_2_i * k_4_i * (k_7_i + k_6_i) + k_5_i * k_7_i * (k_2_i + k_3_i);
-    const ML_CalcType x_2_i = k_1_i * k_7_i * (k_4_i + k_5_i) + k_4_i * k_6_i * (k_1_i + k_8_i);
-    const ML_CalcType x_3_i = k_1_i * k_3_i * (k_7_i + k_6_i) + k_8_i * k_6_i * (k_2_i + k_3_i);
-    const ML_CalcType x_4_i = k_2_i * k_8_i * (k_4_i + k_5_i) + k_3_i * k_5_i * (k_1_i + k_8_i);
+  const ML_CalcType x_1_i = k_2_i * k_4_i * (k_7_i + k_6_i) + k_5_i * k_7_i * (k_2_i + k_3_i);
+  const ML_CalcType x_2_i = k_1_i * k_7_i * (k_4_i + k_5_i) + k_4_i * k_6_i * (k_1_i + k_8_i);
+  const ML_CalcType x_3_i = k_1_i * k_3_i * (k_7_i + k_6_i) + k_8_i * k_6_i * (k_2_i + k_3_i);
+  const ML_CalcType x_4_i = k_2_i * k_8_i * (k_4_i + k_5_i) + k_3_i * k_5_i * (k_1_i + k_8_i);
     
-    const ML_CalcType E_1_i = x_1_i / (x_1_i + x_2_i + x_3_i + x_4_i);
-    const ML_CalcType E_2_i = x_2_i / (x_1_i + x_2_i + x_3_i + x_4_i);
-    const ML_CalcType E_3_i = x_3_i / (x_1_i + x_2_i + x_3_i + x_4_i);
-    const ML_CalcType E_4_i = x_4_i / (x_1_i + x_2_i + x_3_i + x_4_i);
+  const ML_CalcType E_1_i = x_1_i / (x_1_i + x_2_i + x_3_i + x_4_i);
+  const ML_CalcType E_2_i = x_2_i / (x_1_i + x_2_i + x_3_i + x_4_i);
+  const ML_CalcType E_3_i = x_3_i / (x_1_i + x_2_i + x_3_i + x_4_i);
+  const ML_CalcType E_4_i = x_4_i / (x_1_i + x_2_i + x_3_i + x_4_i);
     
-    double KmCaAct = 150.0e-6;
-    const ML_CalcType allo_i = 1.0 / (1.0 + ((KmCaAct / Ca_i) * (KmCaAct / Ca_i)));
-    double z_Na = 1.0;
-    const ML_CalcType J_NaCa_Na_i = 3.0 * (E_4_i * k_7_i - E_1_i * k_8_i) + E_3_i * k_4_dd_i - E_2_i * k_3_dd_i;
-    const ML_CalcType J_NaCa_Ca_i = E_2_i * k_2_i - E_1_i * k_1_i;
-    double G_NaCa = 0.00179 * v(VT_INaCa_Multiplier);
+  double KmCaAct = 150.0e-6;
+  const ML_CalcType allo_i = 1.0 / (1.0 + ((KmCaAct / Ca_i) * (KmCaAct / Ca_i)));
+  double z_Na = 1.0;
+  const ML_CalcType J_NaCa_Na_i = 3.0 * (E_4_i * k_7_i - E_1_i * k_8_i) + E_3_i * k_4_dd_i - E_2_i * k_3_dd_i;
+  const ML_CalcType J_NaCa_Ca_i = E_2_i * k_2_i - E_1_i * k_1_i;
+  double G_NaCa = 0.00179 * v(VT_INaCa_Multiplier);
     
-    I_NaCa_i = G_NaCa * allo_i * (z_Na * J_NaCa_Na_i + z_Ca * J_NaCa_Ca_i) * (1-INaCa_fractionSS); //TODO: Was ist INaCa_fractionSS
+  I_NaCa_i = G_NaCa * allo_i * (z_Na * J_NaCa_Na_i + z_Ca * J_NaCa_Ca_i) * (1-INaCa_fractionSS); //TODO: Was ist INaCa_fractionSS
     
-    // calculate I_NaCa_ss
-    const ML_CalcType h_1_ss = 1.0 + (Na_sl * (1.0 + h_Na)) / kna3;
-    const ML_CalcType h_2_ss = (Na_sl * h_Na) / (kna3 * h_1_ss);
-    const ML_CalcType h_3_ss = 1.0 / h_1_ss;
-    const ML_CalcType h_4_ss = 1.0 + (Na_sl * (1.0 + Na_sl / kna2)) / kna1;
-    const ML_CalcType h_5_ss = (Na_sl * Na_sl) / (h_4_ss * kna1 * kna2);
-    const ML_CalcType h_6_ss = 1.0 / h_4_ss;
-    const ML_CalcType h_7_ss = 1.0 + v(VT_Na_o) / kna3 * (1.0 + 1.0 / h_Na);
-    const ML_CalcType h_8_ss = v(VT_Na_o) / (kna3 * h_Na * h_7_ss);
-    const ML_CalcType h_9_ss = 1.0 / h_7_ss;
-    const ML_CalcType h_10_ss = kasymm + 1.0 + v(VT_Na_o) / kna1 * (1 + v(VT_Na_o) / kna2);
-    const ML_CalcType h_11_ss = v(VT_Na_o) * v(VT_Na_o) / (h_10_ss * kna1 * kna2);
-    const ML_CalcType h_12_ss = 1.0 / h_10_ss;
+  // calculate I_NaCa_ss
+  const ML_CalcType h_1_ss = 1.0 + (Na_sl * (1.0 + h_Na)) / kna3;
+  const ML_CalcType h_2_ss = (Na_sl * h_Na) / (kna3 * h_1_ss);
+  const ML_CalcType h_3_ss = 1.0 / h_1_ss;
+  const ML_CalcType h_4_ss = 1.0 + (Na_sl * (1.0 + Na_sl / kna2)) / kna1;
+  const ML_CalcType h_5_ss = (Na_sl * Na_sl) / (h_4_ss * kna1 * kna2);
+  const ML_CalcType h_6_ss = 1.0 / h_4_ss;
+  const ML_CalcType h_7_ss = 1.0 + v(VT_Na_o) / kna3 * (1.0 + 1.0 / h_Na);
+  const ML_CalcType h_8_ss = v(VT_Na_o) / (kna3 * h_Na * h_7_ss);
+  const ML_CalcType h_9_ss = 1.0 / h_7_ss;
+  const ML_CalcType h_10_ss = kasymm + 1.0 + v(VT_Na_o) / kna1 * (1 + v(VT_Na_o) / kna2);
+  const ML_CalcType h_11_ss = v(VT_Na_o) * v(VT_Na_o) / (h_10_ss * kna1 * kna2);
+  const ML_CalcType h_12_ss = 1.0 / h_10_ss;
     
-    const ML_CalcType k_1_ss = h_12_ss * v(VT_Ca_o) * kcaon;
-    const ML_CalcType k_2_ss = kcaoff;
-    const ML_CalcType k_3_d_ss = h_9_ss * wca;
-    const ML_CalcType k_3_dd_ss = h_8_ss * wnaca;
-    const ML_CalcType k_3_ss = k_3_d_ss + k_3_dd_ss;
-    const ML_CalcType k_4_d_ss = (h_3_ss * wca) / h_Ca;
-    const ML_CalcType k_4_dd_ss = h_2_ss * wnaca;
-    const ML_CalcType k_4_ss = k_4_d_ss + k_4_dd_ss;
-    const ML_CalcType k_5_ss = kcaoff;
-    const ML_CalcType k_6_ss = h_6_ss * Ca_sl * kcaon;
-    const ML_CalcType k_7_ss = h_5_ss * h_2_ss * wna;
-    const ML_CalcType k_8_ss = h_8_ss * h_11_ss * wna;
+  const ML_CalcType k_1_ss = h_12_ss * v(VT_Ca_o) * kcaon;
+  const ML_CalcType k_2_ss = kcaoff;
+  const ML_CalcType k_3_d_ss = h_9_ss * wca;
+  const ML_CalcType k_3_dd_ss = h_8_ss * wnaca;
+  const ML_CalcType k_3_ss = k_3_d_ss + k_3_dd_ss;
+  const ML_CalcType k_4_d_ss = (h_3_ss * wca) / h_Ca;
+  const ML_CalcType k_4_dd_ss = h_2_ss * wnaca;
+  const ML_CalcType k_4_ss = k_4_d_ss + k_4_dd_ss;
+  const ML_CalcType k_5_ss = kcaoff;
+  const ML_CalcType k_6_ss = h_6_ss * Ca_sl * kcaon;
+  const ML_CalcType k_7_ss = h_5_ss * h_2_ss * wna;
+  const ML_CalcType k_8_ss = h_8_ss * h_11_ss * wna;
     
-    const ML_CalcType x_1_ss = k_2_ss * k_4_ss * (k_7_ss + k_6_ss) + k_5_ss * k_7_ss * (k_2_ss + k_3_ss);
-    const ML_CalcType x_2_ss = k_1_ss * k_7_ss * (k_4_ss + k_5_ss) + k_4_ss * k_6_ss * (k_1_ss + k_8_ss);
-    const ML_CalcType x_3_ss = k_1_ss * k_3_ss * (k_7_ss + k_6_ss) + k_8_ss * k_6_ss * (k_2_ss + k_3_ss);
-    const ML_CalcType x_4_ss = k_2_ss * k_8_ss * (k_4_ss + k_5_ss) + k_3_ss * k_5_ss * (k_1_ss + k_8_ss);
+  const ML_CalcType x_1_ss = k_2_ss * k_4_ss * (k_7_ss + k_6_ss) + k_5_ss * k_7_ss * (k_2_ss + k_3_ss);
+  const ML_CalcType x_2_ss = k_1_ss * k_7_ss * (k_4_ss + k_5_ss) + k_4_ss * k_6_ss * (k_1_ss + k_8_ss);
+  const ML_CalcType x_3_ss = k_1_ss * k_3_ss * (k_7_ss + k_6_ss) + k_8_ss * k_6_ss * (k_2_ss + k_3_ss);
+  const ML_CalcType x_4_ss = k_2_ss * k_8_ss * (k_4_ss + k_5_ss) + k_3_ss * k_5_ss * (k_1_ss + k_8_ss);
 
-    const ML_CalcType E_1_ss = x_1_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
-    const ML_CalcType E_2_ss = x_2_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
-    const ML_CalcType E_3_ss = x_3_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
-    const ML_CalcType E_4_ss = x_4_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
+  const ML_CalcType E_1_ss = x_1_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
+  const ML_CalcType E_2_ss = x_2_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
+  const ML_CalcType E_3_ss = x_3_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
+  const ML_CalcType E_4_ss = x_4_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
     
-    const ML_CalcType allo_ss = 1.0 / (1.0 + (KmCaAct / Ca_ss) * (KmCaAct / Ca_ss)); //TODO: Unklar ob Ca_ss oder Ca_sl
-    const ML_CalcType J_NaCa_Na_ss = 3.0 * (E_4_ss * k_7_ss - E_1_ss * k_8_ss) + E_3_ss * k_4_dd_ss - E_2_ss * k_3_dd_ss;
-    const ML_CalcType J_NaCa_Ca_ss = E_2_ss * k_2_ss - E_1_ss * k_1_ss;
+  const ML_CalcType allo_ss = 1.0 / (1.0 + (KmCaAct / Ca_ss) * (KmCaAct / Ca_ss)); //TODO: Unklar ob Ca_ss oder Ca_sl
+  const ML_CalcType J_NaCa_Na_ss = 3.0 * (E_4_ss * k_7_ss - E_1_ss * k_8_ss) + E_3_ss * k_4_dd_ss - E_2_ss * k_3_dd_ss;
+  const ML_CalcType J_NaCa_Ca_ss = E_2_ss * k_2_ss - E_1_ss * k_1_ss;
     
-    I_NaCa_ss = INaCa_fractionSS * G_NaCa * allo_ss * (z_Na * J_NaCa_Na_ss + z_Ca * J_NaCa_Ca_ss); //TODO: Was ist INaCa_fractionSS
+  I_NaCa_ss = INaCa_fractionSS * G_NaCa * allo_ss * (z_Na * J_NaCa_Na_ss + z_Ca * J_NaCa_Ca_ss); //TODO: Was ist INaCa_fractionSS
 
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Sodium-potassium pump (INaK)
+  ////////////////////////////////////////////////////////////////////////////////////////
+  double I_bar_NaK = 2.10774 * v(VT_INaK_Multiplier);
+  double KmNaip = 11;
+  double KmNaip_PKA = 8.4615;
+  double KmKo = 1.5;
     
-  //////////////////////// Sodium-potassium pump (INaK) ////////////////////////
+  const ML_CalcType f_NaK = 0.75 + (0.00375 - ((140 - v(VT_Na_o)) / 50) * 0.001) * V_m; //Varying the slope mainly based on https://rupress.org/jgp/article-pdf/94/3/539/1814046/539.pdf
     
-//    /// calculate I_NaK
-//    double k1p                = 949.5;
-//    double k2m                = 39.4;
-//    double k3p                = 1899.0;
-//    double k3m                = 79300.0;
-//    double k4m                = 40.0;
-//    double Knai0              = 9.073;
-//    double Knao0              = 27.78;
-//    double delta              = -0.1550;
-//    const ML_CalcType K_Nai   = Knai0 * exp(delta * VFoverRT * 1/3);
-//    const ML_CalcType K_Nao   = Knao0 * exp((1.0 - delta) * VFoverRT * 1/3);
-//    double Kki                = 0.5;
-//    double Kko                = 0.3582;
-//    double H                  = 1.0e-7;
-//    double eP                 = 4.2;
-//    double Khp                = 1.698e-7;
-//    double Knap               = 224.0;
-//    double Kxkur              = 292.0;
-//    const ML_CalcType P       = eP / (1.0 + H / Khp + Na_i / Knap + K_i / Kxkur);
-//    const ML_CalcType alpha_1 =
-//      (k1p *
-//       pow((Na_i / K_Nai), 3.0)) / (pow((1.0 + Na_i / K_Nai), 3.0) + pow((1.0 + K_i / Kki), 2.0) - 1.0);
-//    const ML_CalcType beta_2 =
-//      (k2m *
-//       pow((v(VT_Na_o) / K_Nao),
-//           3.0)) / (pow((1.0 + v(VT_Na_o) / K_Nao), 3.0) + pow((1.0 + v(VT_K_o) / Kko), 2.0) - 1.0);
-//    const ML_CalcType alpha_3 =
-//      (k3p *
-//       pow((v(VT_K_o) / Kko),
-//           2.0)) / (pow((1.0 + v(VT_Na_o) / K_Nao), 3.0) + pow((1.0 + v(VT_K_o) / Kko), 2.0) - 1.0);
-//    const ML_CalcType beta_3 = (k3m * P * H) / (1.0 + v(VT_MgATP));
-//    const ML_CalcType beta_4 =
-//      (k4m *
-//       pow((K_i / Kki), 2.0)) / (pow((1.0 + Na_i / K_Nai), 3.0) + pow((1.0 + K_i / Kki), 2.0) - 1.0);
-//    const ML_CalcType x_1 = v(VT_alpha_4) * alpha_1 * v(VT_alpha_2) + beta_2 * beta_4 * beta_3 + v(VT_alpha_2) * beta_4 *
-//      beta_3 + beta_3 * alpha_1 * v(VT_alpha_2);
-//    const ML_CalcType x_2 = beta_2 * v(VT_beta_1) * beta_4 + alpha_1 * v(VT_alpha_2) * alpha_3 + alpha_3 * v(VT_beta_1) *
-//      beta_4 + v(VT_alpha_2) * alpha_3 * beta_4;
-//    const ML_CalcType x_3 = v(VT_alpha_2) * alpha_3 * v(VT_alpha_4) + beta_3 * beta_2 * v(VT_beta_1) + beta_2 * v(
-//      VT_beta_1) * v(VT_alpha_4) + alpha_3 * v(VT_alpha_4) * v(VT_beta_1);
-//    const ML_CalcType x_4 = beta_4 * beta_3 * beta_2 + alpha_3 * v(VT_alpha_4) * alpha_1 + beta_2 * v(VT_alpha_4) *
-//      alpha_1 + beta_3 * beta_2 * alpha_1;
-//    const ML_CalcType E_1      = x_1 / (x_1 + x_2 + x_3 + x_4);
-//    const ML_CalcType E_2      = x_2 / (x_1 + x_2 + x_3 + x_4);
-//    const ML_CalcType E_3      = x_3 / (x_1 + x_2 + x_3 + x_4);
-//    const ML_CalcType E_4      = x_4 / (x_1 + x_2 + x_3 + x_4);
-//    const ML_CalcType J_NaK_Na = 3.0 * (E_1 * alpha_3 - E_2 * beta_3);
-//    const ML_CalcType J_NaK_K  = 2.0 * (E_4 * v(VT_beta_1) - E_3 * alpha_1);
-//    double P_NaK               = 15.4509;
-//    I_NaK = v(VT_INaK_Multiplier)
-//      * P_NaK * (z_Na * J_NaK_Na + z_K * J_NaK_K);
+  I_NaK_junc_noPKA = Fjunc * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip / Na_junc), 4.0)) /(v(VT_K_o) + KmKo);
+  I_NaK_junc_PKA = Fjunc * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip_PKA / Na_junc),4.0)) /(v(VT_K_o) + KmKo);
+  I_NaK_sl_noPKA = Fsl * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip / Na_sl), 4.0)) / (v(VT_K_o) + KmKo);
+  I_NaK_sl_PKA = Fsl * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip_PKA / Na_sl), 4.0)) / (v(VT_K_o) + KmKo);
     
-  //////////////////////// Chloride currents (ICaCl, IClb) ////////////////////////
+  I_NaK_junc = (1.0 - phi_INaK_PKA) * I_NaK_junc_noPKA + phi_INaK_PKA * I_NaK_junc_PKA; //TODO: Wo kommt phi_INaK_PKA her???
+  I_NaK_sl = (1.0 - phi_INaK_PKA) * I_NaK_sl_noPKA + phi_INaK_PKA * I_NaK_sl_PKA;
+  I_NaK = I_Nak_junc + I_NaK_sl;
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Chloride currents (ICaCl, IClb)
+  ////////////////////////////////////////////////////////////////////////////////////////
+    
     
 //    /// Calculate I_CaCl
 //    I_CaCl_junc = (0.2843 * (V_m - E_Cl)) / (1. + (0.1/Ca_ss));
