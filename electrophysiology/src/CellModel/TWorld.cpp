@@ -102,6 +102,17 @@ void TWorld::Init() {
 //  CaMK_trap      = v(VT_Init_CaMK_trap);
 //  J_rel_NP       = v(VT_Init_J_rel_NP);
 //  J_rel_CaMK     = v(VT_Init_J_rel_CaMK);
+    
+  
+    fINa_PKA = v(VT_Init_fINa_PKA);
+    fICaL_PKA = v(VT_Init_fICaL_PKA);
+    fINaK_PKA = v(VT_Init_fINaK_PKA);
+    fIKs_PKA = v(VT_Init_fIKs_PKA);
+    fPLB_PKA = v(VT_Init_fPLB_PKA);
+    fTnI_PKA = v(VT_Init_fTnI_PKA);
+    fMyBPC_PKA = v(VT_Init_fMyBPC_PKA);
+    ICaL_fractionSS = v(VT_Init_ICaL_fractionSS)
+    
 }  // TWorld::Init
 
 ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  ML_CalcType stretch, int euler) {
@@ -187,50 +198,49 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        CaMK and Ca signalling
   ////////////////////////////////////////////////////////////////////////////////////////
-    double PP1_tot = 0.13698; //TODO: Change to parameter using v(), needs to be changed if PKA signalling is simulted
-    double CaMK0  = 2.0 * 0.05; // Equilibrium fraction of active CaMKII binding sites
-    double Km_CaMK_Ca = 5.0 * 0.0015; //[mmol/L] CaMKII affinity for Ca2+/CaM activation %Adjusted because of smaller cleft space
+  double PP1_tot = 0.13698; //TODO: Change to parameter using v(), needs to be changed if PKA signalling is simulted
+  double CaMK0  = 2.0 * 0.05; // Equilibrium fraction of active CaMKII binding sites
+  double Km_CaMK_Ca = 5.0 * 0.0015; //[mmol/L] CaMKII affinity for Ca2+/CaM activation %Adjusted because of smaller cleft space
     
-    const ML_CalcType CaMK_bound = CaMK0 * (1.0 - CaMK_trap) / (1 + Km_CaMK_Ca / Ca_dyad);
-    const ML_CalyType CaMK_active = CaMK_bound + CaMK_trap; // Fraction of active CaMKII
+  const ML_CalcType CaMK_bound = CaMK0 * (1.0 - CaMK_trap) / (1 + Km_CaMK_Ca / Ca_dyad);
+  const ML_CalyType CaMK_active = CaMK_bound + CaMK_trap; // Fraction of active CaMKII
     
-    double alpha = 0.05;
-    double beta  = 6.8e-4;
-    const ML_CalcType dCaMK_trap = alpha * CaMK_bound * CaMK_active - beta * CaMK_trap * (0.1 + 0.9 * PP1_tot / 0.1371); //dCaMK_Trap/dt
-    CaMK_trap += tinc * dCaMK_trap;
+  double alpha = 0.05;
+  double beta  = 6.8e-4;
+  const ML_CalcType dCaMK_trap = alpha * CaMK_bound * CaMK_active - beta * CaMK_trap * (0.1 + 0.9 * PP1_tot / 0.1371); //dCaMK_Trap/dt
+  CaMK_trap += tinc * dCaMK_trap;
     
-    double tau_plb = 100000.0; // [ms] Time constant of CaMKII PLB phosphorylation
-    double tau_ryr = 10000.0; // [ms] Time constant of CaMKII RyR phosphorylation
-    double tau_cal = tau_ryr; // Time constant of CaMKII ICaL phosphorylation
+  double tau_plb = 100000.0; // [ms] Time constant of CaMKII PLB phosphorylation
+  double tau_ryr = 10000.0; // [ms] Time constant of CaMKII RyR phosphorylation
+  double tau_cal = tau_ryr; // Time constant of CaMKII ICaL phosphorylation
     
-    double K_Phos_CaMK = 0.35;  // Affinity of PLB, ICaL etc for CaMKII
-    const ML_CalcType CaMK_Phos_ss_ICaL =  CaMK_active / (CaMK_active + K_Phos_CaMK);
-    const ML_CalcType CaMK_Phos_ss_RyR =  CaMK_active / (CaMK_active + 1.0);
-    const ML_CalcType CaMK_Phos_ss_PLB =  CaMK_active / (CaMK_active + 10.0);
+  double K_Phos_CaMK = 0.35;  // Affinity of PLB, ICaL etc for CaMKII
+  const ML_CalcType CaMK_Phos_ss_ICaL =  CaMK_active / (CaMK_active + K_Phos_CaMK);
+  const ML_CalcType CaMK_Phos_ss_RyR =  CaMK_active / (CaMK_active + 1.0);
+  const ML_CalcType CaMK_Phos_ss_PLB =  CaMK_active / (CaMK_active + 10.0);
 
-    const ML_CalcType dCaMK_f_ICaL = (CaMK_Phos_ss_ICaL - CaMK_f_ICaL) / tau_cal;
-    CaMK_f_ICaL += tinc * dCaMK_f_ICaL;
-    const ML_CalcType dCaMK_f_RyR = (CaMK_Phos_ss_RyR - CaMK_f_RyR)  / tau_ryr;
-    CaMK_f_RyR += tinc * dCaMK_f_RyR;
-    const ML_CalcType dCaMK_f_PLB = (CaMK_Phos_ss_PLB - CaMK_f_PLB)  / tau_plb;
-    CaMK_f_PLB += tinc * dCaMK_f_PLB;
+  const ML_CalcType dCaMK_f_ICaL = (CaMK_Phos_ss_ICaL - CaMK_f_ICaL) / tau_cal;
+  CaMK_f_ICaL += tinc * dCaMK_f_ICaL;
+  const ML_CalcType dCaMK_f_RyR = (CaMK_Phos_ss_RyR - CaMK_f_RyR)  / tau_ryr;
+  CaMK_f_RyR += tinc * dCaMK_f_RyR;
+  const ML_CalcType dCaMK_f_PLB = (CaMK_Phos_ss_PLB - CaMK_f_PLB)  / tau_plb;
+  CaMK_f_PLB += tinc * dCaMK_f_PLB;
     
-    double alpha_serca = 0.05;
-    const ML_CalcType bound_serca = CaMK0 * (1.0 - casig_serca_trap) / (1.0 + Km_CaMK_Ca / Ca_dyad);
-    const ML_CalcType casig_SERCA_act = bound_serca + casig_serca_trap; // Fraction of active CaMKII
-    const ML_CalcType dcasig_serca_trap = alpha_serca * bound_serca * casig_SERCA_act - beta * casig_serca_trap * (0.1 + 0.9 * PP1_tot / 0.1371); //dCaMK_Trap/dt
-    casig_serca_trap += tinc * dcasig_serca_trap;
+  double alpha_serca = 0.05;
+  const ML_CalcType bound_serca = CaMK0 * (1.0 - casig_serca_trap) / (1.0 + Km_CaMK_Ca / Ca_dyad);
+  const ML_CalcType casig_SERCA_act = bound_serca + casig_serca_trap; // Fraction of active CaMKII
+  const ML_CalcType dcasig_serca_trap = alpha_serca * bound_serca * casig_SERCA_act - beta * casig_serca_trap * (0.1 + 0.9 * PP1_tot / 0.1371); //dCaMK_Trap/dt
+  casig_serca_trap += tinc * dcasig_serca_trap;
     
     
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Sodium current (INa, INaL)
   ////////////////////////////////////////////////////////////////////////////////////////
-  
   ///////////// calulate I_Na //////////
   // m gate
-  const ML_CalcType m_inf = 1.0 / ((1.0 + exp(-(V_m + 56.86)/9.03))*(1.0 + exp(-(V_m + 56.86)/9.03))); //passt
-  const ML_CalcType tau_m = 0.1292 * exp(-(((V_m + 45.79)/15.54) * ((V_m + 45.79)/15.54))) + 0.06487 * exp(-(((V_m - 4.823)/51.12) * ((V_m - 4.823)/51.12))); //passt
-  m = m_inf - (m_inf - m) * exp(-tinc / tau_m); //passt
+  const ML_CalcType m_inf = 1.0 / ((1.0 + exp(-(V_m + 56.86)/9.03))*(1.0 + exp(-(V_m + 56.86)/9.03)));
+  const ML_CalcType tau_m = 0.1292 * exp(-(((V_m + 45.79)/15.54) * ((V_m + 45.79)/15.54))) + 0.06487 * exp(-(((V_m - 4.823)/51.12) * ((V_m - 4.823)/51.12)));
+  m = m_inf - (m_inf - m) * exp(-tinc / tau_m);
 
   // h and j gate
   if (V_m < -40.0) {
@@ -244,11 +254,10 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
       A_j = 0.0;
       B_j =((0.6*exp((0.057*V_m)))/(1.0+exp((-0.1*(V_m+32.0))))) ;
   }
-  // TODO: h scheint im MATLAB Code komplett zu fehlen??? hier von Tomek sollte eigentlich passen
   const ML_CalcType tau_h = 1.0/(A_h+B_h);
   const ML_CalcType h_inf = (1.0/((1.0+exp(((V_m+71.55)/7.43)))*(1.0+exp(((V_m+71.55)/7.43)))));
   h = h_inf - (h_inf - h) * exp(-tinc / tau_h);
-      
+    
   const ML_CalcType tau_j = 1.0/(A_j+B_j);
   const ML_CalcType j_inf = (1.0/((1.0+exp(((V_m+71.55)/7.43)))*(1.0+exp(((V_m+71.55)/7.43)))));;
   j = j_inf - (j_inf - j) * exp(-tinc / tau_j);
@@ -279,8 +288,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double G_Na = 22.08788 * v(VT_INaF_Multiplier);
   double G_Na_PKA = G_Na * 1.25;
       
-  const ML_CalcType phi_INa_CaMK = ; //TODO: Formel unklar
-  const ML_CalcType phi_INa_PKA = fINaP; //TODO: Wat is dat??? // PKA-P fraction as assigned as input, take the value 0 or 1
+  const ML_CalcType phi_INa_CaMK = CaMK_f_RyR;
+  const ML_CalcType phi_INa_PKA = fINa_PKA;
   const ML_CalcType phi_INa_Both = phi_INa_CaMK * phi_INa_PKA;
   const ML_CalcType phi_INa_CaMKonly = phi_INa_CaMK - phi_INa_Both;
   const ML_CalcType phi_INa_PKAonly = phi_INa_PKA - phi_INa_Both;
@@ -292,8 +301,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
       
   // 4 population
   I_Na_Base = ((1-phi_INa_CaMKonly-phi_INa_PKAonly-phi_INa_Both)*I_Na_Base_NP + phi_INa_CaMKonly*I_Na_Base_CaMK + phi_INa_PKAonly*I_Na_Base_PKA + phi_INa_Both*I_Na_Base_Both);
-  I_NaFast_junc = Fjunc * I_Na_Base*(V_m - E_Na_junc); // TODO: Was ist Fjunc und Nernst junc
-  I_NaFast_sl = (1 - Fjunc) * I_Na_Base * (V_m - E_Na_sl); //TODO: Was is Fjunc und Nerst sl
+  I_NaFast_junc = Fdyad * I_Na_Base*(V_m - E_Na_dyad);
+  I_NaFast_sl = (1 - dyad) * I_Na_Base * (V_m - E_Na_sl);
 
   ///////////// calulate I_NaL //////////
   // m gate
@@ -326,8 +335,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        L-type calcium current (I_CaL, I_CaNa, I_CaK)
   ////////////////////////////////////////////////////////////////////////////////////////
-    const ML_CalcType phi_ICaL_CaMK = ; //TODO: unklar was genau hier hin
-    const ML_CalcType phi_ICaL_PKA = ; //TODO: unklar was genau hier hin
+
   
     // d gate
     const ML_CalcType d_inf = min(1.0763*exp((-1.007*exp((-0.0829*(V_m+3.62483))))), 1.0);
@@ -374,18 +382,106 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     double Kmn = 0.00222;
     double k2n = 957.85903;
     const ML_CalcType k_m2_n = j_Ca * 0.84191;
-    const ML_CalcType alpha_n_Ca_junc   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_junc)), 3.80763));
-    n_Ca_junc = alpha_n_Ca_junc * k2n - n_Ca_junc * k_m2_n) * exp(-k_m2_n * tinc); //TODO: Ist noch falsch
+    const ML_CalcType alpha_n_Ca_dyad   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_dyad)), 3.80763));
+    const ML_CalcType dn_Ca_dyad = alpha_n_Ca_dyad * k2n - n_Ca_dyad * k_m2_n;
+    n_Ca_dyad += tinc * dn_Ca_dyad;
     
     // myoplasmic nca
-    const ML_CalcType alpha_n_Ca_sl   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_sl)), 3.80763)); //TODO: Ca_sl does not exist yet
-    n_sl = alpha_n_Ca_sl * (k2n / k_m2_n) - (alpha_n_Ca_junc * (k2n / k_m2_n) - n_ss) * exp(-k_m2_n * tinc); //TODO: Ist noch falsch
+    const ML_CalcType alpha_n_Ca_sl   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_sl)), 3.80763));
+    const ML_CalcType dn_Ca_sl = alpha_n_Ca_sl * k2n - n_Ca_sl * k_m2_n;
+    n_Ca_sl += tinc * dn_Ca_sl;
     
     // SS driving force
     const ML_CalcType I_o = (0.5 * (v(VT_Na_o) + v(VT_K_o) + v(VT_Cl_o) + (4.0 * v(VT_Ca_o))) / 1000.0);
     const ML_CalcType I_sl = ((0.5 * (Na_sl + K_sl + Cl_i + (4.* Ca_ss))) / 1000.0);
     
     double constA = (1.82e6*pow((74.*310.),-1.5)); // Diel constant and temperature as constants
+    
+   
+    
+    
+   
+    
+    
+    
+    
+    
+
+    
+    
+    
+    
+    
+    // Channel conductances
+    double P_Ca = 1.5768e-04 * v(VT_IpCa_Multiplier);
+    double P_Ca_PKA = P_Ca * 1.9; // BetaAdrenergic;  (%Gong--> 1.9)
+    if (v(VT_celltype) == 1.0) { // epi
+        P_Ca = P_Ca * 1.025;
+        P_Ca_PKA = P_Ca_P * 1.025;
+    } else if (v(VT_celltype) == 2.0) { // mid
+        P_Ca = P_Ca * 1.1;
+        P_Ca_PKA = P_Ca_P * 1.1;
+    }
+    double P_CaNa = 1.1737 / 1.8969 * 0.00125 * P_Ca;
+    double P_CaK = 1.1737 / 1.8969 * 3.574e-4 * P_Ca;
+    double P_Ca_p = 1.1 * P_Ca;
+    double P_CaNa_p = 1.1737 / 1.8969 * 0.00125 * P_Ca_p;
+    double P_CaK_p = 1.1737 / 1.8969 * 3.574e-4 * P_Ca_p;
+    double P_CaNa_PKA = 1.1737 / 1.8969 * 0.00125 * P_Ca_PKA;
+    double P_CaK_PKA = 1.1737 / 1.8969 * 3.574e-4 * P_Ca_PKA;
+      
+    
+    // Putting together the channels behavior and fraction
+    const ML_CalcType phi_ICaL_CaMK = CaMK_f_ICaL;
+    const ML_CalcType phi_ICaL_PKA = fICaL_PKA;
+    const ML_CalcType phi_ICaL_Both = phi_ICaL_CaMK * phi_ICaL_PKA;
+    const ML_CalcType phi_ICaL_CaMKonly = phi_ICaL_CaMK - phi_ICaL_Both;
+    const ML_CalcType phi_ICaL_PKAonly = phi_ICaL_PKA - phi_ICaL_Both;
+    
+    I_CaL_dyad_NP = ;
+    I_CaL_dyad_CaMK = ;
+    I_CaL_dyad_PKA = ;
+    I_CaL_dyad_Both = ;
+    I_CaL_sl_NP = ;
+    I_CaL_sl_CaMK = ;
+    I_CaL_sl_PKA = ;
+    I_CaL_sl_Both = ;
+    
+    I_CaNa_dyad_NP = ;
+    I_CaNa_dyad_CaMK = ;
+    I_CaNa_dyad_PKA = ;
+    I_CaNa_dyad_Both = ;
+    I_CaNa_sl_NP = ;
+    I_CaNa_sl_CaMK = ;
+    I_CaNa_sl_PKA = ;
+    I_CaNa_sl_Both = ;
+    
+    I_CaK_dyad_NP = ;
+    I_CaK_dyad_CaMK = ;
+    I_CaK_dyad_PKA = ;
+    I_CaK_dyad_Both = ;
+    I_CaK_sl_NP = ;
+    I_CaK_sl_CaMK = ;
+    I_CaK_sl_PKA = ;
+    I_CaK_sl_Both = ;
+    
+    //4 population combination
+    I_CaL_dyad = ;
+    I_CaNa_dyad = ;
+    I_CaK_dyad = ;
+    I_CaL_sl = ;
+    I_CaNa_sl = ;
+    I_CaK_sl = ;
+    
+    // Weigh I_CaL in sl and dyad
+    I_CaL_sl = I_CaL_sl * (1 - ICaL_fractionSS);
+    I_CaNa_sl = I_CaNa_sl * (1 - ICaL_fractionSS);
+    I_CaK_sl = I_CaK_sl * (1 - ICaL_fractionSS);
+    I_CaL_dyad = I_CaL_dyad * ICaL_fractionSS;
+    I_CaNa_dyad = I_CaNa_dyad * ICaL_fractionSS;;
+    I_CaK_dyad = I_CaK_dyad * ICaL_fractionSS;;
+    
+    
     
     
     
