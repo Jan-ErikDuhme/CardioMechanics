@@ -263,12 +263,11 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     const ML_CalcType tau_f_fast = 6.17111 + 1.0 / (0.00126 * exp(-(V_m + 26.63596) / 9.69961) + 0.00126 * exp((V_m + 26.63596) / 9.69961));
     const ML_CalcType tau_f_slow = 2719.22489 + 1.0 / (7.19411e-05 * exp(-(V_m + 5.74631) / 10.87690) + 7.19411e-05 * exp((V_m + 5.74631) / 16.31535));
     
-    const ML_CalcType A_f_fast = 0.52477; //TODO: can be replaced by using v()
-    const ML_CalcType A_f_slow = 1.0 - A_f_fast; //TODO: can be replaced by using v()
+    const ML_CalcType A_f_fast = 0.52477;
+    const ML_CalcType A_f_slow = 1.0 - A_f_fast;
     f_fast = f_inf - (f_inf - f_fast) * exp(-tinc / tau_f_fast);
     f_slow = f_inf - (f_inf - f_slow) * exp(-tinc / tau_f_slow);
     const ML_CalcType f = A_f_fast * f_fast + A_f_slow * f_slow;
-   //TODO: other option -> const ML_CalcType f = v(VT_A_f_fast) * f_fast + v(VT_A_f_slow) * f_slow
     
     const ML_CalcType f_Ca_inf      = f_inf;
     const ML_CalcType tau_f_Ca_fast = 13.50673 + 1.0 / (0.15420 * exp(-(V_m - 1.31611) / 11.33960) + 0.15420 * exp((V_m - 1.31611) / 11.33960));
@@ -277,7 +276,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     const ML_CalcType A_f_Ca_slow = 1.0 - A_f_Ca_fast;
     f_Ca_fast = f_Ca_inf - (f_Ca_inf - f_Ca_fast) * exp(-tinc / tau_f_Ca_fast);
     f_Ca_slow = f_Ca_inf - (f_Ca_inf - f_Ca_slow) * exp(-tinc / tau_f_Ca_slow);
-    const ML_CalcType f_Ca        = A_f_Ca_fast * f_Ca_fast + A_f_Ca_slow * f_Ca_slow;
+    const ML_CalcType f_Ca = A_f_Ca_fast * f_Ca_fast + A_f_Ca_slow * f_Ca_slow;
     
     // j gate
     double tau_j_Ca = 66.0;
@@ -289,7 +288,6 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     const ML_CalcType f_p_inf = f_inf;
     f_p_fast = f_p_inf - (f_p_inf - f_p_fast) * exp(-tinc / tau_f_p_fast);
     const ML_CalcType f_p = A_f_fast * f_p_fast + A_f_slow * f_slow;
-    //TODO: Alternative -> const ML_CalcType f_p = v(VT_A_f_fast) * f_p_fast + v(VT_A_f_slow) * f_slow;
     
     const ML_CalcType tau_f_Ca_p_fast = 2.5 * tau_f_Ca_fast;
     const ML_CalcType f_Ca_p_inf = f_inf;
@@ -300,14 +298,19 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     double Kmn = 0.00222;
     double k2n = 957.85903;
     const ML_CalcType k_m2_n = j_Ca * 0.84191;
-    const ML_CalcType alpha_n_Ca_junc   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_junc)), 3.80763)); //TODO: Ca_junc does not exist yet
-    n_junc = alpha_n_Ca_junc * (k2n / k_m2_n) - (alpha_n_Ca_junc * (k2n / k_m2_n) - n_ss) * exp(-k_m2_n * tinc); //TODO: Ist noch falsch
+    const ML_CalcType alpha_n_Ca_junc   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_junc)), 3.80763));
+    n_Ca_junc = alpha_n_Ca_junc * k2n - n_Ca_junc * k_m2_n) * exp(-k_m2_n * tinc); //TODO: Ist noch falsch
     
     // myoplasmic nca
     const ML_CalcType alpha_n_Ca_sl   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_sl)), 3.80763)); //TODO: Ca_sl does not exist yet
     n_sl = alpha_n_Ca_sl * (k2n / k_m2_n) - (alpha_n_Ca_junc * (k2n / k_m2_n) - n_ss) * exp(-k_m2_n * tinc); //TODO: Ist noch falsch
     
     // SS driving force
+    const ML_CalcType I_o = (0.5 * (v(VT_Na_o) + v(VT_K_o) + v(VT_Cl_o) + (4.0 * v(VT_Ca_o))) / 1000.0);
+    const ML_CalcType I_sl = ((0.5 * (Na_sl + K_sl + Cl_i + (4.* Ca_ss))) / 1000.0);
+    
+    double constA = (1.82e6*pow((74.*310.),-1.5)); // Diel constant and temperature as constants
+    
     
     
 //    /// calculate I_CaL, I_CaNa, I_CaK
@@ -315,9 +318,9 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
 //
 
 //
-//    const ML_CalcType I_o = (0.5*(v(VT_Na_o)+v(VT_K_o)+v(VT_Cl_o)+(4.*v(VT_Ca_o)))/1000.);
-//    const ML_CalcType I_ss = ((0.5*(Na_ss+K_ss+Cl_i+(4.*Ca_ss)))/1000.);
-//    double constA = (1.82e6*pow((74.*310.),-1.5)); // Diel constant and temperature as constants
+//
+//
+//
 //
 //    const ML_CalcType gamma_Ca_ss = exp((-constA*4.*((sqrt(I_ss)/(1.+sqrt(I_ss))) - (0.3*I_ss))));
 //    const ML_CalcType gamma_Ca_o = exp((-constA*4.*((sqrt(I_o)/(1.+sqrt(I_o))) - (0.3*I_o))));
@@ -684,6 +687,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     double caTransFactor2 = 0.52967 ;
 
     ///////////// calculate directly I_CaL-coupled RyRy //////////
+    ///
     
     // inactivation
     
@@ -745,108 +749,126 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Calcium reuptake to the SR (Jup)
   ////////////////////////////////////////////////////////////////////////////////////////
-    
-    
     //    J_up = ((1.0 - phi_up_CaMK) * J_up_NP + (phi_up_CaMK * J_up_CaMK) - J_leak);
     
-  //////////////////////// Sarcolemmal calcium pump (pCa) ////////////////////////
     
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Sarcolemmal calcium pump (pCa)
+  ////////////////////////////////////////////////////////////////////////////////////////
 //    /// calculate I_pCa
 //    double G_pCa = 0.0005;
 //    I_pCa = v(VT_IpCa_Multiplier) * ((G_pCa * Ca_i) / (0.0005 + Ca_i));
     
+    
+    
+    
 
+//    double kmcmdn  = 0.00238;
+//    double trpnmax = 0.07;
+//    double kmtrpn  = 0.0005;
+//    double BSRmax  = 0.047;
+//    double KmBSR   = 0.00087;
+//    double BSLmax  = 1.124;
+//    double KmBSL   = 0.0087;
+//    double csqnmax = 10.0;
+//    double kmcsqn  = 0.8;
+    
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Buffering
+  ////////////////////////////////////////////////////////////////////////////////////////
+    const ML_CalcType dBuffer_NaBj = ; //TODO: Put equation
+    Buffer_NaBj += tinc * dBuffer_NaBj;
+    const ML_CalcType dBuffer_NaBsl = ; //TODO: Put equation
+    Buffer_NaBsl += tinc * dBuffer_NaBsl;
+    const ML_CalcType dBuffer_TnClow = ; //TODO: Put equation
+    Buffer_TnClow += tinc * dBuffer_TnClow;
+    const ML_CalcType dBuffer_TnCHc = ; //TODO: Put equation
+    Buffer_TnCHc += tinc * dBuffer_TnCHc;
+    const ML_CalcType dBuffer_TnCHm = ; //TODO: Put equation
+    Buffer_TnCHm += tinc * dBuffer_TnCHm;
+    const ML_CalcType dBuffer_CaM = ; //TODO: Put equation
+    Buffer_CaM += tinc * dBuffer_CaM;
+    const ML_CalcType dBuffer_Myosin_ca = ; //TODO: Put equation
+    Buffer_Myosin_ca += tinc * dBuffer_Myosin_ca;
+    const ML_CalcType dBuffer_Myosin_mg = ; //TODO: Put equation
+    Buffer_Myosin_mg += tinc * dBuffer_Myosin_mg;
+    const ML_CalcType dBuffer_SRB = ; //TODO: Put equation
+    Buffer_SRB += tinc * dBuffer_SRB;
+    const ML_CalcType dBuffer_SLLj = ; //TODO: Put equation
+    Buffer_SLLj += tinc * dBuffer_SLLj;
+    const ML_CalcType dBuffer_SLLsl = ; //TODO: Put equation
+    Buffer_SLLsl += tinc * dBuffer_SLLsl;
+    const ML_CalcType dBuffer_SLHj = ; //TODO: Put equation
+    Buffer_SLHj += tinc * dBuffer_SLHj;
+    const ML_CalcType dBuffer_SLHsl = ; //TODO: Put equation
+    Buffer_SLHsl += tinc * dBuffer_SLHsl;
+    const ML_CalcType dBuffer_Csqn = ; //TODO: Put equation
+    Buffer_Csqn += tinc * dBuffer_Csqn;
+    
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Diffusion
+  ////////////////////////////////////////////////////////////////////////////////////////
+    double J_Ca_dyad_sl = 1.0 / 3.06685e12;
+    double J_Ca_sl_myo = 1.0 / 0.74556e11;
+    double J_Na_dyad_sl = 1.0 / (1.6382e12 / 3.0 * 100.0);
+    double J_Na_sl_myo = 1.0 / (1.8308e10 / 3.0 * 100.0);
+    
+    const ML_CalcType J_CaBuffer_myo = ; //TODO: Put equation
+    const ML_CalcType J_CaBuffer_dyad = ; //TODO: Put equation
+    const ML_CalcType J_CaBuffer_sl = ; //TODO: Put equation
 
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Total ion currents and concentration changes
+  ////////////////////////////////////////////////////////////////////////////////////////
+    // Sodium Concentration
+    I_Na_tot_dyad = I_Na_dyad + I_Nab_dyad + 3 * I_NaCx_dyad + 3 * I_NaK_dyad + I_CaNa_dayd;
+    I_Na_tot_sl = I_Na_sl + I_Nab_sl + 3 * I_NaCx_sl + 3 * I_NaK_sl + I_CaNa_sl;
+    I_Na_tot = I_Na_tot_dyad + I_Na_tot_sl;
+    const ML_CalcType dNa_dyad = ; //TODO: Put equation
+    Na_dyad += tinc * dNa_dyad;
+    const ML_CalcType dNa_sl = ; //TODO: Put equation
+    Na_sl += tinc * dNa_sl;
+    const ML_CalcType dNa_myo = ; //TODO: Put equation
+    Na_myo += tinc * dNa_myo;
+    
+    // Potassium Concentration
+    I_K_tot = I_to + I_Kr + I_Ks + I_K1 - (2 * I_NaK) + I_CaK + I_Kb + i_external;
+    const ML_CalcType dK_myo = ; //TODO: Put equation
+    K_myo += tinc * dK_myo;
+    
+    // Cloride Concentration
+    I_Cl_tot = I_CaCl + I_Clb;
+    const ML_CalcType dCl_myo = ; //TODO: Put equation
+    Cl_myo += tinc * dCl_myo;
+    
+    // Calcium Concentration
+    I_Ca_tot_dyad = I_Ca_dyad + I_Cab_dyad + I_pCa_dyad - (2 * I_NaCx_dyad);
+    I_Ca_tot_sl = I_Ca_sl + I_Cab_sl + I_pCa_sl - (2 * I_NaCx_sl);
+    I_Ca_tot = I_Ca_tot_dyad + I_Ca_tot_sl;
+    const ML_CalcType dCa_dyad = ; //TODO: Put equation
+    Ca_dyad += tinc * dCa_dyad;
+    const ML_CalcType dCa_sl = ; //TODO: Put equation
+    Ca_sl += tinc * dCa_sl;
+    const ML_CalcType dCa_myo = ; //TODO: Put equation
+    Ca_myo += tinc * dCa_myo;
+    const ML_CalcType dCa_SR = ; //TODO: Put equation
+    Ca_SR += tinc * dCa_SR;
 
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Change Membrane Potential (I_tot)
+  ////////////////////////////////////////////////////////////////////////////////////////
+    I_tot = -(I_Na_tot + I_Cl_tot + I_Ca_tot + I_K_tot + i_external);
 
-
-
-  /// I_tot
-   cur_I_tot =
-    I_Na + I_Na_late + I_to + I_CaL + I_CaNa + I_CaK + I_Kr + I_Ks + I_K1 + I_NaCa_i + I_NaCa_ss + I_NaK +
-    I_Nab + I_Cab + I_Kb + I_pCa + I_Clb + I_CaCl
-    + i_external;
-  I_tot = -cur_I_tot;
-
-  /// diffusion fluxes J_diff_Na, J_diff_Ca, J_diff_K
-  double tau_diff_Na          = 2.0;
-  double tau_diff_Ca          = 0.2;
-  double tau_diff_K           = 2.0;
-  J_diff_Na = (Na_ss - Na_i) / tau_diff_Na;
-  J_diff_Ca = (Ca_ss - Ca_i) / tau_diff_Ca;
-  J_diff_K  = (K_ss - K_i) / tau_diff_K;
-
-
-
-  /// J_tr
-  double tau_tr          = 60.0;
-  J_tr = (Ca_nsr - Ca_jsr) / tau_tr;
-
-  /// Concentrations
-  const ML_CalcType cur_Nai = I_Na + I_Na_late + 3.0 * I_NaCa_i + I_CaNa_i + 3.0 * I_NaK + I_Nab;
-  const ML_CalcType dNa_i = -(cur_Nai) * util_1 + J_diff_Na * util_2;
-  Na_i += tinc * dNa_i;
-  const ML_CalcType dNa_ss = -(I_CaNa_ss + 3.0 * I_NaCa_ss) * util_3 - J_diff_Na;
-  Na_ss += tinc * dNa_ss;
-
-  //const ML_CalcType cur_Ki = I_to + I_Kr + I_Ks + I_K1 + I_Kb - 2.0 * I_NaK + I_CaK_i;
-  const ML_CalcType cur_Ki = I_to + I_Kr + I_Ks + I_K1 + I_Kb + i_external - 2.0 * I_NaK + I_CaK_i;
-  const ML_CalcType dK_i = -(cur_Ki) * util_1 + J_diff_K * util_2;
-  K_i += tinc * dK_i;
-  const ML_CalcType dK_ss = -(I_CaK_ss) * util_3 - J_diff_K;
-  K_ss += tinc * dK_ss;
-
-  /// Ca buffer constants
-  double cmdnmax = 0.05;
-  if (v(VT_celltype) == 1) {
-    cmdnmax *= 1.3;
-  }
-  double kmcmdn  = 0.00238;
-  double trpnmax = 0.07;
-  double kmtrpn  = 0.0005;
-  double BSRmax  = 0.047;
-  double KmBSR   = 0.00087;
-  double BSLmax  = 1.124;
-  double KmBSL   = 0.0087;
-  double csqnmax = 10.0;
-  double kmcsqn  = 0.8;
-  #ifdef TRPN
-  const ML_CalcType Ca_T50 = (v(VT_Ca_T50) + v(VT_beta1) * (lambda_m - 1.0));
-  const ML_CalcType dCaTRPN = v(VT_k_TRPN)*(pow(1000*Ca_i/Ca_T50, v(VT_n_TRPN))*(1.-Ca_TRPN)-Ca_TRPN);// needs muM with Land parameters
-  Ca_TRPN += tinc * dCaTRPN;
-  const ML_CalcType I_Trpn = trpnmax * dCaTRPN;
-  #endif  // ifdef TRPN
-  
-  const ML_CalcType beta_Cai = 1.0 / (1.0 + ((cmdnmax * kmcmdn) / pow((kmcmdn + Ca_i), 2.0))
-  #ifndef TRPN
-                             + ((trpnmax * kmtrpn) / pow((kmtrpn + Ca_i), 2.0))
-  #endif  // ifndef TRPN
-                                      );
-  const ML_CalcType cur_Cai = I_CaL_i + I_pCa + I_Cab - 2.0 * I_NaCa_i;
-  
-
-  //const ML_CalcType dCa_i = beta_Cai * (-(cur_Cai) * 0.5 * util_1 - J_up * (v(VT_v_nsr) / v(VT_v_myo)) + J_diff_Ca * util_2
-  const ML_CalcType dCa_i = beta_Cai * (-(cur_Cai) * 0.5 * util_1 - J_up * (v(VT_v_nsr) / v(VT_v_myo)) + J_diff_Ca * util_2
-  #ifdef TRPN
-      - I_Trpn
-  #endif  // ifdef TRPN
-      );
-  Ca_i += tinc * dCa_i;
-  
-  const ML_CalcType beta_Cass = 1.0 /
-    (1.0 +
-     ((BSRmax * KmBSR) /
-      pow((KmBSR + Ca_ss), 2.0)) + ((BSLmax * KmBSL) / pow((KmBSL + Ca_ss), 2.0)));
-  const ML_CalcType dCa_ss = beta_Cass *
-    (-(I_CaL_ss - 2.0 * I_NaCa_ss) * 0.5 * util_3 + J_rel * (v(VT_v_jsr) / v(VT_v_ss)) - J_diff_Ca);
-  Ca_ss += tinc * dCa_ss;
-  const ML_CalcType dCa_nsr = J_up - ((J_tr * v(VT_v_jsr)) / v(VT_v_nsr));
-  Ca_nsr += tinc * dCa_nsr;
-  const ML_CalcType beta_Cajsr = 1.0 / (1.0 + ((csqnmax * kmcsqn) / pow((kmcsqn + Ca_jsr), 2.0)));
-  const ML_CalcType dCa_jsr    = beta_Cajsr * (J_tr - J_rel);
-  Ca_jsr += tinc * dCa_jsr;
-
-
+    
+    
+    
+    
+    
   return 0.001 * tinc * I_tot;
 }  // TWorld::Calc
 
@@ -860,9 +882,6 @@ void TWorld::Print(ostream &tempstr, double tArg,  ML_CalcType V) {
     x_s1 << ' ' << x_s2 <<' ' <<
     Na_i << ' ' << Na_ss << ' ' << K_i << ' ' << K_ss << ' ' << Ca_i << ' ' << Ca_ss << ' ' << Ca_nsr << ' ' <<
     Ca_jsr << ' ' << Cl_i << ' ' << CaMK_trap << ' ' << J_rel_NP << ' ' << J_rel_CaMK << ' '
-    #ifdef TRPN
-    << 0.07*Ca_TRPN << ' ' // export in mM
-    #endif  // ifdef TRPN
   ;
 }
 
@@ -872,9 +891,6 @@ void TWorld::LongPrint(ostream &tempstr, double tArg,  ML_CalcType V) {
   tempstr << I_Na << ' ' << I_Na_late << ' ' << I_to << ' ' << I_CaL_i << ' ' << I_CaL_ss << ' ' << I_CaNa_i << ' ' << I_CaNa_ss << ' ' << I_CaK_i << ' ' << I_CaK_ss << ' ' << I_CaL << ' ' << I_CaNa << ' ' << I_CaK << ' ' <<
     I_Kr << ' ' << I_Ks << ' ' << I_K1 << ' ' << I_NaCa_i << ' ' << I_NaCa_ss << ' ' << I_NaK << ' ' << I_CaCl << ' ' << I_Nab << ' ' <<
     I_Cab << ' ' << I_Kb << ' ' << I_Clb << ' '<< I_pCa << ' '<< J_diff_Na << ' '<< J_diff_Ca << ' '<< J_diff_K << ' '<< J_leak << ' '<< J_rel << ' '<< J_tr << ' '<< J_up << ' '<< cur_I_tot << ' '
-  #ifdef ISAC
-    << I_SAC << ' '
-  #endif // ifdef ISAC
   ;
 }  // TWorld::LongPrint
 
@@ -895,9 +911,6 @@ void TWorld::GetParameterNames(vector<string> &getpara) {
     "Ca_i",        "Ca_ss",
     "Ca_nsr",      "Ca_jsr", "Cl_i",             "CaMK_trap",               "J_rel_NP",
     "J_rel_CaMK"
-   #ifdef TRPN
-    ,              "Ca_TRPN"
-   #endif  // ifdef TRPN
   };
 
   for (int i = 0; i < sizeof(ParaNames)/sizeof(ParaNames[0]); i++)
@@ -913,9 +926,6 @@ void TWorld::GetLongParameterNames(vector<string> &getpara) {
     "I_NaCa_i",
     "I_NaCa_ss",
     "I_NaK",     "I_CaCl",     "I_Nab",     "I_Cab",     "I_Kb",     "I_Clb",       "I_pCa", "J_diff_Na", "J_diff_Ca", "J_diff_K", "J_leak", "J_rel", "J_tr", "J_up", "cur_I_tot"
-#ifdef ISAC
-    , "I_SAC"
-#endif // ifdef ISAC
   };
   for (int i = 0; i < sizeof(ParaNames)/sizeof(ParaNames[0]); i++)
     getpara.push_back(ParaNames[i]);
