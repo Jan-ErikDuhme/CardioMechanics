@@ -150,36 +150,46 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Buffering parameters
   ////////////////////////////////////////////////////////////////////////////////////////
+  double Bmax_Naj = 7.561;
+  double Bmax_Nasl = 1.65;
+  double koff_na = 1e-3;
+  double kon_na = 0.1e-3;
+  double Bmax_TnClow = 70.0e-3;
+  double Bmax_TnChigh = 140.0e-3;
+  double koff_tnchca = 0.032e-3;
+  double kon_tnchca = 2.37;
+  double koff_tnchmg = 3.33e-3;
+  double kon_tnchmg = 3.0e-3;
+  double Bmax_CaM = 24.0e-3 * CMDN_Multiplier; //TODO: Add Multiplier to v()
+  double koff_cam = 238.0e-3;
+  double kon_cam = 34.0;
+  double Bmax_myosin = 140.0e-3;
+  double koff_myoca = 0.46e-3;
+  double kon_myoca = 13.8;
+  double koff_myomg = 0.057e-3;
+  double kon_myomg = 0.0157;
+  double Bmax_SR = 17.85854e-3;
+  double koff_sr = 60.0e-3;
+  double kon_sr = 100.0;
+  double Bmax_SLlowsl = 33.923e-3 * Vmyo / Vsl;
+  double Bmax_SLlowj = 4.89983e-4 * Vmyo / Vjunc;
+  double koff_sll = 1300.0e-3;
+  double kon_sll = 100.0;
+  double Bmax_SLhighsl = 12.15423e-3 * Vmyo / Vsl;
+  double Bmax_SLhighj = 1.75755e-4 * Vmyo / Vjunc;
+  double koff_slh = 30.0e-3;
+  double kon_slh = 100.0;
+  double Bmax_Csqn = 136.55214e-3 * Vmyo / Vsr;
+  double koff_csqn = 65.0;
+  double kon_csqn = 100.0;
     
     
-//  /// CaMK constants
-//  double KmCaMK = 0.15;
-//  double aCaMK  = 0.05;
-//  double bCaMK  = 0.00068;
-//  double CaMKo  = 0.05;
-//  double KmCaM  = 0.0015;
-//
-//  /// update CaMK
-//  const ML_CalcType CaMK_bound  = ((CaMKo * (1.0 - CaMK_trap)) / (1.0 + (KmCaM / Ca_ss)));
-//  const ML_CalcType CaMK_active = (CaMK_bound + CaMK_trap);
-//  const ML_CalcType dCaMK_trap = ((aCaMK * CaMK_bound * (CaMK_bound + CaMK_trap)) -
-//    (bCaMK * CaMK_trap));
-//  CaMK_trap += tinc * dCaMK_trap;
-//
-//  /// reversal potentials
-//  const ML_CalcType E_Na = v(VT_RToverF) * log(v(VT_Na_o) / Na_i);
-//  const ML_CalcType E_K  = v(VT_RToverF) * log(v(VT_K_o) / K_i);
-//  double PKNa            = 0.01833;
-//  const ML_CalcType E_Ks = v(VT_RToverF) * log((v(VT_K_o) + PKNa * v(VT_Na_o)) / (K_i + PKNa * Na_i));
-//  double zcl = 1.0;
-//  const ML_CalcType E_Cl = ((v(VT_R) * v(VT_T)) / (zcl * v(VT_F))) * log((Cl_i/v(VT_Cl_o)));
-//
-//  // convenient shorthand calculations
-//  const ML_CalcType VFFoverRT = (V_m * v(VT_F) * v(VT_F)) / (v(VT_R) * v(VT_T));
-//  const ML_CalcType VFoverRT  = (V_m * v(VT_F)) / (v(VT_R) * v(VT_T));
-//  const ML_CalcType util_1    = v(VT_A_cap) / (v(VT_F) * v(VT_v_myo));
-//  const ML_CalcType util_2    = v(VT_v_ss) / v(VT_v_myo);
-//  const ML_CalcType util_3    = v(VT_A_cap) / (v(VT_F) * v(VT_v_ss));
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        CaMK and Ca signalling
+  ////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+    
     
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Sodium current (INa, INaL)
