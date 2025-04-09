@@ -187,8 +187,39 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        CaMK and Ca signalling
   ////////////////////////////////////////////////////////////////////////////////////////
+    double PP1_tot = 0.13698; //TODO: Change to parameter using v(), needs to be changed if PKA signalling is simulted
+    double CaMK0  = 2.0 * 0.05; // Equilibrium fraction of active CaMKII binding sites
+    double Km_CaMK_Ca = 5.0 * 0.0015; //[mmol/L] CaMKII affinity for Ca2+/CaM activation %Adjusted because of smaller cleft space
     
+    const ML_CalcType CaMK_bound = CaMK0 * (1.0 - CaMK_trap) / (1 + Km_CaMK_Ca / Ca_dyad);
+    const ML_CalyType CaMK_active = CaMK_bound + CaMK_trap; // Fraction of active CaMKII
     
+    double alpha = 0.05;
+    double beta  = 6.8e-4;
+    const ML_CalcType dCaMK_trap = alpha * CaMK_bound * CaMK_active - beta * CaMK_trap * (0.1 + 0.9 * PP1_tot / 0.1371); //dCaMK_Trap/dt
+    CaMK_trap += tinc * dCaMK_trap;
+    
+    double tau_plb = 100000.0; // [ms] Time constant of CaMKII PLB phosphorylation
+    double tau_ryr = 10000.0; // [ms] Time constant of CaMKII RyR phosphorylation
+    double tau_cal = tau_ryr; // Time constant of CaMKII ICaL phosphorylation
+    
+    double K_Phos_CaMK = 0.35;  // Affinity of PLB, ICaL etc for CaMKII
+    const ML_CalcType CaMK_Phos_ss_ICaL =  CaMK_active / (CaMK_active + K_Phos_CaMK);
+    const ML_CalcType CaMK_Phos_ss_RyR =  CaMK_active / (CaMK_active + 1.0);
+    const ML_CalcType CaMK_Phos_ss_PLB =  CaMK_active / (CaMK_active + 10.0);
+
+    const ML_CalcType dCaMK_f_ICaL = (CaMK_Phos_ss_ICaL - CaMK_f_ICaL) / tau_cal;
+    CaMK_f_ICaL += tinc * dCaMK_f_ICaL;
+    const ML_CalcType dCaMK_f_RyR = (CaMK_Phos_ss_RyR - CaMK_f_RyR)  / tau_ryr;
+    CaMK_f_RyR += tinc * dCaMK_f_RyR;
+    const ML_CalcType dCaMK_f_PLB = (CaMK_Phos_ss_PLB - CaMK_f_PLB)  / tau_plb;
+    CaMK_f_PLB += tinc * dCaMK_f_PLB;
+    
+    double alpha_serca = 0.05;
+    const ML_CalcType bound_serca = CaMK0 * (1.0 - casig_serca_trap) / (1.0 + Km_CaMK_Ca / Ca_dyad);
+    const ML_CalcType casig_SERCA_act = bound_serca + casig_serca_trap; // Fraction of active CaMKII
+    const ML_CalcType dcasig_serca_trap = alpha_serca * bound_serca * casig_SERCA_act - beta * casig_serca_trap * (0.1 + 0.9 * PP1_tot / 0.1371); //dCaMK_Trap/dt
+    casig_serca_trap += tinc * dcasig_serca_trap;
     
     
   /////////////////////////////////////////////////////////////////////////////////////////
