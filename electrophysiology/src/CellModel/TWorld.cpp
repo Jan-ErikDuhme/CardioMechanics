@@ -57,94 +57,129 @@ void TWorld::Init() {
   cerr << "#initializing Class: TWorld ... " << endl;
         #endif  // if KADEBUG
 
-  m              = v(VT_Init_m);
-  A_h            = v(VT_Init_A_h);
-  B_h            = v(VT_Init_B_h);
-  h              = v(VT_Init_h);
-  j              = v(VT_Init_j);
-  h_p            = v(VT_Init_h_p);
-  j_p            = v(VT_Init_j_p);
-  m_L            = v(VT_Init_m_L);
-  h_L            = v(VT_Init_h_L);
-  h_L_CaMK       = v(VT_Init_h_L_CaMK);
-  a              = v(VT_Init_a);
-  i_fast         = v(VT_Init_i_fast);
-  i_slow         = v(VT_Init_i_slow);
-  a_CaMK         = v(VT_Init_a_CaMK);
-  i_CaMK_fast    = v(VT_Init_i_CaMK_fast);
-  i_CaMK_slow    = v(VT_Init_i_CaMK_slow);
-  d              = v(VT_Init_d);
-  f_fast         = v(VT_Init_f_fast);
-  f_slow         = v(VT_Init_f_slow);
-  f_Ca_fast      = v(VT_Init_f_Ca_fast);
-  f_Ca_slow      = v(VT_Init_f_Ca_slow);
-  j_Ca           = v(VT_Init_j_Ca);
-  n_ss           = v(VT_Init_n_ss);
-  n_i            = v(VT_Init_n_i);
-  f_CaMK_fast    = v(VT_Init_f_CaMK_fast);
-  f_Ca_CaMK_fast = v(VT_Init_f_Ca_CaMK_fast);
-  C_0            = v(VT_Init_C_0);
-  C_1            = v(VT_Init_C_1);
-  C_2            = v(VT_Init_C_2);
-  O              = v(VT_Init_O);
-  I              = v(VT_Init_I);
-  x_s1           = v(VT_Init_x_s1);
-  x_s2           = v(VT_Init_x_s2);
-  Na_i           = v(VT_Init_Na_i);
-  Na_ss          = v(VT_Init_Na_ss);
-  K_i            = v(VT_Init_K_i);
-  K_ss           = v(VT_Init_K_ss);
-  Ca_i           = v(VT_Init_Ca_i);
-  Ca_ss          = v(VT_Init_Ca_ss);
-  Ca_nsr         = v(VT_Init_Ca_nsr);
-  Ca_jsr         = v(VT_Init_Ca_jsr);
-  Cl_i           = v(VT_Init_Cl_i);
-  CaMK_trap      = v(VT_Init_CaMK_trap);
-  J_rel_NP       = v(VT_Init_J_rel_NP);
-  J_rel_CaMK     = v(VT_Init_J_rel_CaMK);
-  #ifdef TRPN
-  Ca_TRPN = v(VT_Init_Ca_TRPN)/0.07;
-  #endif  // ifdef TRPN
+//  m              = v(VT_Init_m);
+//  A_h            = v(VT_Init_A_h);
+//  B_h            = v(VT_Init_B_h);
+//  h              = v(VT_Init_h);
+//  j              = v(VT_Init_j);
+//  h_p            = v(VT_Init_h_p);
+//  j_p            = v(VT_Init_j_p);
+//  m_L            = v(VT_Init_m_L);
+//  h_L            = v(VT_Init_h_L);
+//  h_L_CaMK       = v(VT_Init_h_L_CaMK);
+//  a              = v(VT_Init_a);
+//  i_fast         = v(VT_Init_i_fast);
+//  i_slow         = v(VT_Init_i_slow);
+//  a_CaMK         = v(VT_Init_a_CaMK);
+//  i_CaMK_fast    = v(VT_Init_i_CaMK_fast);
+//  i_CaMK_slow    = v(VT_Init_i_CaMK_slow);
+//  d              = v(VT_Init_d);
+//  f_fast         = v(VT_Init_f_fast);
+//  f_slow         = v(VT_Init_f_slow);
+//  f_Ca_fast      = v(VT_Init_f_Ca_fast);
+//  f_Ca_slow      = v(VT_Init_f_Ca_slow);
+//  j_Ca           = v(VT_Init_j_Ca);
+//  n_ss           = v(VT_Init_n_ss);
+//  n_i            = v(VT_Init_n_i);
+//  f_CaMK_fast    = v(VT_Init_f_CaMK_fast);
+//  f_Ca_CaMK_fast = v(VT_Init_f_Ca_CaMK_fast);
+//  C_0            = v(VT_Init_C_0);
+//  C_1            = v(VT_Init_C_1);
+//  C_2            = v(VT_Init_C_2);
+//  O              = v(VT_Init_O);
+//  I              = v(VT_Init_I);
+//  x_s1           = v(VT_Init_x_s1);
+//  x_s2           = v(VT_Init_x_s2);
+//  Na_i           = v(VT_Init_Na_i);
+//  Na_ss          = v(VT_Init_Na_ss);
+//  K_i            = v(VT_Init_K_i);
+//  K_ss           = v(VT_Init_K_ss);
+//  Ca_i           = v(VT_Init_Ca_i);
+//  Ca_ss          = v(VT_Init_Ca_ss);
+//  Ca_nsr         = v(VT_Init_Ca_nsr);
+//  Ca_jsr         = v(VT_Init_Ca_jsr);
+//  Cl_i           = v(VT_Init_Cl_i);
+//  CaMK_trap      = v(VT_Init_CaMK_trap);
+//  J_rel_NP       = v(VT_Init_J_rel_NP);
+//  J_rel_CaMK     = v(VT_Init_J_rel_CaMK);
 }  // TWorld::Init
 
 ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  ML_CalcType stretch, int euler) {
   tinc *= 1000.0;  // second to millisecond conversion
   ML_CalcType V_m = V * 1000.0;
-  
-  #if defined(TRPN) || defined(ISAC)
-  ML_CalcType lambda_m = std::min(1.2, stretch);
-  #endif  // if defined(TRPN) || defined(ISAC)
 
   const int Vi = (int)(DivisionTab*(RangeTabhalf+V_m)+.5);  // array position
 
-  /// CaMK constants
-  double KmCaMK = 0.15;
-  double aCaMK  = 0.05;
-  double bCaMK  = 0.00068;
-  double CaMKo  = 0.05;
-  double KmCaM  = 0.0015;
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Model parameters
+  ////////////////////////////////////////////////////////////////////////////////////////
+  // Constants
+  double R = 8314.0; // [J/kmol*K]
+  double F = 96485.0; // [C/mol]
+  double T = 310.0; // [K]
+  double FoRT = F / R / T;
+  double Cmem = 1.3810e-10; // [F] membrane capacitance
+  double Qpow = (T - 310.0) / 10.0;
+    
+  // Cell Tometry
+  double cellLength = 100.0; // cell length [um]
+  double cellRadius = 10.25; // cell radius [um]
+  double Vcell = 3.14 * pow(cellRadius, 2) * cellLength * 1e-15; // [L]
+  double Vmyo = 0.65 * Vcell;
+  double Vsr = 0.035 * Vcell;
+  double Vsl = 0.02 * Vcell;
+  double Vjunc = 0.0539 * 0.01 * Vcell;
+    
+  // Fractional currents in compartments
+  double Fdyad = 0.11;
+  double Fsl = 1 - Fdyad;
+    
+  // Fixed ion concentrations
+  double Cl_o = 150.0; // Extracellular Cl  [mM]
+  double Mg_i = 0.5; // Intracellular Mg  [mM]
+    
+  // Nerst Potentials
+  const ML_CalcType E_Na_dyad = (1.0 / FoRT) * log(Na_o / Na_dyad);
+  const ML_CalcType E_Na_sl = (1.0 / FoRT) * log(Na_o / Na_sl);
+  const ML_CalcType E_K = (1.0 / FoRT) * log(K_o / K_myo);
+  const ML_CalcType E_Ca_dyad = (1.0 / FoRT / 2.0) * log(Ca_o / Ca_dyad);
+  const ML_CalcType E_Ca_sl = (1.0 / FoRT / 2.0) * log(Ca_o / Ca_sl);
+  const ML_CalcType E_Cl = (1.0 / FoRT) * log(Cl_myo / Cl_o);
 
-  /// update CaMK
-  const ML_CalcType CaMK_bound  = ((CaMKo * (1.0 - CaMK_trap)) / (1.0 + (KmCaM / Ca_ss)));
-  const ML_CalcType CaMK_active = (CaMK_bound + CaMK_trap);
-  const ML_CalcType dCaMK_trap = ((aCaMK * CaMK_bound * (CaMK_bound + CaMK_trap)) -
-    (bCaMK * CaMK_trap));
-  CaMK_trap += tinc * dCaMK_trap;
-
-  /// reversal potentials
-  const ML_CalcType E_Na = v(VT_RToverF) * log(v(VT_Na_o) / Na_i);
-  const ML_CalcType E_K  = v(VT_RToverF) * log(v(VT_K_o) / K_i);
-  double PKNa            = 0.01833;
-  const ML_CalcType E_Ks = v(VT_RToverF) * log((v(VT_K_o) + PKNa * v(VT_Na_o)) / (K_i + PKNa * Na_i));
-  double zcl = 1.0;
-  const ML_CalcType E_Cl = ((v(VT_R) * v(VT_T)) / (zcl * v(VT_F))) * log((Cl_i/v(VT_Cl_o)));
-
-  // convenient shorthand calculations
-  const ML_CalcType VFFoverRT = (V_m * v(VT_F) * v(VT_F)) / (v(VT_R) * v(VT_T));
-  const ML_CalcType VFoverRT  = (V_m * v(VT_F)) / (v(VT_R) * v(VT_T));
-  const ML_CalcType util_1    = v(VT_A_cap) / (v(VT_F) * v(VT_v_myo));
-  const ML_CalcType util_2    = v(VT_v_ss) / v(VT_v_myo);
-  const ML_CalcType util_3    = v(VT_A_cap) / (v(VT_F) * v(VT_v_ss));
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Buffering parameters
+  ////////////////////////////////////////////////////////////////////////////////////////
+    
+    
+//  /// CaMK constants
+//  double KmCaMK = 0.15;
+//  double aCaMK  = 0.05;
+//  double bCaMK  = 0.00068;
+//  double CaMKo  = 0.05;
+//  double KmCaM  = 0.0015;
+//
+//  /// update CaMK
+//  const ML_CalcType CaMK_bound  = ((CaMKo * (1.0 - CaMK_trap)) / (1.0 + (KmCaM / Ca_ss)));
+//  const ML_CalcType CaMK_active = (CaMK_bound + CaMK_trap);
+//  const ML_CalcType dCaMK_trap = ((aCaMK * CaMK_bound * (CaMK_bound + CaMK_trap)) -
+//    (bCaMK * CaMK_trap));
+//  CaMK_trap += tinc * dCaMK_trap;
+//
+//  /// reversal potentials
+//  const ML_CalcType E_Na = v(VT_RToverF) * log(v(VT_Na_o) / Na_i);
+//  const ML_CalcType E_K  = v(VT_RToverF) * log(v(VT_K_o) / K_i);
+//  double PKNa            = 0.01833;
+//  const ML_CalcType E_Ks = v(VT_RToverF) * log((v(VT_K_o) + PKNa * v(VT_Na_o)) / (K_i + PKNa * Na_i));
+//  double zcl = 1.0;
+//  const ML_CalcType E_Cl = ((v(VT_R) * v(VT_T)) / (zcl * v(VT_F))) * log((Cl_i/v(VT_Cl_o)));
+//
+//  // convenient shorthand calculations
+//  const ML_CalcType VFFoverRT = (V_m * v(VT_F) * v(VT_F)) / (v(VT_R) * v(VT_T));
+//  const ML_CalcType VFoverRT  = (V_m * v(VT_F)) / (v(VT_R) * v(VT_T));
+//  const ML_CalcType util_1    = v(VT_A_cap) / (v(VT_F) * v(VT_v_myo));
+//  const ML_CalcType util_2    = v(VT_v_ss) / v(VT_v_myo);
+//  const ML_CalcType util_3    = v(VT_A_cap) / (v(VT_F) * v(VT_v_ss));
     
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Sodium current (INa, INaL)
@@ -773,6 +808,14 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
 //    double KmBSL   = 0.0087;
 //    double csqnmax = 10.0;
 //    double kmcsqn  = 0.8;
+    
+    
+    kon_na
+    Bmax_Naj
+    koff_na
+    Bmax_Nasl
+    
+    Bmax_TnClow
     
     
   /////////////////////////////////////////////////////////////////////////////////////////
