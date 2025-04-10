@@ -140,7 +140,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double Vmyo = 0.65 * Vcell;
   double Vsr = 0.035 * Vcell;
   double Vsl = 0.02 * Vcell;
-  double Vjunc = 0.0539 * 0.01 * Vcell;
+  double Vdyad = 0.0539 * 0.01 * Vcell;
     
   // Fractional currents in compartments
   double Fdyad = 0.11;
@@ -184,11 +184,11 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double koff_sr = 60.0e-3;
   double kon_sr = 100.0;
   double Bmax_SLlowsl = 33.923e-3 * Vmyo / Vsl;
-  double Bmax_SLlowj = 4.89983e-4 * Vmyo / Vjunc;
+  double Bmax_SLlowj = 4.89983e-4 * Vmyo / Vdyad;
   double koff_sll = 1300.0e-3;
   double kon_sll = 100.0;
   double Bmax_SLhighsl = 12.15423e-3 * Vmyo / Vsl;
-  double Bmax_SLhighj = 1.75755e-4 * Vmyo / Vjunc;
+  double Bmax_SLhighj = 1.75755e-4 * Vmyo / Vdyad;
   double koff_slh = 30.0e-3;
   double kon_slh = 100.0;
   double Bmax_Csqn = 136.55214e-3 * Vmyo / Vsr;
@@ -302,8 +302,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
       
   // 4 population
   I_Na_Base = ((1-phi_INa_CaMKonly-phi_INa_PKAonly-phi_INa_Both)*I_Na_Base_NP + phi_INa_CaMKonly*I_Na_Base_CaMK + phi_INa_PKAonly*I_Na_Base_PKA + phi_INa_Both*I_Na_Base_Both);
-  I_NaFast_junc = Fdyad * I_Na_Base*(V_m - E_Na_dyad);
-  I_NaFast_sl = (1 - dyad) * I_Na_Base * (V_m - E_Na_sl);
+  I_NaFast_dyad = Fdyad * I_Na_Base*(V_m - E_Na_dyad);
+  I_NaFast_sl = (1 - Fdyad) * I_Na_Base * (V_m - E_Na_sl);
 
   ///////////// calulate I_NaL //////////
   // m gate
@@ -323,14 +323,14 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   // Putting together the channels behavior and fraction
   const ML_CalcType phi_INaL_CaMK = phi_INa_CaMK;
   double G_Na_L = 0.04229 * v(VT_INaL_Multiplier) * (1.0 + phi_INaL_CaMK); //TODO: Ist noch falsch
-  I_NaL_junc = Fjunc  * G_Na_L * (V_m - E_Na_junc) * m_L * ((1.0 - phi_INaL_CaMK) * h_L + phi_INaL_CaMK * h_L_p);;
+  I_NaL_dyad = Fdyad  * G_Na_L * (V_m - E_Na_dyad) * m_L * ((1.0 - phi_INaL_CaMK) * h_L + phi_INaL_CaMK * h_L_p);;
   I_NaL_sl = Fsl * G_Na_L * (V_m - E_Na_sl) * m_L * ((1.0 - phi_INaL_CaMK) * h_L + phi_INaL_CaMK * h_L_p);;
 
   ///////////// Combinations I_Na and I_NaL //////////
-  I_Na_junc = I_NaFast_junc + I_NaL_junc ;
+  I_Na_dyad = I_NaFast_dyad + I_NaL_dyad;
   I_Na_sl = I_NaFast_sl + I_NaL_sl ;
-  I_NaFast = I_NaFast_junc+I_NaFast_sl;
-  I_NaL = I_NaL_junc+I_NaL_sl;
+  I_NaFast = I_NaFast_dyad+I_NaFast_sl;
+  I_NaL = I_NaL_dyad+I_NaL_sl;
     
     
   /////////////////////////////////////////////////////////////////////////////////////////
@@ -608,11 +608,11 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   const ML_CalcType tau_0 = 26.0 + 9.0 * k_PKA;
   const ML_CalcType tau_max = 40.0 + 4.0 * k_PKA;
     
-  const ML_CalcType V_junc = V_h_0 + (V_h_max - V_h_0) / (1.0 + pow((350e-06 / Ca_junc), 4.0)); // Regulated by PKA
-  const ML_CalcType xs_junc_inf = 1.0 / (1.0 + exp(-(V_m - V_junc) / 25.0));
-  const ML_CalcType V_tau_junc = tau_0 + (tau_max - tau_0) / (1.0 + pow((150e-06/Ca_junc), 3.0)); // Regulated by PKA
-  const ML_CalcType tau_xs_junc = 2.0 * (50.0 + (50.0 + 350.0 * exp(-(pow((V_m + 30.0), 2.0)) / 4000.0)) * 1.0 / (1.0 + exp(-(V_m + V_tau_junc) / 10.0)));
-  xs_junc = xs_junc_inf - (xs_junc_inf - xs_junc) * exp(-tinc / tau_xs_junc);
+  const ML_CalcType V_dyad = V_h_0 + (V_h_max - V_h_0) / (1.0 + pow((350e-06 / Ca_dyad), 4.0)); // Regulated by PKA
+  const ML_CalcType xs_dyad_inf = 1.0 / (1.0 + exp(-(V_m - V_dyad) / 25.0));
+  const ML_CalcType V_tau_dyad = tau_0 + (tau_max - tau_0) / (1.0 + pow((150e-06/Ca_dyad), 3.0)); // Regulated by PKA
+  const ML_CalcType tau_xs_dyad = 2.0 * (50.0 + (50.0 + 350.0 * exp(-(pow((V_m + 30.0), 2.0)) / 4000.0)) * 1.0 / (1.0 + exp(-(V_m + V_tau_dyad) / 10.0)));
+  xs_dyad = xs_dyad_inf - (xs_dyad_inf - xs_dyad) * exp(-tinc / tau_xs_dyad);
     
   const ML_CalcType V_sl = V_h_0 + (V_h_max - V_h_0) / (1.0 + pow((350e-06 / Ca_sl), 4.0)); // Regulated by PKA
   const ML_CalcType xs_sl_inf = 1.0 / (1.0 + exp(-(V_m - V_sl) / 25.0));
@@ -628,17 +628,17 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double G_Ks_factor = 0.01;
   const ML_CalcType G_Ks_0 = G_Ks_factor * (0.2 + 0.2 * k_PKA);
   const ML_CalcType G_Ks_max = G_Ks_factor * (0.8 + 7.0 * k_PKA);
-  const ML_CalcType G_Ks_junc = G_Ks_0 + (G_Ks_max - G_Ks_0) / (1.0 + pow((150e-06 / Ca_junc), 1.3)); // Regulated by PKA
+  const ML_CalcType G_Ks_dyad = G_Ks_0 + (G_Ks_max - G_Ks_0) / (1.0 + pow((150e-06 / Ca_dyad), 1.3)); // Regulated by PKA
   const ML_CalcType G_Ks_sl = G_Ks_0 + (G_Ks_max - G_Ks_0) / (1.0 + pow((150e-06 / Ca_sl), 1.3)); // Regulated by PKA
     
   // Nernst potential
   double pNaK = 0.01833;
-  const ML_CalcType E_Ks = v(VT_RToverF) * log((v(VT_K_o) + pNaK * v(VT_Na_o)) / (K_i + pNaK * Na_i));
+  const ML_CalcType E_Ks = v(VT_RToverF) * log((v(VT_K_o) + pNaK * v(VT_Na_o)) / (K_myo + pNaK * Na_myo));
     
   // Putting together the channels behavior and fraction
-  I_Ks_junc = Fjunc * G_Ks_factor_SA * G_Ks_junc * xs_junc * xs_junc * (V_m - E_Ks); //TODO: Fjunc was?
-  I_Ks_sl = Fsl * G_Ks_factor_SA * G_Ks_sl * xs_sl * xs_sl * (V_m - E_Ks); //TODO: Fsl was?
-  I_Ks = I_Ks_junc + I_Ks_sl;
+  I_Ks_dyad = Fdyad * G_Ks_factor_SA * G_Ks_dyad * xs_dyad * xs_dyad * (V_m - E_Ks);
+  I_Ks_sl = Fsl * G_Ks_factor_SA * G_Ks_sl * xs_sl * xs_sl * (V_m - E_Ks);
+  I_Ks = I_Ks_dyad + I_Ks_sl;
     
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Inward rectifier current (IK1)
@@ -774,14 +774,14 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     
   const ML_CalcType f_NaK = 0.75 + (0.00375 - ((140 - v(VT_Na_o)) / 50) * 0.001) * V_m; //Varying the slope mainly based on https://rupress.org/jgp/article-pdf/94/3/539/1814046/539.pdf
     
-  I_NaK_junc_noPKA = Fjunc * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip / Na_junc), 4.0)) /(v(VT_K_o) + KmKo);
-  I_NaK_junc_PKA = Fjunc * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip_PKA / Na_junc),4.0)) /(v(VT_K_o) + KmKo);
+  I_NaK_dyad_noPKA = Fdyad * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip / Na_dyad), 4.0)) /(v(VT_K_o) + KmKo);
+  I_NaK_dyad_PKA = Fdyad * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip_PKA / Na_dyad),4.0)) /(v(VT_K_o) + KmKo);
   I_NaK_sl_noPKA = Fsl * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip / Na_sl), 4.0)) / (v(VT_K_o) + KmKo);
   I_NaK_sl_PKA = Fsl * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip_PKA / Na_sl), 4.0)) / (v(VT_K_o) + KmKo);
     
-  I_NaK_junc = (1.0 - phi_INaK_PKA) * I_NaK_junc_noPKA + phi_INaK_PKA * I_NaK_junc_PKA; //TODO: Wo kommt phi_INaK_PKA her???
-  I_NaK_sl = (1.0 - phi_INaK_PKA) * I_NaK_sl_noPKA + phi_INaK_PKA * I_NaK_sl_PKA;
-  I_NaK = I_Nak_junc + I_NaK_sl;
+  I_NaK_dyad = (1.0 - fINaK_PKA) * I_NaK_dyad_noPKA + fINaK_PKA * I_NaK_dyad_PKA;
+  I_NaK_sl = (1.0 - fINaK_PKA) * I_NaK_sl_noPKA + fINaK_PKA * I_NaK_sl_PKA;
+  I_NaK = I_Nak_dyad + I_NaK_sl;
     
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Chloride currents (ICaCl, IClb)
@@ -790,9 +790,9 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double G_CaCl = 0.01615 * v(VT_ICaCl_Multiplier);
   double Kd_CaCl = 100e-03;
     
-  I_CaCl_junc = 0.5 * Fjunc * G_CaCl / (1.0 + Kd_CaCl / Ca_junc)*(V_m - E_Cl);
+  I_CaCl_dyad = 0.5 * Fdyad * G_CaCl / (1.0 + Kd_CaCl / Ca_dyad)*(V_m - E_Cl);
   I_CaCl_sl = 0.5 * Fsl * G_CaCl / (1.0 + Kd_CaCl / Ca_sl)*(V_m - E_Cl);
-  I_ClCa = I_ClCa_junc+I_ClCa_sl;
+  I_ClCa = I_ClCa_dyad+I_ClCa_sl;
     
   // calculate I_Clb
   double G_Clb = 0.00241 * v(VT_IClb_Multiplier);
@@ -803,9 +803,9 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   ////////////////////////////////////////////////////////////////////////////////////////
   // calculate I_Nab
   double G_Nab = 2.0 * 0.297e-03 * v(VT_INab_Multiplier);
-  I_Nab_junc = Fjunc * G_Nab * (V_m - E_Na_junc);
+  I_Nab_dyad = Fdyad * G_Nab * (V_m - E_Na_dyad);
   I_Nab_sl = Fsl * G_Nab * (V_m - E_Na_sl);
-  I_Nab = I_Nab_junc + I_Nab_sl;
+  I_Nab = I_Nab_dyad + I_Nab_sl;
     
   // calculate I_Kb
   double G_Kb = 0.010879 * v(VT_IKb_Multiplier);
@@ -814,9 +814,9 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     
   // calculate I_Cab
   double G_Cab = 5.15575e-04 * v(VT_ICab_Multiplier);
-  I_Cab_junc = Fjunc * G_Cab * (V_m - E_ca_junc);
-  I_Cab_sl = Fsl * G_Cab * (V_m - E_ca_sl);
-  I_Cab = I_Cab_junc + I_Cab_sl;
+  I_Cab_dyad = Fdyad * G_Cab * (V_m - E_Ca_dyad);
+  I_Cab_sl = Fsl * G_Cab * (V_m - E_Ca_sl);
+  I_Cab = I_Cab_dyad + I_Cab_sl;
     
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Calcium release from SR (Jrel, Jleak)
@@ -904,10 +904,12 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Sarcolemmal calcium pump (pCa)
   ////////////////////////////////////////////////////////////////////////////////////////
-//    /// calculate I_pCa
-//    double G_pCa = 0.0005;
-//    I_pCa = v(VT_IpCa_Multiplier) * ((G_pCa * Ca_i) / (0.0005 + Ca_i));
-    
+    double IbarSLCaP = 0.02064  * v(VT_IpCa_Multiplier);
+    double KmPCa = 0.5e-3; // [mM]
+    double Q10SLCaP = 2.35; // [none]
+    I_pCa_dyad = Fdyad * pow(Q10SLCaP, Qpow) * IbarSLCaP * pow(Ca_dyad, 1.6) / (pow(KmPCa, 1.6) + pow(Ca_dyad, 1.6));
+    I_pCa_sl = Fsl * pow(Q10SLCaP, Qpow) * IbarSLCaP * pow(Ca_sl, 1.6) / (pow(KmPCa, 1.6) + pow(Ca_sl, 1.6));
+    I_pCa = I_pCa_dyad + I_pCa_sl;
     
     
     
