@@ -897,10 +897,30 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Calcium reuptake to the SR (Jup)
   ////////////////////////////////////////////////////////////////////////////////////////
-    //    J_up = ((1.0 - phi_up_CaMK) * J_up_NP + (phi_up_CaMK * J_up_CaMK) - J_leak);
+    double Q10SRCaP = 2.6; // [none]
+    double Vmax_SRCaP = 0.00543 * v(VT_Jup_Multiplier); // [mM/msec] (286 umol/L cytosol/sec)
+    double Kmr = 2.31442; // [mM]L cytosol
+    double hillSRCaP =  1.02809; // [mM]
+    double Kmf = 0.30672e-03; // [mM] default
     
+    if (v(VT_celltype) == 1.0) { // epi
+        Vmax_SRCaP = Vmax_SRCaP * 1.2; // based loosely on https://www.ahajournals.org/doi/10.1161/01.RES.62468.25308.27?url_ver=Z39.88-2003&rfr_id=ori:rid:crossref.org&rfr_dat=cr_pub%20%200pubmed - there may be other datasets, and other values. % the 20% is just an initial guesstimate.
+    }
     
+    // PLB phosphorylation effect on affinity
+    phosphorylationTotal = CaMK_f_PLB + fPLB_PKA - CaMK_f_PLB * fPLB_PKA; // we assume the same effect, just making sure we don't count it twice.
+    double Kmf_Phospho = Kmf * 0.5; // Similar percentage effect as in Heijman 2011 % CHANGED JAKUB
     
+    // Direct Ca-based acceleration
+    double Km_SERCA_Ca = 0.4; // 0.03 in Heijman 2011; affinity for direct Vmax modulation by CaMKII
+    double Max_Vmax_SERCA_Ca = 1.11142;
+    double Vmax_mult = 1.0 + Max_Vmax_SERCA_Ca / (1.0 + pow((Km_SERCA_Ca / casig_SERCA_act), 2));
+    
+    J_up_NP = pow(Q10SRCaP, Qpow) * Vmax_SRCaP * Vmax_mult * (pow((Ca_myo / Kmf), hillSRCaP) - pow((Ca_SR / Kmr), hillSRCaP)) / (1.0 + pow((Ca_myo / Kmf), hillSRCaP) + pow((Ca_SR / Kmr), hillSRCaP);
+    J_up_CaMK = pow(Q10SRCaP, Qpow) * Vmax_SRCaP * Vmax_mult * (pow((Ca_myo / Kmf_Phospho), hillSRCaP) - pow(Ca_SR / Kmr), hillSRCaP)) / (1.0 + pow((Ca_myo / Kmf_Phospho), hillSRCaP) + pow((Ca_SR / Kmr), hillSRCaP));
+    J_up = J_up_NP * (1.0 - phosphorylationTotal) + J_up_CaMK * phosphorylationTotal;
+    
+
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Sarcolemmal calcium pump (pCa)
   ////////////////////////////////////////////////////////////////////////////////////////
