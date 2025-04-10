@@ -104,13 +104,13 @@ void TWorld::Init() {
 //  J_rel_CaMK     = v(VT_Init_J_rel_CaMK);
     
   
-    fINa_PKA = v(VT_Init_fINa_PKA);
-    fICaL_PKA = v(VT_Init_fICaL_PKA);
-    fINaK_PKA = v(VT_Init_fINaK_PKA);
-    fIKs_PKA = v(VT_Init_fIKs_PKA);
-    fPLB_PKA = v(VT_Init_fPLB_PKA);
-    fTnI_PKA = v(VT_Init_fTnI_PKA);
-    fMyBPC_PKA = v(VT_Init_fMyBPC_PKA);
+//    fINa_PKA = v(VT_Init_fINa_PKA);
+//    fICaL_PKA = v(VT_Init_fICaL_PKA);
+//    fINaK_PKA = v(VT_Init_fINaK_PKA);
+//    fIKs_PKA = v(VT_Init_fIKs_PKA);
+//    fPLB_PKA = v(VT_Init_fPLB_PKA);
+//    fTnI_PKA = v(VT_Init_fTnI_PKA);
+//    fMyBPC_PKA = v(VT_Init_fMyBPC_PKA);
     
 }  // TWorld::Init
 
@@ -128,8 +128,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double F = 96485.0; // [C/mol]
   double T = 310.0; // [K]
   double FoRT = F / R / T;
-  double vffrt = v * F * F / (R * T);
-  double vfrt = v * F / (R * T);
+  double ffrt = F * F / (R * T);
+  double frt = F / (R * T);
   double Cmem = 1.3810e-10; // [F] membrane capacitance
   double Qpow = (T - 310.0) / 10.0;
     
@@ -151,11 +151,11 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double Mg_i = 0.5; // Intracellular Mg  [mM]
     
   // Nerst Potentials
-  const ML_CalcType E_Na_dyad = (1.0 / FoRT) * log(Na_o / Na_dyad);
-  const ML_CalcType E_Na_sl = (1.0 / FoRT) * log(Na_o / Na_sl);
-  const ML_CalcType E_K = (1.0 / FoRT) * log(K_o / K_myo);
-  const ML_CalcType E_Ca_dyad = (1.0 / FoRT / 2.0) * log(Ca_o / Ca_dyad);
-  const ML_CalcType E_Ca_sl = (1.0 / FoRT / 2.0) * log(Ca_o / Ca_sl);
+  const ML_CalcType E_Na_dyad = (1.0 / FoRT) * log(v(VT_Na_o) / Na_dyad);
+  const ML_CalcType E_Na_sl = (1.0 / FoRT) * log(v(VT_Na_o) / Na_sl);
+  const ML_CalcType E_K = (1.0 / FoRT) * log(v(VT_K_o) / K_myo);
+  const ML_CalcType E_Ca_dyad = (1.0 / FoRT / 2.0) * log(v(VT_Ca_o) / Ca_dyad);
+  const ML_CalcType E_Ca_sl = (1.0 / FoRT / 2.0) * log(v(VT_Ca_o) / Ca_sl);
   const ML_CalcType E_Cl = (1.0 / FoRT) * log(Cl_myo / Cl_o);
 
     
@@ -172,7 +172,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double kon_tnchca = 2.37;
   double koff_tnchmg = 3.33e-3;
   double kon_tnchmg = 3.0e-3;
-  double Bmax_CaM = 24.0e-3 * CMDN_Multiplier; //TODO: Add Multiplier to v()
+  double Bmax_CaM = 24.0e-3 * v(VT_CMDN_Multiplier);
   double koff_cam = 238.0e-3;
   double kon_cam = 34.0;
   double Bmax_myosin = 140.0e-3;
@@ -204,7 +204,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double Km_CaMK_Ca = 5.0 * 0.0015; //[mmol/L] CaMKII affinity for Ca2+/CaM activation %Adjusted because of smaller cleft space
     
   const ML_CalcType CaMK_bound = CaMK0 * (1.0 - CaMK_trap) / (1 + Km_CaMK_Ca / Ca_dyad);
-  const ML_CalyType CaMK_active = CaMK_bound + CaMK_trap; // Fraction of active CaMKII
+  const ML_CalcType CaMK_active = CaMK_bound + CaMK_trap; // Fraction of active CaMKII
     
   double alpha = 0.05;
   double beta  = 6.8e-4;
@@ -378,8 +378,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   const ML_CalcType f_Ca_p = A_f_Ca_fast * f_Ca_p_fast + A_f_Ca_slow * f_Ca_slow;
     
   // gating PKA
-  const ML_CalcType d_PKA_inf = 1.0323 * exp(-1.0553 * exp(-0.0810 * (V_m + 12.62483)));
-  d_PKA_inf = min(d_PKA_inf, 1.0);
+  const ML_CalcType d_PKA_inf = min(1.0323 * exp(-1.0553 * exp(-0.0810 * (V_m + 12.62483))), 1.0);
   d_PKA = d_PKA_inf - (d_PKA_inf - d_PKA) * exp(-tinc / tau_d);
     
   const ML_CalcType f_PKA_inf = 1.0 / (1.0 + exp((V_m + 19.58 + 6) / 3.696));
@@ -433,31 +432,33 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   const ML_CalcType gamma_K_dyad = pow(10.0, -constA * 1.0 * (sqrt(I_dyad)/(1.0 + sqrt(I_dyad)) - 0.3 * I_dyad));
   const ML_CalcType gamma_K_sl = pow(10.0, -constA * 1.0 * (sqrt(I_sl)/(1.0 + sqrt(I_sl)) - 0.3 * I_sl));
 
-  const ML_CalcType Psi_CaL_dyad = 4.0 * vffrt * (gamma_Ca_dyad * Ca_dyad * exp(2.0 * vfrt) - gamma_Ca_o * v(VT_Ca_o)) / (exp(2.0 * vfrt) - 1.0);
-  const ML_CalcType Psi_CaNa_dyad = 1.0 * vffrt * (gamma_Na_dyad * Na_dyad * exp(1.0 * vfrt) - gamma_Na_o * v(VT_Na_o)) / (exp(1.0 * vfrt) - 1.0);
-  const ML_CalcType Psi_CaK_dyad = 1.0 * vffrt * (gamma_K_dyad * K_myo * exp(1.0 * vfrt) - gamma_K_o * v(VT_K_o)) / (exp(1.0 * vfrt) - 1.0);
-  const ML_CalcType Psi_CaL_sl = 4.0 * vffrt * (gamma_Ca_sl * Ca_sl * exp(2.0 * vfrt) - gamma_Ca_o * v(VT_Ca_o)) / (exp(2.0 * vfrt) - 1.0);
-  const ML_CalcType Psi_CaNa_sl = 1.0 * vffrt * (gamma_Na_sl * Na_sl * exp(1.0 * vfrt) - gamma_Na_o * v(VT_Na_o)) / (exp(1.0 * vfrt) - 1.0);
-  const ML_CalcType Psi_CaK_sl = 1.0 * vffrt * (gamma_K_sl * K_myo * exp(1.0 * vfrt) - gamma_K_o * v(VT_K_o)) / (exp(1.0 * vfrt) - 1.0);
+  const ML_CalcType Psi_CaL_dyad = 4.0 * V_m * ffrt * (gamma_Ca_dyad * Ca_dyad * exp(2.0 * V_m * frt) - gamma_Ca_o * v(VT_Ca_o)) / (exp(2.0 * V_m * frt) - 1.0);
+  const ML_CalcType Psi_CaNa_dyad = 1.0 * V_m * ffrt * (gamma_Na_dyad * Na_dyad * exp(1.0 * V_m * frt) - gamma_Na_o * v(VT_Na_o)) / (exp(1.0 * V_m * frt) - 1.0);
+  const ML_CalcType Psi_CaK_dyad = 1.0 * V_m * ffrt * (gamma_K_dyad * K_myo * exp(1.0 * V_m * frt) - gamma_K_o * v(VT_K_o)) / (exp(1.0 * V_m * frt) - 1.0);
+  const ML_CalcType Psi_CaL_sl = 4.0 * V_m * ffrt * (gamma_Ca_sl * Ca_sl * exp(2.0 * V_m * frt) - gamma_Ca_o * v(VT_Ca_o)) / (exp(2.0 * V_m * frt) - 1.0);
+  const ML_CalcType Psi_CaNa_sl = 1.0 * V_m * ffrt * (gamma_Na_sl * Na_sl * exp(1.0 * V_m * frt) - gamma_Na_o * v(VT_Na_o)) / (exp(1.0 * V_m * frt) - 1.0);
+  const ML_CalcType Psi_CaK_sl = 1.0 * V_m * ffrt * (gamma_K_sl * K_myo * exp(1.0 * V_m * frt) - gamma_K_o * v(VT_K_o)) / (exp(1.0 * V_m * frt) - 1.0);
     
   // Calculating "pure" CDI
   double rateRecovery = 0.02313;
   const ML_CalcType sigmoidTransition_dyad = 1.0 - 1.0 / (1.0 + (1.86532 * Ca_dyad / 0.032));
   const ML_CalcType tauTransition_dyad = 1.09670 + (1.0 - sigmoidTransition_dyad) * 141.42990;
   const ML_CalcType dI_CaL_pureCDI_dyad = -I_CaL_pureCDI_dyad * sigmoidTransition_dyad / tauTransition_dyad + (1.0 - I_CaL_pureCDI_dyad) * rateRecovery;
+  I_CaL_pureCDI_dyad += tinc * dI_CaL_pureCDI_dyad;
   const ML_CalcType sigmoidTransition_sl = 1.0 - 1.0 / (1.0 + (1.86532 * Ca_sl / 0.032));
   const ML_CalcType tauTransition_sl = 1.09670 + (1.0 - sigmoidTransition_sl) * 141.42990;
   const ML_CalcType dI_CaL_pureCDI_sl = -I_CaL_pureCDI_sl * sigmoidTransition_sl / tauTransition_sl + (1.0 - I_CaL_pureCDI_sl) * rateRecovery;
+  I_CaL_pureCDI_sl += tinc * dI_CaL_pureCDI_sl;
     
   // Channel conductances
   double P_Ca = 1.5768e-04 * v(VT_IpCa_Multiplier);
   double P_Ca_PKA = P_Ca * 1.9; // BetaAdrenergic;  (%Gong--> 1.9)
   if (v(VT_celltype) == 1.0) { // epi
       P_Ca = P_Ca * 1.025;
-      P_Ca_PKA = P_Ca_P * 1.025;
+      P_Ca_PKA = P_Ca_PKA * 1.025;
   } else if (v(VT_celltype) == 2.0) { // mid
       P_Ca = P_Ca * 1.1;
-      P_Ca_PKA = P_Ca_P * 1.1;
+      P_Ca_PKA = P_Ca_PKA * 1.1;
   }
   double P_CaNa = 1.1737 / 1.8969 * 0.00125 * P_Ca;
   double P_CaK = 1.1737 / 1.8969 * 3.574e-4 * P_Ca;
@@ -550,15 +551,17 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   i_p_fast = i_inf - (i_inf - i_p_fast) * exp(-tinc / tau_i_p_fast);
     
   // Putting together the channels behavior and fraction
+  double G_to_slow;
+    double G_to_fast;
   if (v(VT_celltype) == 1.0) { // epi
-      double G_to_slow = 0.02036 * v(VT_Ito_slow_Multiplier);
-      double G_to_fast = 0.29856 * v(VT_Ito_fast_Multiplier);
+      G_to_slow = 0.02036 * v(VT_Ito_slow_Multiplier);
+      G_to_fast = 0.29856 * v(VT_Ito_fast_Multiplier);
   } else if (v(VT_celltype) == 2.0) { // mid
-      double G_to_slow = 0.04632 * v(VT_Ito_slow_Multiplier);
-      double G_to_fast = 0.14928 * v(VT_Ito_fast_Multiplier);
+      G_to_slow = 0.04632 * v(VT_Ito_slow_Multiplier);
+      G_to_fast = 0.14928 * v(VT_Ito_fast_Multiplier);
   } else if (v(VT_celltype) == 0.0) { //endo
-      double G_to_slow = 0.07210 * v(VT_Ito_slow_Multiplier);
-      double G_to_fast = 0.01276 * v(VT_Ito_fast_Multiplier);
+      G_to_slow = 0.07210 * v(VT_Ito_slow_Multiplier);
+      G_to_fast = 0.01276 * v(VT_Ito_fast_Multiplier);
   }
   const ML_CalcType phi_Ito_CaMK = phi_INa_CaMK; //TODO: Hierbei bin ich mir unsicher aus Tomek übernommen (MATLAB -> fItop = camk_f_RyR)
   I_to_slow = v(VT_Ito_Multiplier) * G_to_slow * (V_m - E_K) * ((1.0 - phi_Ito_CaMK) * a_slow * i_slow + phi_Ito_CaMK * a_p_slow * i_p_slow);
@@ -568,6 +571,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Rapid delayed rectifier current (IKr)
   ////////////////////////////////////////////////////////////////////////////////////////
+  const ML_CalcType VFoverRT = V_m * frt;
   const ML_CalcType alpha_Kr = 0.1161 * exp(0.299 * VFoverRT);
   const ML_CalcType beta_Kr = 0.2442 * exp(-1.604 * VFoverRT);
   double alpha_Kr_1 = 1.25 * 0.1235;
@@ -646,7 +650,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   // gating
   const ML_CalcType a_K1 = 4.094 / (1.0 + exp(0.1217 * (V_m - E_K - 49.934)));
   const ML_CalcType b_K1 = (15.72 * exp(0.0674 * (V_m - E_K - 3.257)) + exp(0.0618 * (V_m - E_K - 594.31))) / (1.0 + exp(-0.1629 * (V_m - E_K + 14.207)));
-  const ML_CalcType K1_SS = (a_K1) / (a_K1 + b_K1);
+  K1_SS = (a_K1) / (a_K1 + b_K1);
     
   // Putting together the channels behavior and fraction
   double G_K1 = 0.6992 + v(VT_IK1_Multiplier);
@@ -676,11 +680,11 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   const ML_CalcType h_Na = exp(qna * (V_m - 8.3117) * VFoverRT);
     
   // calculate I_NaCa_i
-  const ML_CalcType h_1_i = 1.0 + (Na_i * (1.0 + h_Na)) / kna3;
-  const ML_CalcType h_2_i = (Na_i * h_Na) / (kna3 * h_1_i);
+  const ML_CalcType h_1_i = 1.0 + (Na_sl * (1.0 + h_Na)) / kna3;
+  const ML_CalcType h_2_i = (Na_sl * h_Na) / (kna3 * h_1_i);
   const ML_CalcType h_3_i = 1.0 / h_1_i;
-  const ML_CalcType h_4_i = 1.0 + (Na_i * (1.0 + Na_i / kna2)) / kna1;
-  const ML_CalcType h_5_i = (Na_i * Na_i) / (h_4_i * kna1 * kna2);
+  const ML_CalcType h_4_i = 1.0 + (Na_sl * (1.0 + Na_sl / kna2)) / kna1;
+  const ML_CalcType h_5_i = (Na_sl * Na_sl) / (h_4_i * kna1 * kna2);
   const ML_CalcType h_6_i = 1.0 / h_4_i;
   const ML_CalcType h_7_i = 1.0 + (v(VT_Na_o) * (1.0 + 1.0 / h_Na)) / kna3;
   const ML_CalcType h_8_i = v(VT_Na_o) / (kna3 * h_Na * h_7_i);
@@ -698,7 +702,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   const ML_CalcType k_4_dd_i = h_2_i * wnaca;
   const ML_CalcType k_4_i = k_4_d_i + k_4_dd_i;
   const ML_CalcType k_5_i = kcaoff;
-  const ML_CalcType k_6_i = h_6_i * Ca_i * kcaon;
+  const ML_CalcType k_6_i = h_6_i * Ca_sl * kcaon;
   const ML_CalcType k_7_i = h_5_i * h_2_i * wna;
   const ML_CalcType k_8_i = h_8_i * h_11_i * wna;
  
@@ -713,20 +717,20 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   const ML_CalcType E_4_i = x_4_i / (x_1_i + x_2_i + x_3_i + x_4_i);
     
   double KmCaAct = 150.0e-6;
-  const ML_CalcType allo_i = 1.0 / (1.0 + ((KmCaAct / Ca_i) * (KmCaAct / Ca_i)));
+  const ML_CalcType allo_sl = 1.0 / (1.0 + ((KmCaAct / Ca_sl) * (KmCaAct / Ca_sl)));
   double z_Na = 1.0;
-  const ML_CalcType J_NaCa_Na_i = 3.0 * (E_4_i * k_7_i - E_1_i * k_8_i) + E_3_i * k_4_dd_i - E_2_i * k_3_dd_i;
-  const ML_CalcType J_NaCa_Ca_i = E_2_i * k_2_i - E_1_i * k_1_i;
+  const ML_CalcType J_NaCa_Na_sl = 3.0 * (E_4_i * k_7_i - E_1_i * k_8_i) + E_3_i * k_4_dd_i - E_2_i * k_3_dd_i;
+  const ML_CalcType J_NaCa_Ca_sl = E_2_i * k_2_i - E_1_i * k_1_i;
   double G_NaCa = 0.00179 * v(VT_INaCa_Multiplier);
     
-  I_NaCa_i = G_NaCa * allo_i * (z_Na * J_NaCa_Na_i + z_Ca * J_NaCa_Ca_i) * (1-INaCa_fractionSS); //TODO: Was ist INaCa_fractionSS
+  I_NaCa_sl = G_NaCa * allo_sl * (z_Na * J_NaCa_Na_sl + z_Ca * J_NaCa_Ca_sl) * (1-v(VT_INaCa_fractionSS));
     
-  // calculate I_NaCa_ss
-  const ML_CalcType h_1_ss = 1.0 + (Na_sl * (1.0 + h_Na)) / kna3;
-  const ML_CalcType h_2_ss = (Na_sl * h_Na) / (kna3 * h_1_ss);
+  // calculate I_NaCa_dyad
+  const ML_CalcType h_1_ss = 1.0 + (Na_dyad * (1.0 + h_Na)) / kna3;
+  const ML_CalcType h_2_ss = (Na_dyad * h_Na) / (kna3 * h_1_ss);
   const ML_CalcType h_3_ss = 1.0 / h_1_ss;
-  const ML_CalcType h_4_ss = 1.0 + (Na_sl * (1.0 + Na_sl / kna2)) / kna1;
-  const ML_CalcType h_5_ss = (Na_sl * Na_sl) / (h_4_ss * kna1 * kna2);
+  const ML_CalcType h_4_ss = 1.0 + (Na_dyad * (1.0 + Na_dyad / kna2)) / kna1;
+  const ML_CalcType h_5_ss = (Na_dyad * Na_dyad) / (h_4_ss * kna1 * kna2);
   const ML_CalcType h_6_ss = 1.0 / h_4_ss;
   const ML_CalcType h_7_ss = 1.0 + v(VT_Na_o) / kna3 * (1.0 + 1.0 / h_Na);
   const ML_CalcType h_8_ss = v(VT_Na_o) / (kna3 * h_Na * h_7_ss);
@@ -744,7 +748,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   const ML_CalcType k_4_dd_ss = h_2_ss * wnaca;
   const ML_CalcType k_4_ss = k_4_d_ss + k_4_dd_ss;
   const ML_CalcType k_5_ss = kcaoff;
-  const ML_CalcType k_6_ss = h_6_ss * Ca_sl * kcaon;
+  const ML_CalcType k_6_ss = h_6_ss * Ca_dyad * kcaon;
   const ML_CalcType k_7_ss = h_5_ss * h_2_ss * wna;
   const ML_CalcType k_8_ss = h_8_ss * h_11_ss * wna;
     
@@ -758,11 +762,11 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   const ML_CalcType E_3_ss = x_3_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
   const ML_CalcType E_4_ss = x_4_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
     
-  const ML_CalcType allo_ss = 1.0 / (1.0 + (KmCaAct / Ca_ss) * (KmCaAct / Ca_ss)); //TODO: Unklar ob Ca_ss oder Ca_sl
-  const ML_CalcType J_NaCa_Na_ss = 3.0 * (E_4_ss * k_7_ss - E_1_ss * k_8_ss) + E_3_ss * k_4_dd_ss - E_2_ss * k_3_dd_ss;
-  const ML_CalcType J_NaCa_Ca_ss = E_2_ss * k_2_ss - E_1_ss * k_1_ss;
+  const ML_CalcType allo_dyad = 1.0 / (1.0 + (KmCaAct / Ca_dyad) * (KmCaAct / Ca_dyad));
+  const ML_CalcType J_NaCa_Na_dyad = 3.0 * (E_4_ss * k_7_ss - E_1_ss * k_8_ss) + E_3_ss * k_4_dd_ss - E_2_ss * k_3_dd_ss;
+  const ML_CalcType J_NaCa_Ca_dyad = E_2_ss * k_2_ss - E_1_ss * k_1_ss;
     
-  I_NaCa_ss = INaCa_fractionSS * G_NaCa * allo_ss * (z_Na * J_NaCa_Na_ss + z_Ca * J_NaCa_Ca_ss); //TODO: Was ist INaCa_fractionSS
+  I_NaCa_dyad = v(VT_INaCa_fractionSS) * G_NaCa * allo_dyad * (z_Na * J_NaCa_Na_dyad + z_Ca * J_NaCa_Ca_dyad);
 
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Sodium-potassium pump (INaK)
@@ -772,7 +776,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double KmNaip_PKA = 8.4615;
   double KmKo = 1.5;
     
-  const ML_CalcType f_NaK = 0.75 + (0.00375 - ((140 - v(VT_Na_o)) / 50) * 0.001) * V_m; //Varying the slope mainly based on https://rupress.org/jgp/article-pdf/94/3/539/1814046/539.pdf
+  f_NaK = 0.75 + (0.00375 - ((140 - v(VT_Na_o)) / 50) * 0.001) * V_m; //Varying the slope mainly based on https://rupress.org/jgp/article-pdf/94/3/539/1814046/539.pdf
     
   I_NaK_dyad_noPKA = Fdyad * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip / Na_dyad), 4.0)) /(v(VT_K_o) + KmKo);
   I_NaK_dyad_PKA = Fdyad * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip_PKA / Na_dyad),4.0)) /(v(VT_K_o) + KmKo);
@@ -926,7 +930,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   }
   
   // PLB phosphorylation effect on affinity
-  phosphorylationTotal = CaMK_f_PLB + fPLB_PKA - CaMK_f_PLB * fPLB_PKA; // we assume the same effect, just making sure we don't count it twice.
+  const ML_CalcType phosphorylationTotal = CaMK_f_PLB + fPLB_PKA - CaMK_f_PLB * fPLB_PKA; // we assume the same effect, just making sure we don't count it twice.
   double Kmf_Phospho = Kmf * 0.5; // Similar percentage effect as in Heijman 2011 % CHANGED JAKUB
     
   // Direct Ca-based acceleration
@@ -948,6 +952,19 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   I_pCa_dyad = Fdyad * pow(Q10SLCaP, Qpow) * IbarSLCaP * pow(Ca_dyad, 1.6) / (pow(KmPCa, 1.6) + pow(Ca_dyad, 1.6));
   I_pCa_sl = Fsl * pow(Q10SLCaP, Qpow) * IbarSLCaP * pow(Ca_sl, 1.6) / (pow(KmPCa, 1.6) + pow(Ca_sl, 1.6));
   I_pCa = I_pCa_dyad + I_pCa_sl;
+    
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Land-Niederer model of contraction
+  ////////////////////////////////////////////////////////////////////////////////////////
+//    double fracTnIpo = 0.0031; // Derived quantity (TnI_PKAp(baseline)/TnItot)
+//    double fPKA_TnI = (1.45 - 0.45 * (1.0 - fTnI_PKA) / (1 - fracTnIpo)); // multiplier for Ca unbinding from troponin.
+    
+    
+    
+    
+    
+    
     
     
   /////////////////////////////////////////////////////////////////////////////////////////
@@ -1044,44 +1061,44 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
 }  // TWorld::Calc
 
 void TWorld::Print(ostream &tempstr, double tArg,  ML_CalcType V) {
-  tempstr << tArg << ' ' << V << ' ' <<
-    m << ' '  << A_h << ' '  << B_h << ' '  << h << ' ' << A_j << ' '  << B_j << ' '<< j << ' ' << h_p << ' ' << j_p << ' ' << m_L << ' ' <<
-    h_L << ' ' << h_L_CaMK << ' ' << a << ' ' <<
-    i_fast << ' ' << i_slow << ' ' << a_CaMK << ' ' << i_CaMK_fast << ' ' << i_CaMK_slow << ' ' << d << ' ' << f_fast <<
-    ' ' << f_slow << ' ' << f_Ca_fast << ' ' << f_Ca_slow << ' ' <<
-    j_Ca << ' ' << f_CaMK_fast << ' ' << f_Ca_CaMK_fast << ' ' << n_ss << ' ' << n_i << ' ' << C_0 << ' ' << C_1 << ' ' << C_2 << ' ' << O << ' ' << I << ' ' <<
-    x_s1 << ' ' << x_s2 <<' ' <<
-    Na_i << ' ' << Na_ss << ' ' << K_i << ' ' << K_ss << ' ' << Ca_i << ' ' << Ca_ss << ' ' << Ca_nsr << ' ' <<
-    Ca_jsr << ' ' << Cl_i << ' ' << CaMK_trap << ' ' << J_rel_NP << ' ' << J_rel_CaMK << ' '
+//  tempstr << tArg << ' ' << V << ' ' <<
+//    m << ' '  << A_h << ' '  << B_h << ' '  << h << ' ' << A_j << ' '  << B_j << ' '<< j << ' ' << h_p << ' ' << j_p << ' ' << m_L << ' ' <<
+//    h_L << ' ' << h_L_CaMK << ' ' << a << ' ' <<
+//    i_fast << ' ' << i_slow << ' ' << a_CaMK << ' ' << i_CaMK_fast << ' ' << i_CaMK_slow << ' ' << d << ' ' << f_fast <<
+//    ' ' << f_slow << ' ' << f_Ca_fast << ' ' << f_Ca_slow << ' ' <<
+//    j_Ca << ' ' << f_CaMK_fast << ' ' << f_Ca_CaMK_fast << ' ' << n_ss << ' ' << n_i << ' ' << C_0 << ' ' << C_1 << ' ' << C_2 << ' ' << O << ' ' << I << ' ' <<
+//    x_s1 << ' ' << x_s2 <<' ' <<
+//    Na_i << ' ' << Na_ss << ' ' << K_i << ' ' << K_ss << ' ' << Ca_i << ' ' << Ca_ss << ' ' << Ca_nsr << ' ' <<
+//    Ca_jsr << ' ' << Cl_i << ' ' << CaMK_trap << ' ' << J_rel_NP << ' ' << J_rel_CaMK << ' '
   ;
 }
 
 void TWorld::LongPrint(ostream &tempstr, double tArg,  ML_CalcType V) {
   Print(tempstr, tArg, V);
 
-  tempstr << I_Na << ' ' << I_Na_late << ' ' << I_to << ' ' << I_CaL_i << ' ' << I_CaL_ss << ' ' << I_CaNa_i << ' ' << I_CaNa_ss << ' ' << I_CaK_i << ' ' << I_CaK_ss << ' ' << I_CaL << ' ' << I_CaNa << ' ' << I_CaK << ' ' <<
-    I_Kr << ' ' << I_Ks << ' ' << I_K1 << ' ' << I_NaCa_i << ' ' << I_NaCa_ss << ' ' << I_NaK << ' ' << I_CaCl << ' ' << I_Nab << ' ' <<
-    I_Cab << ' ' << I_Kb << ' ' << I_Clb << ' '<< I_pCa << ' '<< J_diff_Na << ' '<< J_diff_Ca << ' '<< J_diff_K << ' '<< J_leak << ' '<< J_rel << ' '<< J_tr << ' '<< J_up << ' '<< cur_I_tot << ' '
+//  tempstr << I_Na << ' ' << I_Na_late << ' ' << I_to << ' ' << I_CaL_i << ' ' << I_CaL_ss << ' ' << I_CaNa_i << ' ' << I_CaNa_ss << ' ' << I_CaK_i << ' ' << I_CaK_ss << ' ' << I_CaL << ' ' << I_CaNa << ' ' << I_CaK << ' ' <<
+//    I_Kr << ' ' << I_Ks << ' ' << I_K1 << ' ' << I_NaCa_i << ' ' << I_NaCa_ss << ' ' << I_NaK << ' ' << I_CaCl << ' ' << I_Nab << ' ' <<
+//    I_Cab << ' ' << I_Kb << ' ' << I_Clb << ' '<< I_pCa << ' '<< J_diff_Na << ' '<< J_diff_Ca << ' '<< J_diff_K << ' '<< J_leak << ' '<< J_rel << ' '<< J_tr << ' '<< J_up << ' '<< cur_I_tot << ' '
   ;
 }  // TWorld::LongPrint
 
 void TWorld::GetParameterNames(vector<string> &getpara) {
   const string ParaNames[] =
   {
-    "m", "A_h", "B_h",          "h",  "A_j", "B_j",                "j",                            "h_p",
-    "j_p",
-    "m_L",         "h_L",
-    "h_L_CaMK",    "a",                  "i_fast",                  "i_slow",                       "a_CaMK",
-    "i_CaMK_fast", "i_CaMK_slow",        "d",                       "f_fast",                       "f_slow",
-    "f_Ca_fast",
-    "f_Ca_slow",
-    "j_Ca",        "f_CaMK_fast",        "f_Ca_CaMK_fast",          "n_ss",          "n_i", "C_0", "C_1", "C_2", "O", "I",
-    "x_s1",
-    "x_s2",               "Na_i",                    "Na_ss",                        "K_i",
-    "K_ss",
-    "Ca_i",        "Ca_ss",
-    "Ca_nsr",      "Ca_jsr", "Cl_i",             "CaMK_trap",               "J_rel_NP",
-    "J_rel_CaMK"
+//    "m", "A_h", "B_h",          "h",  "A_j", "B_j",                "j",                            "h_p",
+//    "j_p",
+//    "m_L",         "h_L",
+//    "h_L_CaMK",    "a",                  "i_fast",                  "i_slow",                       "a_CaMK",
+//    "i_CaMK_fast", "i_CaMK_slow",        "d",                       "f_fast",                       "f_slow",
+//    "f_Ca_fast",
+//    "f_Ca_slow",
+//    "j_Ca",        "f_CaMK_fast",        "f_Ca_CaMK_fast",          "n_ss",          "n_i", "C_0", "C_1", "C_2", "O", "I",
+//    "x_s1",
+//    "x_s2",               "Na_i",                    "Na_ss",                        "K_i",
+//    "K_ss",
+//    "Ca_i",        "Ca_ss",
+//    "Ca_nsr",      "Ca_jsr", "Cl_i",             "CaMK_trap",               "J_rel_NP",
+//    "J_rel_CaMK"
   };
 
   for (int i = 0; i < sizeof(ParaNames)/sizeof(ParaNames[0]); i++)
@@ -1092,11 +1109,11 @@ void TWorld::GetLongParameterNames(vector<string> &getpara) {
   GetParameterNames(getpara);
   const string ParaNames[] =
   {
-    "I_Na", "I_Na_late", "I_to", "I_CaL_i", "I_CaL_ss", "I_CaNa_i", "I_CaNa_ss", "I_CaK_i", "I_CaK_ss",      "I_CaL",      "I_CaNa",      "I_CaK",      "I_Kr",      "I_Ks",
-    "I_K1",
-    "I_NaCa_i",
-    "I_NaCa_ss",
-    "I_NaK",     "I_CaCl",     "I_Nab",     "I_Cab",     "I_Kb",     "I_Clb",       "I_pCa", "J_diff_Na", "J_diff_Ca", "J_diff_K", "J_leak", "J_rel", "J_tr", "J_up", "cur_I_tot"
+//    "I_Na", "I_Na_late", "I_to", "I_CaL_i", "I_CaL_ss", "I_CaNa_i", "I_CaNa_ss", "I_CaK_i", "I_CaK_ss",      "I_CaL",      "I_CaNa",      "I_CaK",      "I_Kr",      "I_Ks",
+//    "I_K1",
+//    "I_NaCa_i",
+//    "I_NaCa_ss",
+//    "I_NaK",     "I_CaCl",     "I_Nab",     "I_Cab",     "I_Kb",     "I_Clb",       "I_pCa", "J_diff_Na", "J_diff_Ca", "J_diff_K", "J_leak", "J_rel", "J_tr", "J_up", "cur_I_tot"
   };
   for (int i = 0; i < sizeof(ParaNames)/sizeof(ParaNames[0]); i++)
     getpara.push_back(ParaNames[i]);

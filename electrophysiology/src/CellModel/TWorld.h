@@ -31,28 +31,39 @@ class TWorld : public vbElphyModel<ML_CalcType> {
  public:
   TWorldParameters *ptTeaP;
 
-  /// state variables
-  ML_CalcType m, A_h, B_h, h, A_j, B_j, j, h_p, j_p, m_L, h_L, h_L_CaMK;  // I_Na
-  ML_CalcType a, i_fast, i_slow, a_CaMK, i_CaMK_fast, i_CaMK_slow;  // I_to
-  ML_CalcType d, f_fast, f_slow, f_Ca_fast, f_Ca_slow, j_Ca, f_CaMK_fast, f_Ca_CaMK_fast, n_ss, n_i;  // I_CaL
-  ML_CalcType C_0, C_1, C_2, O, I;  // I_Kr
-  ML_CalcType x_s1, x_s2;  // I_Ks
-  ML_CalcType Na_i, Na_ss, K_i, K_ss, Ca_i, Ca_ss, Ca_nsr, Ca_jsr, Cl_i;  // ion concentrations and buffers
-  ML_CalcType CaMK_trap;  // Calcium/Calmodulin-dependent protein kinase
-  ML_CalcType J_rel_NP, J_rel_CaMK;  // SR calcium release flux via RyRs
-  #ifdef TRPN
-  ML_CalcType Ca_TRPN;  // TROPONIN
-  #endif  // ifdef TRPN
+  /// state variables currents
+    ML_CalcType m, A_h, B_h, A_j, B_j, h, j, h_p, j_p, m_PKA, h_PKA, j_PKA, h_both, j_both, m_L, h_L, h_L_p; // Sodium current (INa, INaL)
+    ML_CalcType d, f_fast, f_slow, f_Ca_fast, f_Ca_slow, j_Ca, f_p_fast, f_Ca_p_fast, d_PKA, f_PKA_fast, f_PKA_slow, f_Ca_PKA_fast, f_Ca_PKA_slow, f_both_fast, f_Ca_both_fast, n_Ca_dyad, n_Ca_sl; // L-type calcium current (I_CaL, I_CaNa, I_CaK)
+    ML_CalcType a_slow, a_fast, i_slow, i_fast, a_p_slow, a_p_fast, i_p_slow, i_p_fast; // Transient outward current (Ito)
+    ML_CalcType C_0, C_1, C_2, O, I; // Rapid delayed rectifier current (IKr)
+    ML_CalcType xs_dyad, xs_sl; // Slow delayed rectifier current (IKs)
+    ML_CalcType K1_SS; // Inward rectifier current (IK1)
+    ML_CalcType f_NaK; // Sodium-potassium pump (INaK)
+    ML_CalcType ryr_R, ryr_O, ryr_I, ryr_CaRI, ryr_R_p, ryr_O_p, ryr_I_p, ryr_CaRI_p; // Calcium release from SR (Jrel, Jleak)
 
   /// currents
-  ML_CalcType I_Na, I_Na_late, I_to, I_CaL, I_CaNa, I_CaK, I_CaL_i, I_CaL_ss, I_CaNa_i, I_CaNa_ss, I_CaK_i, I_CaK_ss, I_Kr, I_Ks, I_K1, I_NaCa_i, I_NaCa_ss;
-  ML_CalcType I_NaK, I_CaCl_junc, I_CaCl_sl, I_CaCl, I_Nab, I_Cab, I_Kb, I_Clb, I_pCa;
-  ML_CalcType J_diff_Na, J_diff_Ca, J_diff_K, J_leak, J_rel, J_tr, J_up;
-  ML_CalcType cur_I_tot, I_tot;
-  #ifdef ISAC
-  ML_CalcType I_SAC;
-  #endif // ifdef ISAC
+    ML_CalcType I_Na_Base_NP, I_Na_Base_CaMK, I_Na_Base_PKA, I_Na_Base_Both, I_Na_Base, I_NaFast_dyad, I_NaFast_sl, I_NaL_dyad, I_NaL_sl, I_Na_dyad, I_Na_sl, I_NaFast, I_NaL; // Sodium current (INa, INaL)
+    ML_CalcType I_CaL_pureCDI_dyad, I_CaL_pureCDI_sl, I_CaL_dyad_NP, I_CaL_dyad_CaMK, I_CaL_dyad_PKA, I_CaL_dyad_Both, I_CaL_sl_NP, I_CaL_sl_CaMK, I_CaL_sl_PKA, I_CaL_sl_Both, I_CaNa_dyad_NP, I_CaNa_dyad_CaMK, I_CaNa_dyad_PKA, I_CaNa_dyad_Both, I_CaNa_sl_NP, I_CaNa_sl_CaMK, I_CaNa_sl_PKA, I_CaNa_sl_Both, I_CaK_dyad_NP, I_CaK_dyad_CaMK, I_CaK_dyad_PKA, I_CaK_dyad_Both, I_CaK_sl_NP, I_CaK_sl_CaMK, I_CaK_sl_PKA, I_CaK_sl_Both, I_CaL_dyad, I_CaNa_dyad, I_CaK_dyad, I_CaL_sl, I_CaNa_sl, I_CaK_sl; // L-type calcium current (I_CaL, I_CaNa, I_CaK)
+    ML_CalcType I_to_slow, I_to_fast, I_to; // Rapid delayed rectifier current (IKr)
+    ML_CalcType I_Kr; // Rapid delayed rectifier current (IKr)
+    ML_CalcType I_Ks_dyad, I_Ks_sl, I_Ks; // Slow delayed rectifier current (IKs)
+    ML_CalcType I_K1; // Inward rectifier current (IK1)
+    ML_CalcType I_NaCa_sl, I_NaCa_dyad; // Sodium-calcium exchanger (INaCa)
+    ML_CalcType I_NaK_dyad_noPKA, I_NaK_dyad_PKA, I_NaK_sl_noPKA, I_NaK_sl_PKA, I_NaK_dyad, I_NaK_sl, I_NaK; // Sodium-potassium pump (INaK)
+    ML_CalcType I_CaCl_dyad, I_CaCl_sl, I_ClCa, I_Clb; // Chloride currents (ICaCl, IClb)
+    ML_CalcType I_Nab_dyad, I_Nab_sl, I_Nab, I_Kb, I_Cab_dyad, I_Cab_sl, I_Cab; // Background currents (INab, ICab, IKb)
+    ML_CalcType J_rel_ICaLdep_act, J_rel_ICaLdep_f1, J_rel_ICaLdep_f2, J_rel_ICaLdep, J_SR_Carel_NP, J_SR_Carel_CaMK, J_SR_Carel, J_SR_leak; // Calcium release from SR (Jrel, Jleak)
+    ML_CalcType J_up_NP, J_up_CaMK, J_up; // Calcium reuptake to the SR (Jup)
+    ML_CalcType I_pCa_dyad, I_pCa_sl, I_pCa; // Sarcolemmal calcium pump (pCa)
+    
+  /// ion concentrations
+    ML_CalcType Na_dyad, Na_sl, Na_myo; // Sodium Concentration
+    ML_CalcType K_myo; // Potassium Concentration
+    ML_CalcType Cl_myo; // Cloride Concentration
+    ML_CalcType Ca_dyad, Ca_sl, Ca_myo, Ca_SR; // Calcium Concentration
 
+  /// Signalling and Buffering
+    ML_CalcType CaMK_trap, CaMK_f_ICaL, CaMK_f_RyR, CaMK_f_PLB, casig_serca_trap; // CaMK and Ca Signalling
 
   TWorld(TWorldParameters *pp);
   ~TWorld();
@@ -67,19 +78,19 @@ class TWorld : public vbElphyModel<ML_CalcType> {
 
   virtual inline  ML_CalcType GetVm() {return v(VT_Init_Vm); }
 
-  virtual inline  ML_CalcType GetCai() {return Ca_i; }
+  virtual inline  ML_CalcType GetCai() {return Ca_myo; }
 
   virtual inline  ML_CalcType GetCao() {return v(VT_Ca_o); }
 
-  virtual inline  ML_CalcType GetNai() {return Na_i; }
+  virtual inline  ML_CalcType GetNai() {return Na_myo; }
 
   virtual inline  ML_CalcType GetNao() {return v(VT_Na_o); }
 
-  virtual inline  ML_CalcType GetKi() {return K_i; }
+  virtual inline  ML_CalcType GetKi() {return K_myo; }
 
   virtual inline  ML_CalcType GetKo() {return v(VT_K_o); }
 
-  virtual inline  ML_CalcType GetCli() {return Cl_i; }
+  virtual inline  ML_CalcType GetCli() {return Cl_myo; }
 
   virtual inline  ML_CalcType GetClo() {return v(VT_Cl_o); }
 

@@ -16,11 +16,6 @@
 #define TWORLDPARAMETERS_H
 
 /// TWorld model variations.
-/// Stretch avtivated channel by Pueyo et al. 2016 Implemented by Albert Dasi
-#define ISAC
-
-/// Troponin dynamics from Land et. al tension model to use mechano-electric feedback. Implemented by Jan-Erik Duhme.
-#define TRPN
 
 #include <ParameterLoader.h>
 
@@ -46,6 +41,11 @@ enum varType {
   VT_INab_Multiplier,
   VT_ICab_Multiplier,
   VT_IpCa_Multiplier,
+  VT_Ito_slow_Multiplier,
+  VT_Ito_fast_Multiplier,
+  VT_ICaL_fractionSS,
+  VT_CMDN_Multiplier,
+  VT_INaCa_fractionSS,
 
   /// state variables
   VT_Init_Vm,
@@ -147,20 +147,6 @@ enum varType {
   VT_tau_h_LCaMK,
   VT_RToverF,
   
-  #ifdef ISAC
-  VT_ISAC_SWITCH,
-  VT_alpha,
-  VT_G_sac,
-  VT_K_sac,
-  VT_E_sac,
-#endif // ifdef ISAC
-  #ifdef TRPN
-  VT_Init_Ca_TRPN,
-  VT_beta1,
-  VT_Ca_T50,
-  VT_k_TRPN,
-  VT_n_TRPN,
-#endif  // ifdef TRPN
   vtLast
 };
 }  // namespace NS_TWorldParameters
