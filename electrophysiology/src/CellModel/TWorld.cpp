@@ -111,7 +111,6 @@ void TWorld::Init() {
     fPLB_PKA = v(VT_Init_fPLB_PKA);
     fTnI_PKA = v(VT_Init_fTnI_PKA);
     fMyBPC_PKA = v(VT_Init_fMyBPC_PKA);
-    ICaL_fractionSS = v(VT_Init_ICaL_fractionSS)
     
 }  // TWorld::Init
 
@@ -129,6 +128,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double F = 96485.0; // [C/mol]
   double T = 310.0; // [K]
   double FoRT = F / R / T;
+  double vffrt = v * F * F / (R * T);
+  double vfrt = v * F / (R * T);
   double Cmem = 1.3810e-10; // [F] membrane capacitance
   double Qpow = (T - 310.0) / 10.0;
     
@@ -335,212 +336,187 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        L-type calcium current (I_CaL, I_CaNa, I_CaK)
   ////////////////////////////////////////////////////////////////////////////////////////
+  // d gate
+  const ML_CalcType d_inf = min(1.0763*exp((-1.007*exp((-0.0829*(V_m+3.62483))))), 1.0);
+  const ML_CalcType tau_d = 1.5 + 1.0 / (exp(-0.05 * (V_m + 6.0)) + exp(0.09 * (V_m + 14.0)));
+  d = d_inf - (d_inf - d) * exp(-tinc / tau_d);
+    
+  // f gate
+  const ML_CalcType f_inf = 1.0 / (1.0 + exp((V_m + 19.58) / 3.696));
+  const ML_CalcType tau_f_fast = 6.17111 + 1.0 / (0.00126 * exp(-(V_m + 26.63596) / 9.69961) + 0.00126 * exp((V_m + 26.63596) / 9.69961));
+  const ML_CalcType tau_f_slow = 2719.22489 + 1.0 / (7.19411e-05 * exp(-(V_m + 5.74631) / 10.87690) + 7.19411e-05 * exp((V_m + 5.74631) / 16.31535));
+    
+  const ML_CalcType A_f_fast = 0.52477;
+  const ML_CalcType A_f_slow = 1.0 - A_f_fast;
+  f_fast = f_inf - (f_inf - f_fast) * exp(-tinc / tau_f_fast);
+  f_slow = f_inf - (f_inf - f_slow) * exp(-tinc / tau_f_slow);
+  const ML_CalcType f = A_f_fast * f_fast + A_f_slow * f_slow;
+    
+  const ML_CalcType f_Ca_inf      = f_inf;
+  const ML_CalcType tau_f_Ca_fast = 13.50673 + 1.0 / (0.15420 * exp(-(V_m - 1.31611) / 11.33960) + 0.15420 * exp((V_m - 1.31611) / 11.33960));
+  const ML_CalcType tau_f_Ca_slow = 177.95813 + 1.0 / (4.73955e-04 * exp((-V_m+0.79049) / 0.81777) + 4.73955e-04 * exp((V_m+2.40474) /1.90812));
+  const ML_CalcType A_f_Ca_fast = 0.3 + 0.6 / (1.0 + exp((V_m - 9.24247) / 27.96201));
+  const ML_CalcType A_f_Ca_slow = 1.0 - A_f_Ca_fast;
+  f_Ca_fast = f_Ca_inf - (f_Ca_inf - f_Ca_fast) * exp(-tinc / tau_f_Ca_fast);
+  f_Ca_slow = f_Ca_inf - (f_Ca_inf - f_Ca_slow) * exp(-tinc / tau_f_Ca_slow);
+  const ML_CalcType f_Ca = A_f_Ca_fast * f_Ca_fast + A_f_Ca_slow * f_Ca_slow;
+    
+  // j gate
+  double tau_j_Ca = 66.0;
+  const ML_CalcType j_Ca_inf = 1. / (1 + exp((V_m + 17.66945) / (3.21501)));
+  j_Ca = j_Ca_inf - (j_Ca_inf - j_Ca) * exp(-tinc / tau_j_Ca);
+    
+  // gating CaMK-P
+  const ML_CalcType tau_f_p_fast = 2.5 * tau_f_fast;
+  const ML_CalcType f_p_inf = f_inf;
+  f_p_fast = f_p_inf - (f_p_inf - f_p_fast) * exp(-tinc / tau_f_p_fast);
+  const ML_CalcType f_p = A_f_fast * f_p_fast + A_f_slow * f_slow;
+    
+  const ML_CalcType tau_f_Ca_p_fast = 2.5 * tau_f_Ca_fast;
+  const ML_CalcType f_Ca_p_inf = f_inf;
+  f_Ca_p_fast = f_Ca_p_inf - (f_Ca_p_inf - f_Ca_p_fast) * exp(-tinc / tau_f_Ca_p_fast);
+  const ML_CalcType f_Ca_p = A_f_Ca_fast * f_Ca_p_fast + A_f_Ca_slow * f_Ca_slow;
+    
+  // gating PKA
+  const ML_CalcType d_PKA_inf = 1.0323 * exp(-1.0553 * exp(-0.0810 * (V_m + 12.62483)));
+  d_PKA_inf = min(d_PKA_inf, 1.0);
+  d_PKA = d_PKA_inf - (d_PKA_inf - d_PKA) * exp(-tinc / tau_d);
+    
+  const ML_CalcType f_PKA_inf = 1.0 / (1.0 + exp((V_m + 19.58 + 6) / 3.696));
+  f_PKA_fast = f_PKA_inf - (f_PKA_inf - f_PKA_fast) * exp(-tinc / tau_f_fast);
+  f_PKA_slow = f_PKA_inf - (f_PKA_inf - f_PKA_slow) * exp(-tinc / tau_f_slow);
+  const ML_CalcType f_PKA = A_f_fast * f_PKA_fast + A_f_slow * f_PKA_slow;
+    
+  const ML_CalcType f_Ca_PKA_inf = f_PKA_inf;
+  f_Ca_PKA_fast = f_Ca_PKA_inf - (f_Ca_PKA_inf - f_Ca_PKA_fast) * exp(-tinc / tau_f_Ca_fast);
+  f_Ca_PKA_slow = f_Ca_PKA_inf - (f_Ca_PKA_inf - f_Ca_PKA_slow) * exp(-tinc / tau_f_Ca_slow);
+  const ML_CalcType f_Ca_PKA = A_f_Ca_fast * f_Ca_PKA_fast + A_f_Ca_slow * f_Ca_PKA_slow;
+    
+  // Both Phosphorylated
+  const ML_CalcType f_both_inf = f_PKA_inf;
+  f_both_fast = f_both_inf - (f_both_inf - f_both_fast) * exp(-tinc / tau_f_p_fast);
+  const ML_CalcType f_both = A_f_fast * f_both_fast + A_f_slow * f_PKA_slow;
+    
+  const ML_CalcType f_Ca_both_inf = f_Ca_PKA_inf;
+  f_Ca_both_fast = f_Ca_both_inf - (f_Ca_both_inf - f_Ca_both_fast) * exp(-tinc / tau_f_Ca_p_fast);
+  const ML_CalcType f_Ca_both = A_f_Ca_fast * f_Ca_both_fast + A_f_Ca_slow * f_Ca_PKA_slow;
+    
+  // nca
+  double Kmn = 0.00222;
+  double k2n = 957.85903;
+  const ML_CalcType k_m2_n = j_Ca * 0.84191;
+    
+  const ML_CalcType alpha_n_Ca_dyad   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_dyad)), 3.80763));
+  const ML_CalcType dn_Ca_dyad = alpha_n_Ca_dyad * k2n - n_Ca_dyad * k_m2_n;
+  n_Ca_dyad += tinc * dn_Ca_dyad;
+    
+  const ML_CalcType alpha_n_Ca_sl   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_sl)), 3.80763));
+  const ML_CalcType dn_Ca_sl = alpha_n_Ca_sl * k2n - n_Ca_sl * k_m2_n;
+  n_Ca_sl += tinc * dn_Ca_sl;
+    
+  // driving force
+  const ML_CalcType I_o = (0.5 * (v(VT_Na_o) + v(VT_K_o) + v(VT_Cl_o) + (4.0 * v(VT_Ca_o))) / 1000.0);
+  const ML_CalcType I_dyad = ((0.5 * (Na_dyad + K_myo + Cl_myo + (4.* Ca_dyad))) / 1000.0);
+  const ML_CalcType I_sl = ((0.5 * (Na_sl + K_myo + Cl_myo + (4.* Ca_sl))) / 1000.0);
+    
+  double dielConstant = 74.0; // water at 37°
+  double temp = 310.0; // body temp in kelvins.
+  double constA = 1.82e6 * pow((dielConstant * temp), -1.5);
+    
+  const ML_CalcType gamma_Ca_o = pow(10.0, -constA * 4.0 * (sqrt(I_o)/(1.0 + sqrt(I_o)) - 0.3 * I_o));
+  const ML_CalcType gamma_Ca_dyad = pow(10.0, -constA * 4.0 * (sqrt(I_dyad)/(1.0 + sqrt(I_dyad)) - 0.3 * I_dyad));
+  const ML_CalcType gamma_Ca_sl = pow(10.0, -constA * 4.0 * (sqrt(I_sl)/(1.0 + sqrt(I_sl)) - 0.3 * I_sl));
+  const ML_CalcType gamma_Na_o = pow(10.0, -constA * 1.0 * (sqrt(I_o)/(1.0 + sqrt(I_o)) - 0.3 * I_o));
+  const ML_CalcType gamma_Na_dyad = pow(10.0, -constA * 1.0 * (sqrt(I_dyad)/(1.0 + sqrt(I_dyad)) - 0.3 * I_dyad));
+  const ML_CalcType gamma_Na_sl = pow(10.0, -constA * 1.0 * (sqrt(I_sl)/(1.0 + sqrt(I_sl)) - 0.3 * I_sl));
+  const ML_CalcType gamma_K_o = pow(10.0, -constA * 1.0 * (sqrt(I_o)/(1.0 + sqrt(I_o)) - 0.3 * I_o));
+  const ML_CalcType gamma_K_dyad = pow(10.0, -constA * 1.0 * (sqrt(I_dyad)/(1.0 + sqrt(I_dyad)) - 0.3 * I_dyad));
+  const ML_CalcType gamma_K_sl = pow(10.0, -constA * 1.0 * (sqrt(I_sl)/(1.0 + sqrt(I_sl)) - 0.3 * I_sl));
 
-  
-    // d gate
-    const ML_CalcType d_inf = min(1.0763*exp((-1.007*exp((-0.0829*(V_m+3.62483))))), 1.0);
-    const ML_CalcType tau_d = 1.5 + 1.0 / (exp(-0.05 * (V_m + 6.0)) + exp(0.09 * (V_m + 14.0)));
-    d = d_inf - (d_inf -d) * exp(-tinc / tau_d);
+  const ML_CalcType Psi_CaL_dyad = 4.0 * vffrt * (gamma_Ca_dyad * Ca_dyad * exp(2.0 * vfrt) - gamma_Ca_o * v(VT_Ca_o)) / (exp(2.0 * vfrt) - 1.0);
+  const ML_CalcType Psi_CaNa_dyad = 1.0 * vffrt * (gamma_Na_dyad * Na_dyad * exp(1.0 * vfrt) - gamma_Na_o * v(VT_Na_o)) / (exp(1.0 * vfrt) - 1.0);
+  const ML_CalcType Psi_CaK_dyad = 1.0 * vffrt * (gamma_K_dyad * K_myo * exp(1.0 * vfrt) - gamma_K_o * v(VT_K_o)) / (exp(1.0 * vfrt) - 1.0);
+  const ML_CalcType Psi_CaL_sl = 4.0 * vffrt * (gamma_Ca_sl * Ca_sl * exp(2.0 * vfrt) - gamma_Ca_o * v(VT_Ca_o)) / (exp(2.0 * vfrt) - 1.0);
+  const ML_CalcType Psi_CaNa_sl = 1.0 * vffrt * (gamma_Na_sl * Na_sl * exp(1.0 * vfrt) - gamma_Na_o * v(VT_Na_o)) / (exp(1.0 * vfrt) - 1.0);
+  const ML_CalcType Psi_CaK_sl = 1.0 * vffrt * (gamma_K_sl * K_myo * exp(1.0 * vfrt) - gamma_K_o * v(VT_K_o)) / (exp(1.0 * vfrt) - 1.0);
     
-    // f gate
-    const ML_CalcType f_inf = 1.0 / (1.0 + exp((V_m + 19.58) / 3.696));
-    const ML_CalcType tau_f_fast = 6.17111 + 1.0 / (0.00126 * exp(-(V_m + 26.63596) / 9.69961) + 0.00126 * exp((V_m + 26.63596) / 9.69961));
-    const ML_CalcType tau_f_slow = 2719.22489 + 1.0 / (7.19411e-05 * exp(-(V_m + 5.74631) / 10.87690) + 7.19411e-05 * exp((V_m + 5.74631) / 16.31535));
+  // Calculating "pure" CDI
+  double rateRecovery = 0.02313;
+  const ML_CalcType sigmoidTransition_dyad = 1.0 - 1.0 / (1.0 + (1.86532 * Ca_dyad / 0.032));
+  const ML_CalcType tauTransition_dyad = 1.09670 + (1.0 - sigmoidTransition_dyad) * 141.42990;
+  const ML_CalcType dI_CaL_pureCDI_dyad = -I_CaL_pureCDI_dyad * sigmoidTransition_dyad / tauTransition_dyad + (1.0 - I_CaL_pureCDI_dyad) * rateRecovery;
+  const ML_CalcType sigmoidTransition_sl = 1.0 - 1.0 / (1.0 + (1.86532 * Ca_sl / 0.032));
+  const ML_CalcType tauTransition_sl = 1.09670 + (1.0 - sigmoidTransition_sl) * 141.42990;
+  const ML_CalcType dI_CaL_pureCDI_sl = -I_CaL_pureCDI_sl * sigmoidTransition_sl / tauTransition_sl + (1.0 - I_CaL_pureCDI_sl) * rateRecovery;
     
-    const ML_CalcType A_f_fast = 0.52477;
-    const ML_CalcType A_f_slow = 1.0 - A_f_fast;
-    f_fast = f_inf - (f_inf - f_fast) * exp(-tinc / tau_f_fast);
-    f_slow = f_inf - (f_inf - f_slow) * exp(-tinc / tau_f_slow);
-    const ML_CalcType f = A_f_fast * f_fast + A_f_slow * f_slow;
-    
-    const ML_CalcType f_Ca_inf      = f_inf;
-    const ML_CalcType tau_f_Ca_fast = 13.50673 + 1.0 / (0.15420 * exp(-(V_m - 1.31611) / 11.33960) + 0.15420 * exp((V_m - 1.31611) / 11.33960));
-    const ML_CalcType tau_f_Ca_slow = 177.95813 + 1.0 / (4.73955e-04 * exp((-V_m+0.79049) / 0.81777) + 4.73955e-04 * exp((V_m+2.40474) /1.90812));
-    const ML_CalcType A_f_Ca_fast = 0.3 + 0.6 / (1.0 + exp((V_m - 9.24247) / 27.96201));
-    const ML_CalcType A_f_Ca_slow = 1.0 - A_f_Ca_fast;
-    f_Ca_fast = f_Ca_inf - (f_Ca_inf - f_Ca_fast) * exp(-tinc / tau_f_Ca_fast);
-    f_Ca_slow = f_Ca_inf - (f_Ca_inf - f_Ca_slow) * exp(-tinc / tau_f_Ca_slow);
-    const ML_CalcType f_Ca = A_f_Ca_fast * f_Ca_fast + A_f_Ca_slow * f_Ca_slow;
-    
-    // j gate
-    double tau_j_Ca = 66.0;
-    const ML_CalcType j_Ca_inf = 1. / (1 + exp((V_m + 17.66945) / (3.21501)));
-    j_Ca = j_Ca_inf - (j_Ca_inf - j_Ca) * exp(-tinc / tau_j_Ca);
-    
-    // gating CaMK-P
-    const ML_CalcType tau_f_p_fast = 2.5 * tau_f_fast;
-    const ML_CalcType f_p_inf = f_inf;
-    f_p_fast = f_p_inf - (f_p_inf - f_p_fast) * exp(-tinc / tau_f_p_fast);
-    const ML_CalcType f_p = A_f_fast * f_p_fast + A_f_slow * f_slow;
-    
-    const ML_CalcType tau_f_Ca_p_fast = 2.5 * tau_f_Ca_fast;
-    const ML_CalcType f_Ca_p_inf = f_inf;
-    f_Ca_p_fast = f_Ca_p_inf - (f_Ca_p_inf - f_Ca_p_fast) * exp(-tinc / tau_f_Ca_p_fast);
-    const ML_CalcType f_Ca_p = A_f_Ca_fast * f_Ca_p_fast + A_f_Ca_slow * f_Ca_slow;
-    
-    // SS nca
-    double Kmn = 0.00222;
-    double k2n = 957.85903;
-    const ML_CalcType k_m2_n = j_Ca * 0.84191;
-    const ML_CalcType alpha_n_Ca_dyad   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_dyad)), 3.80763));
-    const ML_CalcType dn_Ca_dyad = alpha_n_Ca_dyad * k2n - n_Ca_dyad * k_m2_n;
-    n_Ca_dyad += tinc * dn_Ca_dyad;
-    
-    // myoplasmic nca
-    const ML_CalcType alpha_n_Ca_sl   = 1.0 / ((k2n / k_m2_n) + pow((1.0 + (Kmn / Ca_sl)), 3.80763));
-    const ML_CalcType dn_Ca_sl = alpha_n_Ca_sl * k2n - n_Ca_sl * k_m2_n;
-    n_Ca_sl += tinc * dn_Ca_sl;
-    
-    // SS driving force
-    const ML_CalcType I_o = (0.5 * (v(VT_Na_o) + v(VT_K_o) + v(VT_Cl_o) + (4.0 * v(VT_Ca_o))) / 1000.0);
-    const ML_CalcType I_sl = ((0.5 * (Na_sl + K_sl + Cl_i + (4.* Ca_ss))) / 1000.0);
-    
-    double constA = (1.82e6*pow((74.*310.),-1.5)); // Diel constant and temperature as constants
-    
-   
-    
-    
-   
-    
-    
-    
-    
-    
-
-    
-    
-    
-    
-    
-    // Channel conductances
-    double P_Ca = 1.5768e-04 * v(VT_IpCa_Multiplier);
-    double P_Ca_PKA = P_Ca * 1.9; // BetaAdrenergic;  (%Gong--> 1.9)
-    if (v(VT_celltype) == 1.0) { // epi
-        P_Ca = P_Ca * 1.025;
-        P_Ca_PKA = P_Ca_P * 1.025;
-    } else if (v(VT_celltype) == 2.0) { // mid
-        P_Ca = P_Ca * 1.1;
-        P_Ca_PKA = P_Ca_P * 1.1;
-    }
-    double P_CaNa = 1.1737 / 1.8969 * 0.00125 * P_Ca;
-    double P_CaK = 1.1737 / 1.8969 * 3.574e-4 * P_Ca;
-    double P_Ca_p = 1.1 * P_Ca;
-    double P_CaNa_p = 1.1737 / 1.8969 * 0.00125 * P_Ca_p;
-    double P_CaK_p = 1.1737 / 1.8969 * 3.574e-4 * P_Ca_p;
-    double P_CaNa_PKA = 1.1737 / 1.8969 * 0.00125 * P_Ca_PKA;
-    double P_CaK_PKA = 1.1737 / 1.8969 * 3.574e-4 * P_Ca_PKA;
+  // Channel conductances
+  double P_Ca = 1.5768e-04 * v(VT_IpCa_Multiplier);
+  double P_Ca_PKA = P_Ca * 1.9; // BetaAdrenergic;  (%Gong--> 1.9)
+  if (v(VT_celltype) == 1.0) { // epi
+      P_Ca = P_Ca * 1.025;
+      P_Ca_PKA = P_Ca_P * 1.025;
+  } else if (v(VT_celltype) == 2.0) { // mid
+      P_Ca = P_Ca * 1.1;
+      P_Ca_PKA = P_Ca_P * 1.1;
+  }
+  double P_CaNa = 1.1737 / 1.8969 * 0.00125 * P_Ca;
+  double P_CaK = 1.1737 / 1.8969 * 3.574e-4 * P_Ca;
+  double P_Ca_p = 1.1 * P_Ca;
+  double P_CaNa_p = 1.1737 / 1.8969 * 0.00125 * P_Ca_p;
+  double P_CaK_p = 1.1737 / 1.8969 * 3.574e-4 * P_Ca_p;
+  double P_CaNa_PKA = 1.1737 / 1.8969 * 0.00125 * P_Ca_PKA;
+  double P_CaK_PKA = 1.1737 / 1.8969 * 3.574e-4 * P_Ca_PKA;
       
+  // Putting together the channels behavior and fraction
+  I_CaL_dyad_NP = P_Ca * Psi_CaL_dyad * d * (f * (1.0 - n_Ca_dyad) + j_Ca * f_Ca * n_Ca_dyad);
+  I_CaL_dyad_CaMK = P_Ca_p * Psi_CaL_dyad * d * (f_p * (1.0 - n_Ca_dyad) + j_Ca * f_Ca_p * n_Ca_dyad);
+  I_CaL_dyad_PKA = P_Ca_PKA * Psi_CaL_dyad * d_PKA * (f_PKA * (1.0 - n_Ca_dyad) + j_Ca * f_Ca_PKA * n_Ca_dyad);
+  I_CaL_dyad_Both = P_Ca_PKA * Psi_CaL_dyad * d_PKA * (f_both * (1.0 - n_Ca_dyad) + j_Ca * f_Ca_both * n_Ca_dyad);
+  I_CaL_sl_NP = P_Ca * Psi_CaL_sl * d * (f * (1.0 - n_Ca_sl) + j_Ca * f_Ca * n_Ca_sl);
+  I_CaL_sl_CaMK = P_Ca_p * Psi_CaL_sl * d * (f_p * (1.0 - n_Ca_sl) + j_Ca * f_Ca_p * n_Ca_sl);
+  I_CaL_sl_PKA = P_Ca_PKA * Psi_CaL_sl * d_PKA * (f_PKA * (1.0 - n_Ca_sl) + j_Ca * f_Ca_PKA * n_Ca_sl);
+  I_CaL_sl_Both = P_Ca_PKA * Psi_CaL_sl * d_PKA * (f_both * (1.0 - n_Ca_sl) + j_Ca * f_Ca_both * n_Ca_sl);
     
-    // Putting together the channels behavior and fraction
-    const ML_CalcType phi_ICaL_CaMK = CaMK_f_ICaL;
-    const ML_CalcType phi_ICaL_PKA = fICaL_PKA;
-    const ML_CalcType phi_ICaL_Both = phi_ICaL_CaMK * phi_ICaL_PKA;
-    const ML_CalcType phi_ICaL_CaMKonly = phi_ICaL_CaMK - phi_ICaL_Both;
-    const ML_CalcType phi_ICaL_PKAonly = phi_ICaL_PKA - phi_ICaL_Both;
+  I_CaNa_dyad_NP = P_CaNa * Psi_CaNa_dyad * d * (f * (1.0 - n_Ca_dyad) + j_Ca * f_Ca * n_Ca_dyad);
+  I_CaNa_dyad_CaMK = P_CaNa_p * Psi_CaNa_dyad * d * (f_p * (1.0 - n_Ca_dyad) + j_Ca * f_Ca_p * n_Ca_dyad);
+  I_CaNa_dyad_PKA = P_CaNa_PKA * Psi_CaNa_dyad * d_PKA * (f_PKA * (1.0 - n_Ca_dyad) + j_Ca * f_Ca_PKA * n_Ca_dyad);
+  I_CaNa_dyad_Both = P_CaNa_PKA * Psi_CaNa_dyad * d_PKA * (f_both * (1.0 - n_Ca_dyad) + j_Ca * f_Ca_both * n_Ca_dyad);
+  I_CaNa_sl_NP = P_CaNa * Psi_CaNa_sl * d * (f * (1.0 - n_Ca_sl) + j_Ca * f_Ca * n_Ca_sl);
+  I_CaNa_sl_CaMK = P_CaNa_p * Psi_CaNa_sl * d * (f_p * (1.0 - n_Ca_sl) + j_Ca * f_Ca_p * n_Ca_sl);
+  I_CaNa_sl_PKA = P_CaNa_PKA * Psi_CaNa_sl * d_PKA * (f_PKA * (1.0 - n_Ca_sl) + j_Ca * f_Ca_PKA * n_Ca_sl);
+  I_CaNa_sl_Both = P_CaNa_PKA * Psi_CaNa_sl * d_PKA * (f_both * (1.0 - n_Ca_sl) + j_Ca * f_Ca_both * n_Ca_sl);
     
-    I_CaL_dyad_NP = ;
-    I_CaL_dyad_CaMK = ;
-    I_CaL_dyad_PKA = ;
-    I_CaL_dyad_Both = ;
-    I_CaL_sl_NP = ;
-    I_CaL_sl_CaMK = ;
-    I_CaL_sl_PKA = ;
-    I_CaL_sl_Both = ;
+  I_CaK_dyad_NP = P_CaK * Psi_CaK_dyad * d * (f * (1.0 - n_Ca_dyad) + j_Ca * f_Ca * n_Ca_dyad);
+  I_CaK_dyad_CaMK = P_CaK_p * Psi_CaK_dyad * d * (f_p * (1.0 - n_Ca_dyad) + j_Ca * f_Ca_p * n_Ca_dyad);
+  I_CaK_dyad_PKA = P_CaK_PKA * Psi_CaK_dyad * d_PKA * (f_PKA * (1.0 - n_Ca_dyad) + j_Ca * f_Ca_PKA * n_Ca_dyad);
+  I_CaK_dyad_Both = P_CaK_PKA * Psi_CaK_dyad * d_PKA * (f_both * (1.0 - n_Ca_dyad) + j_Ca * f_Ca_both * n_Ca_dyad);
+  I_CaK_sl_NP = P_CaK * Psi_CaK_sl * d * (f * (1.0 - n_Ca_sl) + j_Ca * f_Ca * n_Ca_sl);
+  I_CaK_sl_CaMK = P_CaK_p * Psi_CaK_sl * d * (f_p * (1.0 - n_Ca_sl) + j_Ca * f_Ca_p * n_Ca_sl);
+  I_CaK_sl_PKA = P_CaK_PKA * Psi_CaK_sl * d_PKA * (f_PKA * (1.0 - n_Ca_sl) + j_Ca * f_Ca_PKA * n_Ca_sl);
+  I_CaK_sl_Both = P_CaK_PKA * Psi_CaK_sl * d_PKA * (f_both * (1.0 - n_Ca_sl) + j_Ca * f_Ca_both * n_Ca_sl);
     
-    I_CaNa_dyad_NP = ;
-    I_CaNa_dyad_CaMK = ;
-    I_CaNa_dyad_PKA = ;
-    I_CaNa_dyad_Both = ;
-    I_CaNa_sl_NP = ;
-    I_CaNa_sl_CaMK = ;
-    I_CaNa_sl_PKA = ;
-    I_CaNa_sl_Both = ;
+  //4 population combination
+  const ML_CalcType phi_ICaL_CaMK = CaMK_f_ICaL;
+  const ML_CalcType phi_ICaL_PKA = fICaL_PKA;
+  const ML_CalcType phi_ICaL_Both = phi_ICaL_CaMK * phi_ICaL_PKA;
+  const ML_CalcType phi_ICaL_CaMKonly = phi_ICaL_CaMK - phi_ICaL_Both;
+  const ML_CalcType phi_ICaL_PKAonly = phi_ICaL_PKA - phi_ICaL_Both;
     
-    I_CaK_dyad_NP = ;
-    I_CaK_dyad_CaMK = ;
-    I_CaK_dyad_PKA = ;
-    I_CaK_dyad_Both = ;
-    I_CaK_sl_NP = ;
-    I_CaK_sl_CaMK = ;
-    I_CaK_sl_PKA = ;
-    I_CaK_sl_Both = ;
+  I_CaL_dyad = ((1.0 - phi_ICaL_CaMKonly - phi_ICaL_PKAonly - phi_ICaL_Both) * I_CaL_dyad_NP + phi_ICaL_CaMKonly * I_CaL_dyad_CaMK + phi_ICaL_PKAonly * I_CaL_dyad_PKA + phi_ICaL_Both * I_CaL_dyad_Both) * I_CaL_pureCDI_dyad;
+  I_CaNa_dyad = ((1.0 - phi_ICaL_CaMKonly - phi_ICaL_PKAonly - phi_ICaL_Both) * I_CaNa_dyad_NP + phi_ICaL_CaMKonly * I_CaNa_dyad_CaMK + phi_ICaL_PKAonly * I_CaNa_dyad_PKA + phi_ICaL_Both * I_CaNa_dyad_Both) * I_CaL_pureCDI_dyad;
+  I_CaK_dyad = ((1.0 - phi_ICaL_CaMKonly - phi_ICaL_PKAonly - phi_ICaL_Both) * I_CaK_dyad_NP + phi_ICaL_CaMKonly * I_CaK_dyad_CaMK + phi_ICaL_PKAonly * I_CaK_dyad_PKA + phi_ICaL_Both * I_CaK_dyad_Both) * I_CaL_pureCDI_dyad;
+  I_CaL_sl = ((1.0 - phi_ICaL_CaMKonly - phi_ICaL_PKAonly - phi_ICaL_Both) * I_CaL_sl_NP + phi_ICaL_CaMKonly * I_CaL_sl_CaMK + phi_ICaL_PKAonly * I_CaL_sl_PKA + phi_ICaL_Both * I_CaL_sl_Both) * I_CaL_pureCDI_sl;
+  I_CaNa_sl = ((1.0 - phi_ICaL_CaMKonly - phi_ICaL_PKAonly - phi_ICaL_Both) * I_CaNa_sl_NP + phi_ICaL_CaMKonly * I_CaNa_sl_CaMK + phi_ICaL_PKAonly * I_CaNa_sl_PKA + phi_ICaL_Both * I_CaNa_sl_Both) * I_CaL_pureCDI_sl;
+  I_CaK_sl = ((1.0 - phi_ICaL_CaMKonly - phi_ICaL_PKAonly - phi_ICaL_Both) * I_CaK_sl_NP + phi_ICaL_CaMKonly * I_CaK_sl_CaMK + phi_ICaL_PKAonly * I_CaK_sl_PKA + phi_ICaL_Both * I_CaK_sl_Both) * I_CaL_pureCDI_sl;
     
-    //4 population combination
-    I_CaL_dyad = ;
-    I_CaNa_dyad = ;
-    I_CaK_dyad = ;
-    I_CaL_sl = ;
-    I_CaNa_sl = ;
-    I_CaK_sl = ;
-    
-    // Weigh I_CaL in sl and dyad
-    I_CaL_sl = I_CaL_sl * (1 - ICaL_fractionSS);
-    I_CaNa_sl = I_CaNa_sl * (1 - ICaL_fractionSS);
-    I_CaK_sl = I_CaK_sl * (1 - ICaL_fractionSS);
-    I_CaL_dyad = I_CaL_dyad * ICaL_fractionSS;
-    I_CaNa_dyad = I_CaNa_dyad * ICaL_fractionSS;;
-    I_CaK_dyad = I_CaK_dyad * ICaL_fractionSS;;
-    
-    
-    
-    
-    
-//    /// calculate I_CaL, I_CaNa, I_CaK
+  // Weigh I_CaL in sl and dyad
+  I_CaL_dyad = I_CaL_dyad * v(VT_ICaL_fractionSS);
+  I_CaNa_dyad = I_CaNa_dyad * v(VT_ICaL_fractionSS);
+  I_CaK_dyad = I_CaK_dyad * v(VT_ICaL_fractionSS);
+  I_CaL_sl = I_CaL_sl * (1 - v(VT_ICaL_fractionSS));
+  I_CaNa_sl = I_CaNa_sl * (1 - v(VT_ICaL_fractionSS));
+  I_CaK_sl = I_CaK_sl * (1 - v(VT_ICaL_fractionSS));
 
-//
-
-//
-//
-//
-//
-//
-//    const ML_CalcType gamma_Ca_ss = exp((-constA*4.*((sqrt(I_ss)/(1.+sqrt(I_ss))) - (0.3*I_ss))));
-//    const ML_CalcType gamma_Ca_o = exp((-constA*4.*((sqrt(I_o)/(1.+sqrt(I_o))) - (0.3*I_o))));
-//    const ML_CalcType gamma_Na_ss = exp((-constA*1.*((sqrt(I_ss)/(1.+sqrt(I_ss))) - (0.3*I_ss))));
-//    const ML_CalcType gamma_Na_o = exp((-constA*1.*((sqrt(I_o)/(1.+sqrt(I_o))) - (0.3*I_o))));
-//    const ML_CalcType gamma_K_ss = exp((-constA*1.*((sqrt(I_ss)/(1.+sqrt(I_ss))) - (0.3*I_ss))));
-//    const ML_CalcType gamma_K_o = exp((-constA*1.*((sqrt(I_o)/(1.+sqrt(I_o))) - (0.3*I_o))));
-//    const ML_CalcType Psi_Ca_ss = ((4.*VFFoverRT*((gamma_Ca_ss*Ca_ss*exp((2.*VFoverRT))) - (gamma_Ca_o*v(VT_Ca_o))))/(exp((2.*VFoverRT)) - 1.));
-//    const ML_CalcType Psi_CaNa_ss = ((1.*VFFoverRT*((gamma_Na_ss*Na_ss*exp((1.*VFoverRT))) - (gamma_Na_o)*v(VT_Na_o)))/(exp((1.*VFoverRT)) - 1.));
-//    const ML_CalcType Psi_CaK_ss = ((1.*VFFoverRT*((gamma_K_ss*K_ss*exp((1.*VFoverRT))) - (gamma_K_o*v(VT_K_o))))/(exp((1.*VFoverRT)) - 1.));
-//
-//    double PCa_b = 8.3757e-05;
-//    const ML_CalcType PCa = v(VT_IpCa_Multiplier) * PCa_b;
-//    const ML_CalcType PCaNa = (0.00125*PCa);
-//    const ML_CalcType PCaK = (3.574e-4*PCa);
-//    const ML_CalcType PCap = (1.1*PCa);
-//    const ML_CalcType PCaNap = (0.00125*PCap);
-//    const ML_CalcType PCaKp = (3.574e-4*PCap);
-//
-//    double ICaL_fractionSS = 0.8;
-//    const ML_CalcType phi_ICaL_CaMK = 1.0 / (1.0 + KmCaMK / CaMK_active);
-//
-//    I_CaL_ss = (ICaL_fractionSS*(((1. - phi_ICaL_CaMK)*PCa*Psi_Ca_ss*d*((f*(1. - n_ss))+(j_Ca*f_Ca*n_ss)))+(phi_ICaL_CaMK*PCap*Psi_Ca_ss*d*((f_CaMK*(1. - n_ss))+(j_Ca*f_Ca_CaMK*n_ss)))));
-//    I_CaNa_ss = (ICaL_fractionSS*(((1. - phi_ICaL_CaMK)*PCaNa*Psi_CaNa_ss*d*((f*(1. - n_ss))+(j_Ca*f_Ca*n_ss)))+(phi_ICaL_CaMK*PCaNap*Psi_CaNa_ss*d*((f_CaMK*(1. - n_ss))+(j_Ca*f_Ca_CaMK*n_ss)))));
-//    I_CaK_ss = (ICaL_fractionSS*(((1. - phi_ICaL_CaMK)*PCaK*Psi_CaK_ss*d*((f*(1. - n_ss))+(j_Ca*f_Ca*n_ss)))+(phi_ICaL_CaMK*PCaKp*Psi_CaK_ss*d*((f_CaMK*(1. - n_ss))+(j_Ca*f_Ca_CaMK*n_ss)))));
-//
-//
-//    const ML_CalcType alpha_n_Ca_i   = 1.0 / ((k2n / k_m2_n) + ((1. + (Kmn / Ca_i))*(1. + (Kmn / Ca_i))*(1. + (Kmn / Ca_i))*(1. + (Kmn / Ca_i))));
-//    n_i = alpha_n_Ca_i * (k2n / k_m2_n) - (alpha_n_Ca_i * (k2n / k_m2_n) - n_i) * exp(-k_m2_n * tinc);
-//
-//
-//    const ML_CalcType I_i = ((0.5*(Na_i+K_i+Cl_i+(4.*Ca_i)))/1000.);
-//    const ML_CalcType gamma_Ca_i = exp((-constA*4.*((sqrt(I_i)/(1.+sqrt(I_i))) - (0.3*I_i))));
-//    const ML_CalcType gamma_Na_i = exp((-constA*1.*((sqrt(I_i)/(1.+sqrt(I_i))) - (0.3*I_i))));
-//    const ML_CalcType gamma_K_i = exp((-constA*1.*((sqrt(I_i)/(1.+sqrt(I_i))) - (0.3*I_i))));
-//    const ML_CalcType Psi_Ca_i = ((4.*VFFoverRT*((gamma_Ca_i*Ca_i*exp((2.*VFoverRT))) - (gamma_Ca_o*v(VT_Ca_o))))/(exp((2.*VFoverRT)) - 1.));
-//    const ML_CalcType Psi_CaNa_i = (1.*VFFoverRT*((gamma_Na_i*Na_i*exp((1.*VFoverRT))) - (gamma_Na_o*v(VT_Na_o)))/(exp((1.*VFoverRT)) - 1.));
-//    const ML_CalcType Psi_CaK_i = ((1.*VFFoverRT*((gamma_K_i*K_i*exp((1.*VFoverRT))) - (gamma_K_o*v(VT_K_o))))/(exp((1.*VFoverRT)) - 1.));
-//
-//    I_CaL_i = ((1. - ICaL_fractionSS)*(((1. - phi_ICaL_CaMK)*PCa*Psi_Ca_i*d*((f*(1. - n_i))+(j_Ca*f_Ca*n_i)))+(phi_ICaL_CaMK*PCap*Psi_Ca_i*d*((f_CaMK*(1. - n_i))+(j_Ca*f_Ca_CaMK*n_i)))));
-//    I_CaNa_i = ((1. - ICaL_fractionSS)*(((1. - phi_ICaL_CaMK)*PCaNa*Psi_CaNa_i*d*((f*(1. - n_i))+(j_Ca*f_Ca*n_i)))+(phi_ICaL_CaMK*PCaNap*Psi_CaNa_i*d*((f_CaMK*(1. - n_i))+(j_Ca*f_Ca_CaMK*n_i)))));
-//    I_CaK_i = ((1. - ICaL_fractionSS)*(((1. - phi_ICaL_CaMK)*PCaK*Psi_CaK_i*d*((f*(1. - n_i))+(j_Ca*f_Ca*n_i)))+(phi_ICaL_CaMK*PCaKp*Psi_CaK_i*d*((f_CaMK*(1. - n_i))+(j_Ca*f_Ca_CaMK*n_i)))));
-//
-//
-//    I_CaL = I_CaL_ss + I_CaL_i;
-//    I_CaNa = I_CaNa_ss + I_CaNa_i;
-//    I_CaK = I_CaK_ss + I_CaK_i;
-  
     
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Transient outward current (Ito)
