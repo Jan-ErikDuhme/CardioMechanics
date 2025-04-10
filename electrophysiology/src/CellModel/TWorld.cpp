@@ -897,106 +897,85 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Calcium reuptake to the SR (Jup)
   ////////////////////////////////////////////////////////////////////////////////////////
-    double Q10SRCaP = 2.6; // [none]
-    double Vmax_SRCaP = 0.00543 * v(VT_Jup_Multiplier); // [mM/msec] (286 umol/L cytosol/sec)
-    double Kmr = 2.31442; // [mM]L cytosol
-    double hillSRCaP =  1.02809; // [mM]
-    double Kmf = 0.30672e-03; // [mM] default
+  double Q10SRCaP = 2.6; // [none]
+  double Vmax_SRCaP = 0.00543 * v(VT_Jup_Multiplier); // [mM/msec] (286 umol/L cytosol/sec)
+  double Kmr = 2.31442; // [mM]L cytosol
+  double hillSRCaP =  1.02809; // [mM]
+  double Kmf = 0.30672e-03; // [mM] default
     
-    if (v(VT_celltype) == 1.0) { // epi
-        Vmax_SRCaP = Vmax_SRCaP * 1.2; // based loosely on https://www.ahajournals.org/doi/10.1161/01.RES.62468.25308.27?url_ver=Z39.88-2003&rfr_id=ori:rid:crossref.org&rfr_dat=cr_pub%20%200pubmed - there may be other datasets, and other values. % the 20% is just an initial guesstimate.
-    }
+  if (v(VT_celltype) == 1.0) { // epi
+      Vmax_SRCaP = Vmax_SRCaP * 1.2; // based loosely on https://www.ahajournals.org/doi/10.1161/01.RES.62468.25308.27?url_ver=Z39.88-2003&rfr_id=ori:rid:crossref.org&rfr_dat=cr_pub%20%200pubmed - there may be other datasets, and other values. % the 20% is just an initial guesstimate.
+  }
+  
+  // PLB phosphorylation effect on affinity
+  phosphorylationTotal = CaMK_f_PLB + fPLB_PKA - CaMK_f_PLB * fPLB_PKA; // we assume the same effect, just making sure we don't count it twice.
+  double Kmf_Phospho = Kmf * 0.5; // Similar percentage effect as in Heijman 2011 % CHANGED JAKUB
     
-    // PLB phosphorylation effect on affinity
-    phosphorylationTotal = CaMK_f_PLB + fPLB_PKA - CaMK_f_PLB * fPLB_PKA; // we assume the same effect, just making sure we don't count it twice.
-    double Kmf_Phospho = Kmf * 0.5; // Similar percentage effect as in Heijman 2011 % CHANGED JAKUB
+  // Direct Ca-based acceleration
+  double Km_SERCA_Ca = 0.4; // 0.03 in Heijman 2011; affinity for direct Vmax modulation by CaMKII
+  double Max_Vmax_SERCA_Ca = 1.11142;
+  double Vmax_mult = 1.0 + Max_Vmax_SERCA_Ca / (1.0 + pow((Km_SERCA_Ca / casig_SERCA_act), 2));
     
-    // Direct Ca-based acceleration
-    double Km_SERCA_Ca = 0.4; // 0.03 in Heijman 2011; affinity for direct Vmax modulation by CaMKII
-    double Max_Vmax_SERCA_Ca = 1.11142;
-    double Vmax_mult = 1.0 + Max_Vmax_SERCA_Ca / (1.0 + pow((Km_SERCA_Ca / casig_SERCA_act), 2));
-    
-    J_up_NP = pow(Q10SRCaP, Qpow) * Vmax_SRCaP * Vmax_mult * (pow((Ca_myo / Kmf), hillSRCaP) - pow((Ca_SR / Kmr), hillSRCaP)) / (1.0 + pow((Ca_myo / Kmf), hillSRCaP) + pow((Ca_SR / Kmr), hillSRCaP);
-    J_up_CaMK = pow(Q10SRCaP, Qpow) * Vmax_SRCaP * Vmax_mult * (pow((Ca_myo / Kmf_Phospho), hillSRCaP) - pow(Ca_SR / Kmr), hillSRCaP)) / (1.0 + pow((Ca_myo / Kmf_Phospho), hillSRCaP) + pow((Ca_SR / Kmr), hillSRCaP));
-    J_up = J_up_NP * (1.0 - phosphorylationTotal) + J_up_CaMK * phosphorylationTotal;
+  J_up_NP = pow(Q10SRCaP, Qpow) * Vmax_SRCaP * Vmax_mult * (pow((Ca_myo / Kmf), hillSRCaP) - pow((Ca_SR / Kmr), hillSRCaP)) / (1.0 + pow((Ca_myo / Kmf), hillSRCaP) + pow((Ca_SR / Kmr), hillSRCaP);
+  J_up_CaMK = pow(Q10SRCaP, Qpow) * Vmax_SRCaP * Vmax_mult * (pow((Ca_myo / Kmf_Phospho), hillSRCaP) - pow(Ca_SR / Kmr), hillSRCaP)) / (1.0 + pow((Ca_myo / Kmf_Phospho), hillSRCaP) + pow((Ca_SR / Kmr), hillSRCaP));
+  J_up = J_up_NP * (1.0 - phosphorylationTotal) + J_up_CaMK * phosphorylationTotal;
     
 
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Sarcolemmal calcium pump (pCa)
   ////////////////////////////////////////////////////////////////////////////////////////
-    double IbarSLCaP = 0.02064  * v(VT_IpCa_Multiplier);
-    double KmPCa = 0.5e-3; // [mM]
-    double Q10SLCaP = 2.35; // [none]
-    I_pCa_dyad = Fdyad * pow(Q10SLCaP, Qpow) * IbarSLCaP * pow(Ca_dyad, 1.6) / (pow(KmPCa, 1.6) + pow(Ca_dyad, 1.6));
-    I_pCa_sl = Fsl * pow(Q10SLCaP, Qpow) * IbarSLCaP * pow(Ca_sl, 1.6) / (pow(KmPCa, 1.6) + pow(Ca_sl, 1.6));
-    I_pCa = I_pCa_dyad + I_pCa_sl;
-    
-    
-    
-
-//    double kmcmdn  = 0.00238;
-//    double trpnmax = 0.07;
-//    double kmtrpn  = 0.0005;
-//    double BSRmax  = 0.047;
-//    double KmBSR   = 0.00087;
-//    double BSLmax  = 1.124;
-//    double KmBSL   = 0.0087;
-//    double csqnmax = 10.0;
-//    double kmcsqn  = 0.8;
-    
-    
-    kon_na
-    Bmax_Naj
-    koff_na
-    Bmax_Nasl
-    
-    Bmax_TnClow
+  double IbarSLCaP = 0.02064  * v(VT_IpCa_Multiplier);
+  double KmPCa = 0.5e-3; // [mM]
+  double Q10SLCaP = 2.35; // [none]
+  I_pCa_dyad = Fdyad * pow(Q10SLCaP, Qpow) * IbarSLCaP * pow(Ca_dyad, 1.6) / (pow(KmPCa, 1.6) + pow(Ca_dyad, 1.6));
+  I_pCa_sl = Fsl * pow(Q10SLCaP, Qpow) * IbarSLCaP * pow(Ca_sl, 1.6) / (pow(KmPCa, 1.6) + pow(Ca_sl, 1.6));
+  I_pCa = I_pCa_dyad + I_pCa_sl;
     
     
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Buffering
   ////////////////////////////////////////////////////////////////////////////////////////
-    const ML_CalcType dBuffer_NaBj = ; //TODO: Put equation
-    Buffer_NaBj += tinc * dBuffer_NaBj;
-    const ML_CalcType dBuffer_NaBsl = ; //TODO: Put equation
-    Buffer_NaBsl += tinc * dBuffer_NaBsl;
-    const ML_CalcType dBuffer_TnClow = ; //TODO: Put equation
-    Buffer_TnClow += tinc * dBuffer_TnClow;
-    const ML_CalcType dBuffer_TnCHc = ; //TODO: Put equation
-    Buffer_TnCHc += tinc * dBuffer_TnCHc;
-    const ML_CalcType dBuffer_TnCHm = ; //TODO: Put equation
-    Buffer_TnCHm += tinc * dBuffer_TnCHm;
-    const ML_CalcType dBuffer_CaM = ; //TODO: Put equation
-    Buffer_CaM += tinc * dBuffer_CaM;
-    const ML_CalcType dBuffer_Myosin_ca = ; //TODO: Put equation
-    Buffer_Myosin_ca += tinc * dBuffer_Myosin_ca;
-    const ML_CalcType dBuffer_Myosin_mg = ; //TODO: Put equation
-    Buffer_Myosin_mg += tinc * dBuffer_Myosin_mg;
-    const ML_CalcType dBuffer_SRB = ; //TODO: Put equation
-    Buffer_SRB += tinc * dBuffer_SRB;
-    const ML_CalcType dBuffer_SLLj = ; //TODO: Put equation
-    Buffer_SLLj += tinc * dBuffer_SLLj;
-    const ML_CalcType dBuffer_SLLsl = ; //TODO: Put equation
-    Buffer_SLLsl += tinc * dBuffer_SLLsl;
-    const ML_CalcType dBuffer_SLHj = ; //TODO: Put equation
-    Buffer_SLHj += tinc * dBuffer_SLHj;
-    const ML_CalcType dBuffer_SLHsl = ; //TODO: Put equation
-    Buffer_SLHsl += tinc * dBuffer_SLHsl;
-    const ML_CalcType dBuffer_Csqn = ; //TODO: Put equation
-    Buffer_Csqn += tinc * dBuffer_Csqn;
+  const ML_CalcType dBuffer_NaBj = kon_na * Na_dyad * (Bmax_Naj - Buffer_NaBj) - koff_na * Buffer_NaBj;
+  Buffer_NaBj += tinc * dBuffer_NaBj;
+  const ML_CalcType dBuffer_NaBsl = kon_na * Na_sl * (Bmax_Nasl - Buffer_NaBsl) - koff_na * Buffer_NaBsl;
+  Buffer_NaBsl += tinc * dBuffer_NaBsl;
+  const ML_CalcType dBuffer_TnClow = Bmax_TnClow * d_contraction_Ca_TRPN; //TODO: d_contraction_Ca_TRPN muss noch definiert werden
+  Buffer_TnClow += tinc * dBuffer_TnClow;
+  const ML_CalcType dBuffer_TnCHc = kon_tnchca * Ca_myo * (Bmax_TnChigh - Buffer_TnCHc - Buffer_TnCHm) - koff_tnchca * Buffer_TnCHc;
+  Buffer_TnCHc += tinc * dBuffer_TnCHc;
+  const ML_CalcType dBuffer_TnCHm = kon_tnchmg * Mg_myo * (Bmax_TnChigh - Buffer_TnCHc - Buffer_TnCHm) - koff_tnchmg * Buffer_TnCHm
+  Buffer_TnCHm += tinc * dBuffer_TnCHm;
+  const ML_CalcType dBuffer_CaM = kon_cam * Ca_myo * (Bmax_CaM - Buffer_CaM) - koff_cam * Buffer_CaM;
+  Buffer_CaM += tinc * dBuffer_CaM;
+  const ML_CalcType dBuffer_Myosin_ca = kon_myoca * Ca_myo * (Bmax_myosin - Buffer_Myosin_ca - Buffer_Myosin_mg) - koff_myoca * Buffer_Myosin_ca;
+  Buffer_Myosin_ca += tinc * dBuffer_Myosin_ca;
+  const ML_CalcType dBuffer_Myosin_mg = kon_myomg * Mg_myo * (Bmax_myosin - Buffer_Myosin_ca - Buffer_Myosin_mg) - koff_myomg * Buffer_Myosin_mg;
+  Buffer_Myosin_mg += tinc * dBuffer_Myosin_mg;
+  const ML_CalcType dBuffer_SRB = kon_sr * Ca_myo * (Bmax_SR - Buffer_SRB) - koff_sr * Buffer_SRB;
+  Buffer_SRB += tinc * dBuffer_SRB;
+  const ML_CalcType dBuffer_SLLj = kon_sll * Ca_dyad * (Bmax_SLlowj - Buffer_SLLj) - koff_sll * Buffer_SLLj;
+  Buffer_SLLj += tinc * dBuffer_SLLj;
+  const ML_CalcType dBuffer_SLLsl = kon_sll * Ca_sl * (Bmax_SLlowsl - Buffer_SLLsl) - koff_sll * Buffer_SLLsl;
+  Buffer_SLLsl += tinc * dBuffer_SLLsl;
+  const ML_CalcType dBuffer_SLHj = kon_slh * Ca_dyad * (Bmax_SLhighj - Buffer_SLHj) - koff_slh * Buffer_SLHj;
+  Buffer_SLHj += tinc * dBuffer_SLHj;
+  const ML_CalcType dBuffer_SLHsl = kon_slh * Ca_sl * (Bmax_SLhighsl - Buffer_SLHsl) - koff_slh * Buffer_SLHsl;
+  Buffer_SLHsl += tinc * dBuffer_SLHsl;
+  const ML_CalcType dBuffer_Csqn = kon_csqn * Ca_SR * (Bmax_Csqn - Buffer_Csqn) - koff_csqn * Buffer_Csqn;
+  Buffer_Csqn += tinc * dBuffer_Csqn;
     
     
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Diffusion
   ////////////////////////////////////////////////////////////////////////////////////////
-    double J_Ca_dyad_sl = 1.0 / 3.06685e12;
-    double J_Ca_sl_myo = 1.0 / 0.74556e11;
-    double J_Na_dyad_sl = 1.0 / (1.6382e12 / 3.0 * 100.0);
-    double J_Na_sl_myo = 1.0 / (1.8308e10 / 3.0 * 100.0);
+  double J_Ca_dyad_sl = 1.0 / 3.06685e12;
+  double J_Ca_sl_myo = 1.0 / 0.74556e11;
+  double J_Na_dyad_sl = 1.0 / (1.6382e12 / 3.0 * 100.0);
+  double J_Na_sl_myo = 1.0 / (1.8308e10 / 3.0 * 100.0);
     
-    const ML_CalcType J_CaBuffer_myo = ; //TODO: Put equation
-    const ML_CalcType J_CaBuffer_dyad = ; //TODO: Put equation
-    const ML_CalcType J_CaBuffer_sl = ; //TODO: Put equation
+  const ML_CalcType J_CaBuffer_myo = dBuffer_TnClow + dBuffer_TnCHc + dBuffer_CaM + dBuffer_Myosin_ca + dBuffer_SRB;
+  const ML_CalcType J_CaBuffer_dyad = dBuffer_SLLj + dBuffer_SLHj;
+  const ML_CalcType J_CaBuffer_sl = dBuffer_SLLsl + dBuffer_SLHsl;
 
     
   /////////////////////////////////////////////////////////////////////////////////////////
@@ -1040,12 +1019,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Change Membrane Potential (I_tot)
   ////////////////////////////////////////////////////////////////////////////////////////
-    I_tot = -(I_Na_tot + I_Cl_tot + I_Ca_tot + I_K_tot + i_external);
+  I_tot = -(I_Na_tot + I_Cl_tot + I_Ca_tot + I_K_tot + i_external);
 
-    
-    
-    
-    
     
   return 0.001 * tinc * I_tot;
 }  // TWorld::Calc
