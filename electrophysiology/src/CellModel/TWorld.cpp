@@ -821,77 +821,95 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Calcium release from SR (Jrel, Jleak)
   ////////////////////////////////////////////////////////////////////////////////////////
-    
-    double ks = 26.6 * v(VT_Jrel_Multiplier);
-    double koCa = 23.87221;
-    double kom = 0.16219;
-    double kiCa = 0.39871;
-    double kim = 0.04311;
-    double ec50SR = 0.75385;
-    double steepnessCaSR = 5.09473;
-    double caExpFactor = 0.68655 ;
-    double caTransFactor = 0.94428 ;
-    double caExpFactor2 = 2.06273 ;
-    double caTransFactor2 = 0.52967 ;
+  double ks = 26.6 * v(VT_Jrel_Multiplier);
+  double koCa = 23.87221;
+  double kom = 0.16219;
+  double kiCa = 0.39871;
+  double kim = 0.04311;
+  double ec50SR = 0.75385;
+  double steepnessCaSR = 5.09473;
+  double caExpFactor = 0.68655 ;
+  double caTransFactor = 0.94428 ;
+  double caExpFactor2 = 2.06273 ;
+  double caTransFactor2 = 0.52967 ;
 
-    ///////////// calculate directly I_CaL-coupled RyRy //////////
-    ///
+  ///////////// calculate directly I_CaL-coupled RyRy //////////
+  double directRelMidpoint = 0.95271;
+  double bt = 12.47670;
+  double a_rel=1.25 * bt;
+  const ML_CalcType I_Ca_dyad_positive = abs(I_Ca_dyad);
+  const ML_CalcType I_Ca_dyad_sigmoided = 1.0 - 1.0 / (1.0 + pow((I_Ca_dyad_positive / 0.45), 4.5));
+  const ML_CalcType J_rel_inf = a_rel * (I_Ca_dyad_sigmoided) / (1.0 + pow((directRelMidpoint / Ca_SR), 7.72672));
+  const ML_CalcType tau_rel = bt / (1.0 + 0.0123 / Ca_SR);
+  if (tau_rel < 0.001) {
+      tau_rel = 0.001;
+  }
+  const ML_CalcType dJ_rel_ICaLdep_act = (J_rel_inf - J_rel_ICaLdep_act) / tau_rel;
+  J_rel_ICaLdep_act += tinc * dJ_rel_ICaLdep_act;
     
-    // inactivation
+  double tauInact = 64.11202;
+  const ML_CalcType Jrel_inact_inf = 1.0 / (1.0 + (I_Ca_dyad_sigmoided / 1e-3));
+  const ML_CalcType dJ_rel_ICaLdep_f1 = (Jrel_inact_inf - J_rel_ICaLdep_f1)/tauInact;
+  J_rel_ICaLdep_f1 += tinc * dJ_rel_ICaLdep_f1;
     
-    // slower inactivation
+  double tauInact2 = 119.48978;
+  const ML_CalcType Jrel_inact_inf2 = 1.0 / (1.0 + (I_Ca_dyad_sigmoided / 0.6e-3));
+  const ML_CalcType dJ_rel_ICaLdep_f2 = (Jrel_inact_inf2 - J_rel_ICaLdep_f2)/tauInact2;
+  J_rel_ICaLdep_f2 += tinc * dJ_rel_ICaLdep_f2;
     
+  J_rel_ICaLdep = (0.00174 * J_rel_ICaLdep_act * J_rel_ICaLdep_f1 * J_rel_ICaLdep_f2);
     
+  ///////////// Main Ca-sensitive RyRs //////////
+  double MaxSR = 15;
+  double MinSR = 1;
+  const ML_CalcType kCaSR = MaxSR - (MaxSR - MinSR) / (1.0 + pow((ec50SR / Ca_SR), steepnessCaSR));
+  const ML_CalcType koSRCa = koCa / kCaSR;
+  const ML_CalcType kiSRCa = kiCa * kCaSR;
     
-    ///////////// Main Ca-sensitive RyRs //////////
+  double ecCaI = 0.001;
+  double steepnessCaI = 5.93447; // change compared to 5.7.4.5.4 was reflected here
+  double minCaI = 0.93249;
+  double maxCaI = 30.13294;
     
+  double baseRateCaI = 3.02320e-04;
+  const ML_CalcType sigmoidBaseCaI = minCaI + (maxCaI - minCaI) / (1.0 + pow((ecCaI / Ca_dyad), steepnessCaI));
+  const ML_CalcType RI_to_CI = baseRateCaI * sigmoidBaseCaI;
+  double CI_to_RI = 0.00248;
     
-    // not phosphorylated by CaMKII
+  // not phosphorylated by CaMKII
+  const ML_CalcType RIcleft = 1.0 - ryr_R - ryr_O - ryr_I - ryr_CaRI;
+  const ML_CalcType dryr_R = (kim * RIcleft - kiSRCa * (caTransFactor * pow(Ca_dyad, caExpFactor)) * ryr_R) - (caTransFactor2 * koSRCa * pow(Ca_dyad, caExpFactor2) * ryr_R - kom * ryr_O);
+  ryr_R += tinc * dryr_R;
+  const ML_CalcType dryr_O = (caTransFactor2 * koSRCa * pow(Ca_dyad, caExpFactor2) * ryr_R - kom * ryr_O) - (kiSRCa * (caTransFactor * pow(Ca_dyad, caExpFactor)) * ryr_O - kim * ryr_I);
+  ryr_O += tinc * dryr_O;
+  const ML_CalcType dryr_I = (kiSRCa * (caTransFactor * pow(Ca_dyad, caExpFactor)) * ryr_O - kim * ryr_I) - (kom * ryr_I - caTransFactor2 * koSRCa * pow(Ca_dyad, caExpFactor2) * RIcleft);
+  ryr_I += tinc * dryr_I;
+  const ML_CalcType dryr_CaRI =  RI_to_CI * RIcleft - CI_to_RI * ryr_CaRI; // shift of 29 state numbers
+  ryr_CaRI += tinc * dryr_CaRI;
+  
+  J_SR_Carel_NP = ks * ryr_O * (Ca_SR - Ca_dyad) + J_rel_ICaLdep;
     
+  // And also a version of phosphorylated
+  double caTransFactor2 = caTransFactor2 * 1.5; // *1.69
+  const ML_CalcType RIcleftP = 1 - ryr_R_p - ryr_O_p - ryr_I_p - ryr_CaRI_p;
+  const ML_CalcType dryr_R_p = (kim * RIcleftP - kiSRCa * (caTransFactor * pow(Ca_dyad, caExpFactor)) * ryr_R_p) - (caTransFactor2 * koSRCa * pow(Ca_dyad, caExpFactor2) * ryr_R_p - kom * ryr_O_p);
+  ryr_R_p += tinc * dryr_R_p;
+  const ML_CalcType dryr_O_p = (caTransFactor2 * koSRCa * pow(Ca_dyad, caExpFactor2) * ryr_R_p - kom * ryr_O_p) - (kiSRCa * (caTransFactor * pow(Ca_dyad, caExpFactor)) * ryr_O_p - kim * ryr_I_p);
+  ryr_O_p += tinc * dryr_O_p;
+  const ML_CalcType dryr_I_p = (kiSRCa * (caTransFactor * pow(Ca_dyad, caExpFactor)) * ryr_O_p - kim * ryr_I_p) - (kom * ryr_I_p - caTransFactor2 * koSRCa * pow(Ca_dyad, caExpFactor2) * RIcleftP);
+  ryr_I_p += tinc * dryr_I_p;
+  const ML_CalcType dryr_CaRI_p =  RI_to_CI * RIcleftP - CI_to_RI * ryr_CaRI_p;
+  ryr_CaRI_p += tinc * dryr_CaRI_p;
+  
+  J_SR_Carel_CaMK = ks * ryr_O_p * (Ca_SR - Ca_dyad) + J_rel_ICaLdep;
     
-    // And also a version of phosphorylated
+  // Total release
+  J_SR_Carel = J_SR_Carel_CaMK * CaMK_f_RyR + J_SR_Carel_NP * (1 - CaMK_f_RyR);
     
-    
-    // Total release
-    
-    
-    // Additional leak
-    
-    
-    
-    
-    
-//    /// SR Calcuim release flux J_rel
-//    double K_inf_rel = 1.7;
-//    ML_CalcType J_rel_NP_inf = (v(VT_alpha_rel) * (-I_CaL)) / (1.0 + pow((K_inf_rel/ Ca_jsr), 8.0));
-//    ML_CalcType J_rel_CaMK_inf = (v(VT_alpha_rel_CaMK) * (-I_CaL)) / (1.0 + pow((K_inf_rel/ Ca_jsr), 8.0));
-//    if (v(VT_celltype) == 2.0) {
-//      J_rel_NP_inf   *= 1.7;
-//      J_rel_CaMK_inf *= 1.7;
-//    }
-//    const ML_CalcType tau_rel_NP_b = v(VT_beta_tau) / (1.0 + (0.0123 / Ca_jsr));
-//    const ML_CalcType tau_rel_NP   = tau_rel_NP_b < 0.001 ? 0.001 : tau_rel_NP_b;
-//    J_rel_NP = J_rel_NP_inf - (J_rel_NP_inf - J_rel_NP) * exp(-tinc / tau_rel_NP);
-//    
-//    const ML_CalcType tau_rel_CaMK_b = v(VT_beta_tau_CaMK) / (1.0 + (0.0123 / Ca_jsr));
-//    const ML_CalcType tau_rel_CaMK   = tau_rel_CaMK_b < 0.001 ? 0.001 : tau_rel_CaMK_b;
-//    J_rel_CaMK = J_rel_CaMK_inf - (J_rel_CaMK_inf - J_rel_CaMK) * exp(-tinc / tau_rel_CaMK);
-//    
-//    const ML_CalcType phi_rel_CaMK = phi_INa_CaMK;
-//    J_rel        = 1.5378 * (1.0 - phi_rel_CaMK) * J_rel_NP + phi_rel_CaMK * J_rel_CaMK;
-//
-//    /// J_up
-//    ML_CalcType J_up_NP   = (0.005425 * Ca_i) / (0.00092 + Ca_i);
-//    ML_CalcType J_up_CaMK = (2.75 * 0.005425 * Ca_i) / (0.00092 - 0.00017 + Ca_i);
-//    if (v(VT_celltype) == 1.0) {
-//      J_up_NP   *= 1.3;
-//      J_up_CaMK *= 1.3;
-//    }
-//    const ML_CalcType phi_up_CaMK = (1.0 /(1.0 + (KmCaMK / CaMK_active)));
-//    J_leak      = (0.0048825 * Ca_nsr) / 15.0;
-//
-
-    
+  ///////////// Additional leak //////////
+  const ML_CalcType nonlinearModifier = 0.2144 * exp(1.83 * Ca_SR); // Leak should be nonlinear with load
+  const ML_CalcType CaMKIILeakMultiplier = 1.0 + 2.0 * CaMK_f_RyR; // And it should be promoted by CaMKII
+  J_SR_leak = 1.59306e-06 * (Ca_SR - Ca_dyad) * nonlinearModifier * CaMKIILeakMultiplier;
     
     
   /////////////////////////////////////////////////////////////////////////////////////////
