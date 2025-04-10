@@ -1002,39 +1002,39 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Total ion currents and concentration changes
   ////////////////////////////////////////////////////////////////////////////////////////
-    // Sodium Concentration
-    I_Na_tot_dyad = I_Na_dyad + I_Nab_dyad + 3 * I_NaCx_dyad + 3 * I_NaK_dyad + I_CaNa_dayd;
-    I_Na_tot_sl = I_Na_sl + I_Nab_sl + 3 * I_NaCx_sl + 3 * I_NaK_sl + I_CaNa_sl;
-    I_Na_tot = I_Na_tot_dyad + I_Na_tot_sl;
-    const ML_CalcType dNa_dyad = ; //TODO: Put equation
-    Na_dyad += tinc * dNa_dyad;
-    const ML_CalcType dNa_sl = ; //TODO: Put equation
-    Na_sl += tinc * dNa_sl;
-    const ML_CalcType dNa_myo = ; //TODO: Put equation
-    Na_myo += tinc * dNa_myo;
+  // Sodium Concentration
+  I_Na_tot_dyad = I_Na_dyad + I_Nab_dyad + 3 * I_NaCx_dyad + 3 * I_NaK_dyad + I_CaNa_dayd;
+  I_Na_tot_sl = I_Na_sl + I_Nab_sl + 3 * I_NaCx_sl + 3 * I_NaK_sl + I_CaNa_sl;
+  I_Na_tot = I_Na_tot_dyad + I_Na_tot_sl;
+  const ML_CalcType dNa_dyad = -I_Na_tot_dyad * Cmem / (Vdyad * F) + J_Na_dyad_sl / Vdyad * (Na_sl - Na_dyad) - dBuffer_NaBj;
+  Na_dyad += tinc * dNa_dyad;
+  const ML_CalcType dNa_sl = -I_Na_tot_sl * Cmem / (Vsl * F) + J_Na_dyad_sl / Vsl * (Na_dyad - Na_sl) + J_Na_sl_myo / Vsl * (Na_myo - Na_sl) - dBuffer_NaBsl;
+  Na_sl += tinc * dNa_sl;
+  const ML_CalcType dNa_myo = J_Na_sl_myo / Vmyo * (Na_sl - Na_myo);
+  Na_myo += tinc * dNa_myo;
     
-    // Potassium Concentration
-    I_K_tot = I_to + I_Kr + I_Ks + I_K1 - (2 * I_NaK) + I_CaK + I_Kb + i_external;
-    const ML_CalcType dK_myo = ; //TODO: Put equation
-    K_myo += tinc * dK_myo;
+  // Potassium Concentration
+  I_K_tot = I_to + I_Kr + I_Ks + I_K1 - (2 * I_NaK) + I_CaK + I_Kb + i_external;
+  const ML_CalcType dK_myo = -I_K_tot * Cmem / (Vmyo * F);
+  K_myo += tinc * dK_myo;
     
-    // Cloride Concentration
-    I_Cl_tot = I_CaCl + I_Clb;
-    const ML_CalcType dCl_myo = ; //TODO: Put equation
-    Cl_myo += tinc * dCl_myo;
+  // Cloride Concentration
+  I_Cl_tot = I_CaCl + I_Clb;
+  const ML_CalcType dCl_myo = -I_Cl_tot * Cmem / (-1.0 * Vmyo * F);
+  Cl_myo += tinc * dCl_myo;
     
-    // Calcium Concentration
-    I_Ca_tot_dyad = I_Ca_dyad + I_Cab_dyad + I_pCa_dyad - (2 * I_NaCx_dyad);
-    I_Ca_tot_sl = I_Ca_sl + I_Cab_sl + I_pCa_sl - (2 * I_NaCx_sl);
-    I_Ca_tot = I_Ca_tot_dyad + I_Ca_tot_sl;
-    const ML_CalcType dCa_dyad = ; //TODO: Put equation
-    Ca_dyad += tinc * dCa_dyad;
-    const ML_CalcType dCa_sl = ; //TODO: Put equation
-    Ca_sl += tinc * dCa_sl;
-    const ML_CalcType dCa_myo = ; //TODO: Put equation
-    Ca_myo += tinc * dCa_myo;
-    const ML_CalcType dCa_SR = ; //TODO: Put equation
-    Ca_SR += tinc * dCa_SR;
+  // Calcium Concentration
+  I_Ca_tot_dyad = I_Ca_dyad + I_Cab_dyad + I_pCa_dyad - (2 * I_NaCx_dyad);
+  I_Ca_tot_sl = I_Ca_sl + I_Cab_sl + I_pCa_sl - (2 * I_NaCx_sl);
+  I_Ca_tot = I_Ca_tot_dyad + I_Ca_tot_sl;
+  const ML_CalcType dCa_dyad = -I_Ca_tot_dyad * Cmem / (Vdyad * 2.0 * F) + J_Ca_dyad_sl / Vdyad * (Ca_sl - Ca_dyad) - J_CaBuffer_dyad + (J_SR_Carel) * Vsr / Vdyad + J_SR_leak * Vmyo / Vdyad;
+  Ca_dyad += tinc * dCa_dyad;
+  const ML_CalcType dCa_sl = -I_Ca_tot_sl * Cmem / (Vsl * 2.0 * F) + J_Ca_dyad_sl / Vsl * (Ca_dyad - Ca_sl) + J_Ca_sl_myo / Vsl * (Ca_myo - Ca_sl) - J_CaBuffer_sl;
+  Ca_sl += tinc * dCa_sl;
+  const ML_CalcType dCa_myo = -J_up * Vsr / Vmyo - J_CaBuffer_myo + J_Ca_sl_myo / Vmyo * (Ca_sl - Ca_myo);
+  Ca_myo += tinc * dCa_myo;
+  const ML_CalcType dCa_SR = J_up - (J_SR_leak * Vmyo / Vsr + J_SR_Carel) - dBuffer_Csqn;
+  Ca_SR += tinc * dCa_SR;
 
     
   /////////////////////////////////////////////////////////////////////////////////////////
