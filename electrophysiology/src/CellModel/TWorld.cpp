@@ -104,13 +104,7 @@ void TWorld::Init() {
 //  J_rel_CaMK     = v(VT_Init_J_rel_CaMK);
     
   
-//    fINa_PKA = v(VT_Init_fINa_PKA);
-//    fICaL_PKA = v(VT_Init_fICaL_PKA);
-//    fINaK_PKA = v(VT_Init_fINaK_PKA);
-//    fIKs_PKA = v(VT_Init_fIKs_PKA);
-//    fPLB_PKA = v(VT_Init_fPLB_PKA);
-//    fTnI_PKA = v(VT_Init_fTnI_PKA);
-//    fMyBPC_PKA = v(VT_Init_fMyBPC_PKA);
+
     
 }  // TWorld::Init
 
@@ -148,7 +142,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     
   // Fixed ion concentrations
   double Cl_o = 150.0; // Extracellular Cl  [mM]
-  double Mg_i = 0.5; // Intracellular Mg  [mM]
+  double Mg_myo = 0.5; // Intracellular Mg  [mM]
     
   // Nerst Potentials
   const ML_CalcType E_Na_dyad = (1.0 / FoRT) * log(v(VT_Na_o) / Na_dyad);
@@ -232,6 +226,18 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   const ML_CalcType casig_SERCA_act = bound_serca + casig_serca_trap; // Fraction of active CaMKII
   const ML_CalcType dcasig_serca_trap = alpha_serca * bound_serca * casig_SERCA_act - beta * casig_serca_trap * (0.1 + 0.9 * PP1_tot / 0.1371); //dCaMK_Trap/dt
   casig_serca_trap += tinc * dcasig_serca_trap;
+    
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        PKA phosphorylation
+  ////////////////////////////////////////////////////////////////////////////////////////
+  double fINa_PKA = v(VT_fINa_PKA);
+  double fICaL_PKA = v(VT_fICaL_PKA);
+  double fINaK_PKA = v(VT_fINaK_PKA);
+  double fIKs_PKA = v(VT_fIKs_PKA);
+  double fPLB_PKA = v(VT_fIfPLB_PKA);
+  double fTnI_PKA = v(VT_fTnI_PKA);
+  double fMyBPC_PKA = v(VT_fMyBPC_PKA);
     
     
   /////////////////////////////////////////////////////////////////////////////////////////
@@ -606,7 +612,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   ///        Slow delayed rectifier current (IKs)
   ////////////////////////////////////////////////////////////////////////////////////////
   // gating
-  const ML_CalcType k_PKA = phi_IKs_PKA; //TODO: No idea what that is
+  const ML_CalcType k_PKA = fIKs_PKA;
   const ML_CalcType V_h_0 = -1.0 - 10.0 * k_PKA;
   const ML_CalcType V_h_max = -12.0 - 9.0 * k_PKA;
   const ML_CalcType tau_0 = 26.0 + 9.0 * k_PKA;
@@ -785,7 +791,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     
   I_NaK_dyad = (1.0 - fINaK_PKA) * I_NaK_dyad_noPKA + fINaK_PKA * I_NaK_dyad_PKA;
   I_NaK_sl = (1.0 - fINaK_PKA) * I_NaK_sl_noPKA + fINaK_PKA * I_NaK_sl_PKA;
-  I_NaK = I_Nak_dyad + I_NaK_sl;
+  I_NaK = I_NaK_dyad + I_NaK_sl;
     
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Chloride currents (ICaCl, IClb)
@@ -796,7 +802,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     
   I_CaCl_dyad = 0.5 * Fdyad * G_CaCl / (1.0 + Kd_CaCl / Ca_dyad)*(V_m - E_Cl);
   I_CaCl_sl = 0.5 * Fsl * G_CaCl / (1.0 + Kd_CaCl / Ca_sl)*(V_m - E_Cl);
-  I_ClCa = I_ClCa_dyad+I_ClCa_sl;
+  I_CaCl = I_CaCl_dyad + I_CaCl_sl;
     
   // calculate I_Clb
   double G_Clb = 0.00241 * v(VT_IClb_Multiplier);
@@ -841,13 +847,10 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double directRelMidpoint = 0.95271;
   double bt = 12.47670;
   double a_rel=1.25 * bt;
-  const ML_CalcType I_Ca_dyad_positive = abs(I_Ca_dyad);
+  const ML_CalcType I_Ca_dyad_positive = abs(I_CaL_dyad);
   const ML_CalcType I_Ca_dyad_sigmoided = 1.0 - 1.0 / (1.0 + pow((I_Ca_dyad_positive / 0.45), 4.5));
   const ML_CalcType J_rel_inf = a_rel * (I_Ca_dyad_sigmoided) / (1.0 + pow((directRelMidpoint / Ca_SR), 7.72672));
-  const ML_CalcType tau_rel = bt / (1.0 + 0.0123 / Ca_SR);
-  if (tau_rel < 0.001) {
-      tau_rel = 0.001;
-  }
+  const ML_CalcType tau_rel = max(bt / (1.0 + 0.0123 / Ca_SR), 0.001);
   const ML_CalcType dJ_rel_ICaLdep_act = (J_rel_inf - J_rel_ICaLdep_act) / tau_rel;
   J_rel_ICaLdep_act += tinc * dJ_rel_ICaLdep_act;
     
@@ -894,7 +897,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   J_SR_Carel_NP = ks * ryr_O * (Ca_SR - Ca_dyad) + J_rel_ICaLdep;
     
   // And also a version of phosphorylated
-  double caTransFactor2 = caTransFactor2 * 1.5; // *1.69
+  caTransFactor2 = caTransFactor2 * 1.5; // *1.69
   const ML_CalcType RIcleftP = 1 - ryr_R_p - ryr_O_p - ryr_I_p - ryr_CaRI_p;
   const ML_CalcType dryr_R_p = (kim * RIcleftP - kiSRCa * (caTransFactor * pow(Ca_dyad, caExpFactor)) * ryr_R_p) - (caTransFactor2 * koSRCa * pow(Ca_dyad, caExpFactor2) * ryr_R_p - kom * ryr_O_p);
   ryr_R_p += tinc * dryr_R_p;
@@ -938,8 +941,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double Max_Vmax_SERCA_Ca = 1.11142;
   double Vmax_mult = 1.0 + Max_Vmax_SERCA_Ca / (1.0 + pow((Km_SERCA_Ca / casig_SERCA_act), 2));
     
-  J_up_NP = pow(Q10SRCaP, Qpow) * Vmax_SRCaP * Vmax_mult * (pow((Ca_myo / Kmf), hillSRCaP) - pow((Ca_SR / Kmr), hillSRCaP)) / (1.0 + pow((Ca_myo / Kmf), hillSRCaP) + pow((Ca_SR / Kmr), hillSRCaP);
-  J_up_CaMK = pow(Q10SRCaP, Qpow) * Vmax_SRCaP * Vmax_mult * (pow((Ca_myo / Kmf_Phospho), hillSRCaP) - pow(Ca_SR / Kmr), hillSRCaP)) / (1.0 + pow((Ca_myo / Kmf_Phospho), hillSRCaP) + pow((Ca_SR / Kmr), hillSRCaP));
+  J_up_NP = pow(Q10SRCaP, Qpow) * Vmax_SRCaP * Vmax_mult * (pow((Ca_myo / Kmf), hillSRCaP) - pow((Ca_SR / Kmr), hillSRCaP)) / (1.0 + pow((Ca_myo / Kmf), hillSRCaP) + pow((Ca_SR / Kmr), hillSRCaP));
+  J_up_CaMK = pow(Q10SRCaP, Qpow) * Vmax_SRCaP * Vmax_mult * (pow((Ca_myo / Kmf_Phospho), hillSRCaP) - pow((Ca_SR / Kmr), hillSRCaP)) / (1.0 + pow((Ca_myo / Kmf_Phospho), hillSRCaP) + pow((Ca_SR / Kmr), hillSRCaP));
   J_up = J_up_NP * (1.0 - phosphorylationTotal) + J_up_CaMK * phosphorylationTotal;
     
 
@@ -974,11 +977,11 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   Buffer_NaBj += tinc * dBuffer_NaBj;
   const ML_CalcType dBuffer_NaBsl = kon_na * Na_sl * (Bmax_Nasl - Buffer_NaBsl) - koff_na * Buffer_NaBsl;
   Buffer_NaBsl += tinc * dBuffer_NaBsl;
-  const ML_CalcType dBuffer_TnClow = Bmax_TnClow * d_contraction_Ca_TRPN; //TODO: d_contraction_Ca_TRPN muss noch definiert werden
+  const ML_CalcType dBuffer_TnClow = Bmax_TnClow; //* d_contraction_Ca_TRPN; //TODO: d_contraction_Ca_TRPN muss noch definiert werden
   Buffer_TnClow += tinc * dBuffer_TnClow;
   const ML_CalcType dBuffer_TnCHc = kon_tnchca * Ca_myo * (Bmax_TnChigh - Buffer_TnCHc - Buffer_TnCHm) - koff_tnchca * Buffer_TnCHc;
   Buffer_TnCHc += tinc * dBuffer_TnCHc;
-  const ML_CalcType dBuffer_TnCHm = kon_tnchmg * Mg_myo * (Bmax_TnChigh - Buffer_TnCHc - Buffer_TnCHm) - koff_tnchmg * Buffer_TnCHm
+  const ML_CalcType dBuffer_TnCHm = kon_tnchmg * Mg_myo * (Bmax_TnChigh - Buffer_TnCHc - Buffer_TnCHm) - koff_tnchmg * Buffer_TnCHm;
   Buffer_TnCHm += tinc * dBuffer_TnCHm;
   const ML_CalcType dBuffer_CaM = kon_cam * Ca_myo * (Bmax_CaM - Buffer_CaM) - koff_cam * Buffer_CaM;
   Buffer_CaM += tinc * dBuffer_CaM;
@@ -1017,8 +1020,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   ///        Total ion currents and concentration changes
   ////////////////////////////////////////////////////////////////////////////////////////
   // Sodium Concentration
-  I_Na_tot_dyad = I_Na_dyad + I_Nab_dyad + 3 * I_NaCx_dyad + 3 * I_NaK_dyad + I_CaNa_dayd;
-  I_Na_tot_sl = I_Na_sl + I_Nab_sl + 3 * I_NaCx_sl + 3 * I_NaK_sl + I_CaNa_sl;
+  I_Na_tot_dyad = I_Na_dyad + I_Nab_dyad + 3 * I_NaCa_dyad + 3 * I_NaK_dyad + I_CaNa_dyad;
+  I_Na_tot_sl = I_Na_sl + I_Nab_sl + 3 * I_NaCa_sl + 3 * I_NaK_sl + I_CaNa_sl;
   I_Na_tot = I_Na_tot_dyad + I_Na_tot_sl;
   const ML_CalcType dNa_dyad = -I_Na_tot_dyad * Cmem / (Vdyad * F) + J_Na_dyad_sl / Vdyad * (Na_sl - Na_dyad) - dBuffer_NaBj;
   Na_dyad += tinc * dNa_dyad;
@@ -1028,7 +1031,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   Na_myo += tinc * dNa_myo;
     
   // Potassium Concentration
-  I_K_tot = I_to + I_Kr + I_Ks + I_K1 - (2 * I_NaK) + I_CaK + I_Kb + i_external;
+  I_K_tot = I_to + I_Kr + I_Ks + I_K1 - (2 * I_NaK) + (I_CaK_dyad + I_CaK_sl) + I_Kb + i_external;
   const ML_CalcType dK_myo = -I_K_tot * Cmem / (Vmyo * F);
   K_myo += tinc * dK_myo;
     
@@ -1038,8 +1041,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   Cl_myo += tinc * dCl_myo;
     
   // Calcium Concentration
-  I_Ca_tot_dyad = I_Ca_dyad + I_Cab_dyad + I_pCa_dyad - (2 * I_NaCx_dyad);
-  I_Ca_tot_sl = I_Ca_sl + I_Cab_sl + I_pCa_sl - (2 * I_NaCx_sl);
+  I_Ca_tot_dyad = I_CaL_dyad + I_Cab_dyad + I_pCa_dyad - (2 * I_NaCa_dyad);
+  I_Ca_tot_sl = I_CaL_sl + I_Cab_sl + I_pCa_sl - (2 * I_NaCa_sl);
   I_Ca_tot = I_Ca_tot_dyad + I_Ca_tot_sl;
   const ML_CalcType dCa_dyad = -I_Ca_tot_dyad * Cmem / (Vdyad * 2.0 * F) + J_Ca_dyad_sl / Vdyad * (Ca_sl - Ca_dyad) - J_CaBuffer_dyad + (J_SR_Carel) * Vsr / Vdyad + J_SR_leak * Vmyo / Vdyad;
   Ca_dyad += tinc * dCa_dyad;

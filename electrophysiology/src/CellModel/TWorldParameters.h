@@ -46,6 +46,20 @@ enum varType {
   VT_ICaL_fractionSS,
   VT_CMDN_Multiplier,
   VT_INaCa_fractionSS,
+  VT_Jup_Multiplier,
+  VT_ICaCl_Multiplier,
+  VT_IClb_Multiplier,
+  VT_Jrel_Multiplier,
+    
+    
+  /// PKA fractions
+  VT_fINa_PKA,
+  VT_fICaL_PKA,
+  VT_fINaK_PKA,
+  VT_fIKs_PKA,
+  VT_fIfPLB_PKA,
+  VT_fTnI_PKA,
+  VT_fMyBPC_PKA,
 
   /// state variables
   VT_Init_Vm,

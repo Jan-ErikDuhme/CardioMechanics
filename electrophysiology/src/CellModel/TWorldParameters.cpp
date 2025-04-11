@@ -57,6 +57,19 @@ void TWorldParameters::Init(const char *initFile, ML_CalcType tinc) {
   P[VT_ICaL_fractionSS].name = "ICaL_fractionSS";
   P[VT_CMDN_Multiplier].name = "CMDN_Multiplier";
   P[VT_INaCa_fractionSS].name = "INaCa_fractionSS";
+  P[VT_Jup_Multiplier].name = "Jup_Multiplier";
+  P[VT_ICaCl_Multiplier].name = "ICaCl_Multiplier";
+  P[VT_IClb_Multiplier].name = "IClb_Multiplier";
+  P[VT_Jrel_Multiplier].name = "Jrel_Multiplier";
+    
+  /// PKA Fractions
+  P[VT_fINa_PKA].name = "fINa_PKA";
+  P[VT_fICaL_PKA].name = "fICaL_PKA";
+  P[VT_fINaK_PKA].name = "fINaK_PKA";
+  P[VT_fIKs_PKA].name = "fIKs_PKA";
+  P[VT_fIfPLB_PKA].name = "fIfPLB_PKA";
+  P[VT_fTnI_PKA].name = "fTnI_PKA";
+  P[VT_fMyBPC_PKA].name = "fMyBPC_PKA";
     
   /// state variables
   P[VT_Init_Vm].name             = "Init_Vm";

@@ -50,20 +50,22 @@ class TWorld : public vbElphyModel<ML_CalcType> {
     ML_CalcType I_K1; // Inward rectifier current (IK1)
     ML_CalcType I_NaCa_sl, I_NaCa_dyad; // Sodium-calcium exchanger (INaCa)
     ML_CalcType I_NaK_dyad_noPKA, I_NaK_dyad_PKA, I_NaK_sl_noPKA, I_NaK_sl_PKA, I_NaK_dyad, I_NaK_sl, I_NaK; // Sodium-potassium pump (INaK)
-    ML_CalcType I_CaCl_dyad, I_CaCl_sl, I_ClCa, I_Clb; // Chloride currents (ICaCl, IClb)
+    ML_CalcType I_CaCl_dyad, I_CaCl_sl, I_CaCl, I_Clb; // Chloride currents (ICaCl, IClb)
     ML_CalcType I_Nab_dyad, I_Nab_sl, I_Nab, I_Kb, I_Cab_dyad, I_Cab_sl, I_Cab; // Background currents (INab, ICab, IKb)
     ML_CalcType J_rel_ICaLdep_act, J_rel_ICaLdep_f1, J_rel_ICaLdep_f2, J_rel_ICaLdep, J_SR_Carel_NP, J_SR_Carel_CaMK, J_SR_Carel, J_SR_leak; // Calcium release from SR (Jrel, Jleak)
     ML_CalcType J_up_NP, J_up_CaMK, J_up; // Calcium reuptake to the SR (Jup)
     ML_CalcType I_pCa_dyad, I_pCa_sl, I_pCa; // Sarcolemmal calcium pump (pCa)
     
   /// ion concentrations
-    ML_CalcType Na_dyad, Na_sl, Na_myo; // Sodium Concentration
-    ML_CalcType K_myo; // Potassium Concentration
-    ML_CalcType Cl_myo; // Cloride Concentration
-    ML_CalcType Ca_dyad, Ca_sl, Ca_myo, Ca_SR; // Calcium Concentration
+    ML_CalcType I_Na_tot_dyad, I_Na_tot_sl, I_Na_tot, Na_dyad, Na_sl, Na_myo; // Sodium Concentration
+    ML_CalcType I_K_tot, K_myo; // Potassium Concentration
+    ML_CalcType I_Cl_tot, Cl_myo; // Cloride Concentration
+    ML_CalcType I_Ca_tot_dyad, I_Ca_tot_sl, I_Ca_tot, Ca_dyad, Ca_sl, Ca_myo, Ca_SR; // Calcium Concentration
+    ML_CalcType I_tot;
 
   /// Signalling and Buffering
     ML_CalcType CaMK_trap, CaMK_f_ICaL, CaMK_f_RyR, CaMK_f_PLB, casig_serca_trap; // CaMK and Ca Signalling
+    ML_CalcType Buffer_NaBj, Buffer_NaBsl, Buffer_TnClow, Buffer_TnCHc, Buffer_TnCHm, Buffer_CaM, Buffer_Myosin_ca, Buffer_Myosin_mg, Buffer_SRB, Buffer_SLLj, Buffer_SLLsl, Buffer_SLHj, Buffer_SLHsl, Buffer_Csqn; // Buffering
 
   TWorld(TWorldParameters *pp);
   ~TWorld();
