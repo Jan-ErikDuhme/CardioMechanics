@@ -108,9 +108,10 @@ void TWorld::Init() {
     
 }  // TWorld::Init
 
-ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  ML_CalcType stretch, int euler) {
+ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  ML_CalcType stretch, ML_CalcType velocity, int euler) {
   tinc *= 1000.0;  // second to millisecond conversion
   ML_CalcType V_m = V * 1000.0;
+  double VEL = velocity/1000.0;  // 1/s to 1/ms
 
   const int Vi = (int)(DivisionTab*(RangeTabhalf+V_m)+.5);  // array position
 
@@ -960,16 +961,67 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Land-Niederer model of contraction
   ////////////////////////////////////////////////////////////////////////////////////////
-//    double fracTnIpo = 0.0031; // Derived quantity (TnI_PKAp(baseline)/TnItot)
-//    double fPKA_TnI = (1.45 - 0.45 * (1.0 - fTnI_PKA) / (1 - fracTnIpo)); // multiplier for Ca unbinding from troponin.
+    double fracTnIpo = 0.0031; // Derived quantity (TnI_PKAp(baseline)/TnItot)
+    double fPKA_TnI = (1.45 - 0.45 * (1.0 - fTnI_PKA)/(1.0 - fracTnIpo)); // multiplier for Ca unbinding from troponin.
+    double PKAForceMultiplier = 1.0 + fMyBPC_PKA * 0.26;
+    double PKAXBacceleration = 1.0 + 0.5 * fMyBPC_PKA;
     
+    double lambda_m = std::min(1.2, stretch);
+    double overlap  = 1.0 + v(VT_beta_0) * (lambda_m + std::min(0.87, lambda_m) - 1.87);
+    double h        = std::max(0.0, overlap);
     
+    // unattached available xb = all - tm blocked - already prepowerstroke - already post-poststroke - no overlap
+    double XU    = (1.0 - TmBlocked) - XW - XS;
+    double xb_ws = v(VT_k_ws) * XW * PKAXBacceleration;
+    double xb_uw = v(VT_k_uw) * XU * PKAXBacceleration;
+    double xb_wu = v(VT_k_wu) * XW;
+    double xb_su = v(VT_k_su) * XS;
     
+    double zs_pos      = (ZETAS > 0.0) * ZETAS;
+    double zs_neg      = (ZETAS < -1.0) * (-ZETAS - 1.0);
+    double zs_         = std::max(zs_pos, zs_neg);  // should be zero if ZETAS + 1 is in [0,1] interval
+    double gamma_rate  = (v(VT_gamma)) * zs_;
+    double xb_su_gamma = gamma_rate * XS;
+    double diff_XS     = xb_ws - xb_su - xb_su_gamma;
+    XS += tinc * diff_XS;
+
+    double gr_w_        = ((ZETAW < 0.0) ? -ZETAW : ZETAW); // use absolute value of ZetaW
+    double gamma_rate_w = (v(VT_gamma_wu)) * gr_w_;  // weak xbs don't like being strained
+    double xb_wu_gamma  = gamma_rate_w * XW;
+    double diff_XW      = xb_uw - xb_wu - xb_ws - xb_wu_gamma;
+    XW += tinc * diff_XW;
+
+    double ca50_     = ((v(VT_ca50) * fPKA_TnI) + v(VT_beta_1) * (lambda_m - 1.0));
+    double diff_TRPN = v(VT_koff) * (pow((Ca_myo/ca50_), v(VT_TRPN_n)) * (1.0 - TRPN) - TRPN);
+    TRPN += tinc * diff_TRPN;
+
+    double trpn_np_       = pow(TRPN, -v(VT_nperm)/2.0);
+    double trpn_np        = std::min(100.0, trpn_np_);
+    double diff_TmBlocked = v(VT_ktm_block) * trpn_np * XU - v(VT_ktm_unblock) * pow(TRPN, v(VT_nperm)/2.0) * TmBlocked;
+    TmBlocked += tinc * diff_TmBlocked;
+
+    // Velocity dependence -- assumes distortion resets on W->S
+    double diff_ZETAS = v(VT_A) * VEL - v(VT_cds) * ZETAS;  // - gamma_rate * ZETAS;
+    double diff_ZETAW = v(VT_A) * VEL - v(VT_cdw) * ZETAW;  // - gamma_rate_w * ZETAW;
+    ZETAS += tinc * diff_ZETAS;
+    ZETAW += tinc * diff_ZETAW;
+
+    // Active and Total Force
+    Ta = h * PKAForceMultiplier * (v(VT_Tref) / v(VT_dr)) * ((ZETAS + 1.0) * XS + ZETAW * XW);
+
+    // Minimal implementation of the passive cell model
+    // Similar to a standard linear solid model. It is used for the viscoelastic response.
+    double C_s     = (stretch - 1.0) - Cd;
+    double eta     = (C_s > 0.0) ? v(VT_eta_l) : v(VT_eta_s);
+    double diff_Cd = v(VT_k) * C_s / eta;
+    Cd += tinc * diff_Cd;
+
+    double F_d = v(VT_a) * v(VT_k) * C_s;
+
+    // Total Tension
+    T = Ta + F_d;
     
-    
-    
-    
-    
+
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Buffering
   ////////////////////////////////////////////////////////////////////////////////////////

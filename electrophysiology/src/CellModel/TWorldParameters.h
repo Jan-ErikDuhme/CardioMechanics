@@ -160,7 +160,53 @@ enum varType {
   VT_alpha_rel_CaMK,
   VT_tau_h_LCaMK,
   VT_RToverF,
-  
+    
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///        Land-Niederer model of contraction
+  ////////////////////////////////////////////////////////////////////////////////////////
+  VT_perm50,
+  VT_TRPN_n,
+  VT_koff,
+  VT_dr,
+  VT_wfrac,
+  VT_A_eff,
+  VT_ktm_unblock,
+  VT_beta_1,
+  VT_beta_0,
+  VT_gamma,
+  VT_gamma_wu,
+  VT_phi,
+  VT_nperm,
+  VT_ca50,
+  VT_Tref,
+  VT_nu,
+  VT_mu,
+  VT_xi,
+  VT_a,
+  VT_k,
+  VT_eta_l,
+  VT_eta_s,
+    
+  VT_k_ws,
+  VT_k_uw,
+  VT_cdw,
+  VT_cds,
+  VT_k_wu,
+  VT_k_su,
+  VT_A,
+  VT_XSSS,
+  VT_XWSS,
+  VT_ktm_block,
+    
+  VT_XS_init,
+  VT_XW_init,
+  VT_TRPN_init,
+  VT_TmBlocked_init,
+  VT_ZETAS_init,
+  VT_ZETAW_init,
+  VT_Cd_init,
+    
   vtLast
 };
 }  // namespace NS_TWorldParameters

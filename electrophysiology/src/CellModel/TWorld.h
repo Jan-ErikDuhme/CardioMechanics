@@ -66,6 +66,18 @@ class TWorld : public vbElphyModel<ML_CalcType> {
   /// Signalling and Buffering
     ML_CalcType CaMK_trap, CaMK_f_ICaL, CaMK_f_RyR, CaMK_f_PLB, casig_serca_trap; // CaMK and Ca Signalling
     ML_CalcType Buffer_NaBj, Buffer_NaBsl, Buffer_TnClow, Buffer_TnCHc, Buffer_TnCHm, Buffer_CaM, Buffer_Myosin_ca, Buffer_Myosin_mg, Buffer_SRB, Buffer_SLLj, Buffer_SLLsl, Buffer_SLHj, Buffer_SLHsl, Buffer_Csqn; // Buffering
+    
+  /// Land-Niederer model of contraction
+    ML_CalcType XS;
+    ML_CalcType XW;
+    ML_CalcType TRPN;
+    ML_CalcType TmBlocked;
+    ML_CalcType ZETAS;
+    ML_CalcType ZETAW;
+    ML_CalcType Ta;
+    ML_CalcType T;
+    ML_CalcType Cd;
+    
 
   TWorld(TWorldParameters *pp);
   ~TWorld();
@@ -115,7 +127,7 @@ class TWorld : public vbElphyModel<ML_CalcType> {
   virtual inline unsigned char getSpeed(ML_CalcType adVm);
   virtual void                 Init();
   virtual  ML_CalcType         Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external = .0,
-                                    ML_CalcType stretch = 1.,
+                                    ML_CalcType stretch = 1., ML_CalcType velocity = 0.,
                                     int euler = 2);
   virtual void Print(ostream &tempstr, double tArg,  ML_CalcType V);
   virtual void LongPrint(ostream &tempstr, double tArg,  ML_CalcType V);
