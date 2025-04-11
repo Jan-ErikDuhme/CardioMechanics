@@ -56,6 +56,25 @@ void TWorld::Init() {
 #if KADEBUG
   cerr << "#initializing Class: TWorld ... " << endl;
         #endif  // if KADEBUG
+    
+    // Sodium current (INa, INaL)
+    m = v(VT_Init_m);
+    A_h = v(VT_Init_A_h);
+    B_h = v(VT_Init_B_h);
+    h = v(VT_Init_h);
+    j = v(VT_Init_j);
+    h_p = v(VT_Init_h_p);
+    j_p = v(VT_Init_j_p);
+    m_PKA = v(VT_Init_m_PKA);
+    h_PKA = v(VT_Init_h_PKA);
+    j_PKA = v(VT_Init_j_PKA);
+    h_both = v(VT_Init_h_both);
+    j_both = v(VT_Init_j_both);
+    m_L = v(VT_Init_m_L);
+    h_L = v(VT_Init_h_L);
+    h_L_p = v(VT_Init_h_L_p);
+    
+    // L-type calcium current (I_CaL, I_CaNa, I_CaK)
 
 //  m              = v(VT_Init_m);
 //  A_h            = v(VT_Init_A_h);
@@ -108,10 +127,10 @@ void TWorld::Init() {
     
 }  // TWorld::Init
 
-ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  ML_CalcType stretch, ML_CalcType velocity, int euler) {
+ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  ML_CalcType stretch, int euler) {
   tinc *= 1000.0;  // second to millisecond conversion
   ML_CalcType V_m = V * 1000.0;
-  double VEL = velocity/1000.0;  // 1/s to 1/ms
+    double VEL = 0.0; //velocity/1000.0;  // 1/s to 1/ms
 
   const int Vi = (int)(DivisionTab*(RangeTabhalf+V_m)+.5);  // array position
 
@@ -320,11 +339,12 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     
   // h gate
   const ML_CalcType h_L_inf = 1.0 / (1.0 + exp((V_m + 87.61) / 7.488));
-  h_L = h_L_inf - (h_L_inf - h_L) * exp(-tinc / v(VT_tau_h_L));
+  double tau_h_L = 145.0;
+  h_L = h_L_inf - (h_L_inf - h_L) * exp(-tinc / tau_h_L);
     
   // gating CaMK-P
   const ML_CalcType h_L_p_inf = 1.0 / (1.0 + exp((V_m + 93.81) / 7.488));
-  const ML_CalcType tau_h_L_p = 3.0 * v(VT_tau_h_L);
+  const ML_CalcType tau_h_L_p = 3.0 * tau_h_L;
   h_L_p = h_L_p_inf - (h_L_p_inf - h_L_p) * exp(-tinc / tau_h_L_p);
     
   // Putting together the channels behavior and fraction
@@ -644,7 +664,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     
   // Nernst potential
   double pNaK = 0.01833;
-  const ML_CalcType E_Ks = v(VT_RToverF) * log((v(VT_K_o) + pNaK * v(VT_Na_o)) / (K_myo + pNaK * Na_myo));
+  const ML_CalcType E_Ks = FoRT * log((v(VT_K_o) + pNaK * v(VT_Na_o)) / (K_myo + pNaK * Na_myo));
     
   // Putting together the channels behavior and fraction
   I_Ks_dyad = Fdyad * G_Ks_factor_SA * G_Ks_dyad * xs_dyad * xs_dyad * (V_m - E_Ks);

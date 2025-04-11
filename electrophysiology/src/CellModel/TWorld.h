@@ -127,7 +127,7 @@ class TWorld : public vbElphyModel<ML_CalcType> {
   virtual inline unsigned char getSpeed(ML_CalcType adVm);
   virtual void                 Init();
   virtual  ML_CalcType         Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external = .0,
-                                    ML_CalcType stretch = 1., ML_CalcType velocity = 0.,
+                                    ML_CalcType stretch = 1.,
                                     int euler = 2);
   virtual void Print(ostream &tempstr, double tArg,  ML_CalcType V);
   virtual void LongPrint(ostream &tempstr, double tArg,  ML_CalcType V);
