@@ -1172,44 +1172,31 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
 }  // TWorld::Calc
 
 void TWorld::Print(ostream &tempstr, double tArg,  ML_CalcType V) {
-//  tempstr << tArg << ' ' << V << ' ' <<
-//    m << ' '  << A_h << ' '  << B_h << ' '  << h << ' ' << A_j << ' '  << B_j << ' '<< j << ' ' << h_p << ' ' << j_p << ' ' << m_L << ' ' <<
-//    h_L << ' ' << h_L_CaMK << ' ' << a << ' ' <<
-//    i_fast << ' ' << i_slow << ' ' << a_CaMK << ' ' << i_CaMK_fast << ' ' << i_CaMK_slow << ' ' << d << ' ' << f_fast <<
-//    ' ' << f_slow << ' ' << f_Ca_fast << ' ' << f_Ca_slow << ' ' <<
-//    j_Ca << ' ' << f_CaMK_fast << ' ' << f_Ca_CaMK_fast << ' ' << n_ss << ' ' << n_i << ' ' << C_0 << ' ' << C_1 << ' ' << C_2 << ' ' << O << ' ' << I << ' ' <<
-//    x_s1 << ' ' << x_s2 <<' ' <<
-//    Na_i << ' ' << Na_ss << ' ' << K_i << ' ' << K_ss << ' ' << Ca_i << ' ' << Ca_ss << ' ' << Ca_nsr << ' ' <<
-//    Ca_jsr << ' ' << Cl_i << ' ' << CaMK_trap << ' ' << J_rel_NP << ' ' << J_rel_CaMK << ' '
-  ;
+  tempstr << tArg << ' ' << V << ' ' <<
+    m <<' '<< A_h <<' '<< B_h <<' '<< A_j <<' '<< B_j <<' '<< h <<' '<< j <<' '<< h_p <<' '<< j_p <<' '<< m_PKA <<' '<< h_PKA <<' '<< j_PKA <<' '<< h_both <<' '<< j_both <<' '<< m_L <<' '<< h_L <<' '<< h_L_p <<' '<<
+    d <<' '<< f_fast <<' '<< f_slow <<' '<< f_Ca_fast <<' '<< f_Ca_slow <<' '<< j_Ca <<' '<< f_p_fast <<' '<< f_Ca_p_fast <<' '<< d_PKA <<' '<< f_PKA_fast <<' '<< f_PKA_slow <<' '<< f_Ca_PKA_fast <<' '<< f_Ca_PKA_slow <<' '<< f_both_fast <<' '<< f_Ca_both_fast <<' '<< n_Ca_dyad <<' '<< n_Ca_sl <<' '<<
+    a_slow <<' '<< a_fast <<' '<< i_slow <<' '<< i_fast <<' '<< a_p_slow <<' '<< a_p_fast <<' '<< i_p_slow <<' '<< i_p_fast <<' '<<
+    C_0 <<' '<< C_1 <<' '<< C_2 <<' '<< O <<' '<< I <<' '<<
+    xs_dyad <<' '<< xs_sl <<' '<<
+    ryr_R <<' '<< ryr_O <<' '<< ryr_I <<' '<< ryr_CaRI <<' '<< ryr_R_p <<' '<< ryr_O_p <<' '<< ryr_I_p <<' '<< ryr_CaRI_p <<' '<<
+    Na_dyad <<' '<< Na_sl <<' '<< Na_myo <<' '<< K_myo <<' '<< Cl_myo <<' '<< Ca_dyad <<' '<< Ca_sl <<' '<< Ca_myo <<' '<< Ca_SR << ' ';
 }
 
 void TWorld::LongPrint(ostream &tempstr, double tArg,  ML_CalcType V) {
   Print(tempstr, tArg, V);
-
-//  tempstr << I_Na << ' ' << I_Na_late << ' ' << I_to << ' ' << I_CaL_i << ' ' << I_CaL_ss << ' ' << I_CaNa_i << ' ' << I_CaNa_ss << ' ' << I_CaK_i << ' ' << I_CaK_ss << ' ' << I_CaL << ' ' << I_CaNa << ' ' << I_CaK << ' ' <<
-//    I_Kr << ' ' << I_Ks << ' ' << I_K1 << ' ' << I_NaCa_i << ' ' << I_NaCa_ss << ' ' << I_NaK << ' ' << I_CaCl << ' ' << I_Nab << ' ' <<
-//    I_Cab << ' ' << I_Kb << ' ' << I_Clb << ' '<< I_pCa << ' '<< J_diff_Na << ' '<< J_diff_Ca << ' '<< J_diff_K << ' '<< J_leak << ' '<< J_rel << ' '<< J_tr << ' '<< J_up << ' '<< cur_I_tot << ' '
-  ;
+    tempstr << I_Na_tot_dyad <<' '<< I_Na_tot_sl <<' '<< I_Na_tot <<' '<< I_K_tot <<' '<< I_Cl_tot <<' '<< I_Ca_tot_dyad <<' '<< I_Ca_tot_sl <<' '<< I_Ca_tot <<' '<< I_tot << ' ';
 }  // TWorld::LongPrint
 
 void TWorld::GetParameterNames(vector<string> &getpara) {
   const string ParaNames[] =
   {
-//    "m", "A_h", "B_h",          "h",  "A_j", "B_j",                "j",                            "h_p",
-//    "j_p",
-//    "m_L",         "h_L",
-//    "h_L_CaMK",    "a",                  "i_fast",                  "i_slow",                       "a_CaMK",
-//    "i_CaMK_fast", "i_CaMK_slow",        "d",                       "f_fast",                       "f_slow",
-//    "f_Ca_fast",
-//    "f_Ca_slow",
-//    "j_Ca",        "f_CaMK_fast",        "f_Ca_CaMK_fast",          "n_ss",          "n_i", "C_0", "C_1", "C_2", "O", "I",
-//    "x_s1",
-//    "x_s2",               "Na_i",                    "Na_ss",                        "K_i",
-//    "K_ss",
-//    "Ca_i",        "Ca_ss",
-//    "Ca_nsr",      "Ca_jsr", "Cl_i",             "CaMK_trap",               "J_rel_NP",
-//    "J_rel_CaMK"
+    "m", "A_h", "B_h", "A_j", "B_j", "h", "j", "h_p", "j_p", "m_PKA", "h_PKA", "j_PKA", "h_both", "j_both", "m_L", "h_L", "h_L_p",
+    "d", "f_fast", "f_slow", "f_Ca_fast", "f_Ca_slow", "j_Ca", "f_p_fast", "f_Ca_p_fast", "d_PKA", "f_PKA_fast", "f_PKA_slow", "f_Ca_PKA_fast", "f_Ca_PKA_slow", "f_both_fast", "f_Ca_both_fast", "n_Ca_dyad", "n_Ca_sl",
+    "a_slow", "a_fast", "i_slow", "i_fast", "a_p_slow", "a_p_fast", "i_p_slow", "i_p_fast",
+    "C_0", "C_1", "C_2", "O", "I",
+    "xs_dyad", "xs_sl",
+    "ryr_R", "ryr_O", "ryr_I", "ryr_CaRI", "ryr_R_p", "ryr_O_p", "ryr_I_p", "ryr_CaRI_p",
+    "Na_dyad", "Na_sl", "Na_myo", "K_myo", "Cl_myo", "Ca_dyad", "Ca_sl", "Ca_myo", "Ca_SR"
   };
 
   for (int i = 0; i < sizeof(ParaNames)/sizeof(ParaNames[0]); i++)
@@ -1220,11 +1207,7 @@ void TWorld::GetLongParameterNames(vector<string> &getpara) {
   GetParameterNames(getpara);
   const string ParaNames[] =
   {
-//    "I_Na", "I_Na_late", "I_to", "I_CaL_i", "I_CaL_ss", "I_CaNa_i", "I_CaNa_ss", "I_CaK_i", "I_CaK_ss",      "I_CaL",      "I_CaNa",      "I_CaK",      "I_Kr",      "I_Ks",
-//    "I_K1",
-//    "I_NaCa_i",
-//    "I_NaCa_ss",
-//    "I_NaK",     "I_CaCl",     "I_Nab",     "I_Cab",     "I_Kb",     "I_Clb",       "I_pCa", "J_diff_Na", "J_diff_Ca", "J_diff_K", "J_leak", "J_rel", "J_tr", "J_up", "cur_I_tot"
+    "I_Na_tot_dyad", "I_Na_tot_sl", "I_Na_tot", "I_K_tot", "I_Cl_tot", "I_Ca_tot_dyad", "I_Ca_tot_sl", "I_Ca_tot", "I_tot"
   };
   for (int i = 0; i < sizeof(ParaNames)/sizeof(ParaNames[0]); i++)
     getpara.push_back(ParaNames[i]);
