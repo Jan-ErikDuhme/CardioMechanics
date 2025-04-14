@@ -249,7 +249,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        CaMK and Ca signalling
   ////////////////////////////////////////////////////////////////////////////////////////
-  double PP1_tot = 0.13698; //TODO: Change to parameter using v(), needs to be changed if PKA signalling is simulted
+  double PP1_tot = v(VT_PP1_tot); //0.13698
   double CaMK0  = 2.0 * 0.05; // Equilibrium fraction of active CaMKII binding sites
   double Km_CaMK_Ca = 5.0 * 0.0015; //[mmol/L] CaMKII affinity for Ca2+/CaM activation %Adjusted because of smaller cleft space
     
@@ -614,17 +614,17 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   i_p_fast = i_inf - (i_inf - i_p_fast) * exp(-tinc / tau_i_p_fast);
     
   // Putting together the channels behavior and fraction
-  double G_to_slow;
-    double G_to_fast;
+  double G_to_slow = v(VT_Ito_slow_Multiplier);
+ double G_to_fast = v(VT_Ito_fast_Multiplier);
   if (v(VT_celltype) == 1.0) { // epi
-      G_to_slow = 0.02036 * v(VT_Ito_slow_Multiplier);
-      G_to_fast = 0.29856 * v(VT_Ito_fast_Multiplier);
+      G_to_slow = 0.02036 * G_to_slow;
+      G_to_fast = 0.29856 * G_to_fast;
   } else if (v(VT_celltype) == 2.0) { // mid
-      G_to_slow = 0.04632 * v(VT_Ito_slow_Multiplier);
-      G_to_fast = 0.14928 * v(VT_Ito_fast_Multiplier);
+      G_to_slow = 0.04632 * G_to_slow;
+      G_to_fast = 0.14928 * G_to_fast;
   } else if (v(VT_celltype) == 0.0) { //endo
-      G_to_slow = 0.07210 * v(VT_Ito_slow_Multiplier);
-      G_to_fast = 0.01276 * v(VT_Ito_fast_Multiplier);
+      G_to_slow = 0.07210 * G_to_slow;
+      G_to_fast = 0.01276 * G_to_fast;
   }
   const ML_CalcType phi_Ito_CaMK = phi_INa_CaMK; //TODO: Hierbei bin ich mir unsicher aus Tomek übernommen (MATLAB -> fItop = camk_f_RyR)
   I_to_slow = v(VT_Ito_Multiplier) * G_to_slow * (V_m - E_K) * ((1.0 - phi_Ito_CaMK) * a_slow * i_slow + phi_Ito_CaMK * a_p_slow * i_p_slow);

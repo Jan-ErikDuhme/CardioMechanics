@@ -22,9 +22,7 @@
 namespace NS_TWorldParameters {
 enum varType {
   
-  /////////////////////////////////////////////////////////////////////////////////////////
-  ///       Simulation Parameters
-  ////////////////////////////////////////////////////////////////////////////////////////
+  /// Simulation Parameters
   VT_amplitude = vtFirst,
   VT_duration,
   VT_celltype,
@@ -32,29 +30,30 @@ enum varType {
   VT_Ca_o,
   VT_K_o,
   VT_Cl_o,
+    
+  /// Multipliers
+  VT_ICaL_fractionSS,
+  VT_INaCa_fractionSS,
   VT_INaF_Multiplier,
-  VT_INaL_Multiplier,
+  VT_ICaL_Multiplier,
   VT_Ito_Multiplier,
-  VT_PCa_Multiplier,
+  VT_Ito_slow_Multiplier,
+  VT_Ito_fast_Multiplier,
+  VT_INaL_Multiplier,
   VT_IKr_Multiplier,
   VT_IKs_Multiplier,
   VT_IK1_Multiplier,
+  VT_IKb_Multiplier,
   VT_INaCa_Multiplier,
   VT_INaK_Multiplier,
-  VT_IKb_Multiplier,
   VT_INab_Multiplier,
   VT_ICab_Multiplier,
   VT_IpCa_Multiplier,
-  VT_Ito_slow_Multiplier,
-  VT_Ito_fast_Multiplier,
-  VT_ICaL_fractionSS,
-  VT_CMDN_Multiplier,
-  VT_INaCa_fractionSS,
-  VT_Jup_Multiplier,
   VT_ICaCl_Multiplier,
   VT_IClb_Multiplier,
   VT_Jrel_Multiplier,
-    
+  VT_Jup_Multiplier,
+  VT_CMDN_Multiplier,
     
   /// PKA fractions
   VT_fINa_PKA,
@@ -64,10 +63,9 @@ enum varType {
   VT_fIfPLB_PKA,
   VT_fTnI_PKA,
   VT_fMyBPC_PKA,
-    
-  /////////////////////////////////////////////////////////////////////////////////////////
-  ///       State Variables
-  ////////////////////////////////////////////////////////////////////////////////////////
+  VT_PP1_tot,
+
+  /// State Variables
   // Transmenbrane Voltage and Concentrations
   VT_Init_Vm,
   VT_Init_Na_dyad,
@@ -79,14 +77,12 @@ enum varType {
   VT_Init_Ca_sl,
   VT_Init_Ca_myo,
   VT_Init_Ca_SR,
-    
   // CaMK and Ca Signalling
   VT_Init_CaMK_trap,
   VT_Init_CaMK_f_ICaL,
   VT_Init_CaMK_f_RyR,
   VT_Init_CaMK_f_PLB,
   VT_Init_casig_serca_trap,
-    
   // Sodium current (INa, INaL)
   VT_Init_m,
   VT_Init_A_h,
@@ -105,7 +101,6 @@ enum varType {
   VT_Init_m_L,
   VT_Init_h_L,
   VT_Init_h_L_p,
-    
   // L-type calcium current (I_CaL, I_CaNa, I_CaK)
   VT_Init_d,
   VT_Init_f_fast,
@@ -124,7 +119,6 @@ enum varType {
   VT_Init_n_Ca_sl,
   VT_Init_I_CaL_pureCDI_dyad,
   VT_Init_I_CaL_pureCDI_sl,
-    
   // Transient outward current (Ito)
   VT_Init_a_slow,
   VT_Init_a_fast,
@@ -134,18 +128,15 @@ enum varType {
   VT_Init_a_p_fast,
   VT_Init_i_p_slow,
   VT_Init_i_p_fast,
-    
   // Rapid delayed rectifier current (IKr)
   VT_Init_C_0,
   VT_Init_C_1,
   VT_Init_C_2,
   VT_Init_O,
   VT_Init_I,
-    
   // Slow delayed rectifier current (IKs)
   VT_Init_xs_dyad,
   VT_Init_xs_sl,
-    
   // Calcium release from SR (Jrel, Jleak)
   VT_Init_J_rel_ICaLdep_act,
   VT_Init_J_rel_ICaLdep_f1,
@@ -158,7 +149,6 @@ enum varType {
   VT_Init_ryr_O_p,
   VT_Init_ryr_I_p,
   VT_Init_ryr_CaRI_p,
-    
   // Buffering
   VT_Init_Buffer_NaBj,
   VT_Init_Buffer_NaBsl,
@@ -235,69 +225,69 @@ class TWorldParameters : public vbNewElphyParameters {
   void InitTable(ML_CalcType);
   void Init(const char *, ML_CalcType);
 
-  ML_CalcType m_inf[RTDT];
-  ML_CalcType exptau_m[RTDT];
-  ML_CalcType h_inf[RTDT];
-  ML_CalcType exptau_h[RTDT];
-  ML_CalcType j_inf[RTDT];
-  ML_CalcType exptau_j[RTDT];
-  ML_CalcType h_p_inf[RTDT];
-  ML_CalcType exptau_h_p[RTDT];
-  ML_CalcType j_p_inf[RTDT];
-  ML_CalcType exptau_j_p[RTDT];
-  ML_CalcType m_L_inf[RTDT];
-  ML_CalcType exptau_m_L[RTDT];
-  ML_CalcType h_L_inf[RTDT];
-  ML_CalcType exptau_h_L[RTDT];
-  ML_CalcType h_L_CaMK_inf[RTDT];
-  ML_CalcType exptau_h_L_CaMK[RTDT];
-  ML_CalcType a_inf[RTDT];
-  ML_CalcType exptau_a[RTDT];
-  ML_CalcType i_inf[RTDT];
-  ML_CalcType exptau_i_fast[RTDT];
-  ML_CalcType exptau_i_slow[RTDT];
-  ML_CalcType A_i_fast[RTDT];
-  ML_CalcType A_i_slow[RTDT];
-  ML_CalcType a_CaMK_inf[RTDT];
-  ML_CalcType exptau_a_CaMK[RTDT];
-  ML_CalcType i_CaMK_inf[RTDT];
-  ML_CalcType exptau_i_CaMK_fast[RTDT];
-  ML_CalcType exptau_i_CaMK_slow[RTDT];
-  ML_CalcType d_inf[RTDT];
-  ML_CalcType exptau_d[RTDT];
-  ML_CalcType f_inf[RTDT];
-  ML_CalcType exptau_f_fast[RTDT];
-  ML_CalcType exptau_f_slow[RTDT];
-  ML_CalcType f_Ca_inf[RTDT];
-  ML_CalcType exptau_f_Ca_fast[RTDT];
-  ML_CalcType exptau_f_Ca_slow[RTDT];
-  ML_CalcType A_f_Ca_fast[RTDT];
-  ML_CalcType A_f_Ca_slow[RTDT];
-  ML_CalcType j_Ca_inf[RTDT];
-  ML_CalcType exptau_j_Ca[RTDT];
-  ML_CalcType f_CaMK_inf[RTDT];
-  ML_CalcType exptau_f_CaMK_fast[RTDT];
-  ML_CalcType f_Ca_CaMK_inf[RTDT];
-  ML_CalcType exptau_f_Ca_CaMK_fast[RTDT];
-  ML_CalcType x_r_inf[RTDT];
-  ML_CalcType exptau_x_r_fast[RTDT];
-  ML_CalcType exptau_x_r_slow[RTDT];
-  ML_CalcType A_x_r_fast[RTDT];
-  ML_CalcType A_x_r_slow[RTDT];
-  ML_CalcType C_0[RTDT];
-  ML_CalcType C_1[RTDT];
-  ML_CalcType C_2[RTDT];
-  ML_CalcType O[RTDT];
-  ML_CalcType I[RTDT];
-  ML_CalcType R_Kr[RTDT];
-  ML_CalcType x_s1_inf[RTDT];
-  ML_CalcType exptau_x_s1[RTDT];
-  ML_CalcType x_s2_inf[RTDT];
-  ML_CalcType exptau_x_s2[RTDT];
-  ML_CalcType x_K1_inf[RTDT];
-  ML_CalcType exptau_x_K1[RTDT];
-  ML_CalcType R_K1[RTDT];
-  ML_CalcType x_Kb[RTDT];
+//  ML_CalcType m_inf[RTDT];
+//  ML_CalcType exptau_m[RTDT];
+//  ML_CalcType h_inf[RTDT];
+//  ML_CalcType exptau_h[RTDT];
+//  ML_CalcType j_inf[RTDT];
+//  ML_CalcType exptau_j[RTDT];
+//  ML_CalcType h_p_inf[RTDT];
+//  ML_CalcType exptau_h_p[RTDT];
+//  ML_CalcType j_p_inf[RTDT];
+//  ML_CalcType exptau_j_p[RTDT];
+//  ML_CalcType m_L_inf[RTDT];
+//  ML_CalcType exptau_m_L[RTDT];
+//  ML_CalcType h_L_inf[RTDT];
+//  ML_CalcType exptau_h_L[RTDT];
+//  ML_CalcType h_L_CaMK_inf[RTDT];
+//  ML_CalcType exptau_h_L_CaMK[RTDT];
+//  ML_CalcType a_inf[RTDT];
+//  ML_CalcType exptau_a[RTDT];
+//  ML_CalcType i_inf[RTDT];
+//  ML_CalcType exptau_i_fast[RTDT];
+//  ML_CalcType exptau_i_slow[RTDT];
+//  ML_CalcType A_i_fast[RTDT];
+//  ML_CalcType A_i_slow[RTDT];
+//  ML_CalcType a_CaMK_inf[RTDT];
+//  ML_CalcType exptau_a_CaMK[RTDT];
+//  ML_CalcType i_CaMK_inf[RTDT];
+//  ML_CalcType exptau_i_CaMK_fast[RTDT];
+//  ML_CalcType exptau_i_CaMK_slow[RTDT];
+//  ML_CalcType d_inf[RTDT];
+//  ML_CalcType exptau_d[RTDT];
+//  ML_CalcType f_inf[RTDT];
+//  ML_CalcType exptau_f_fast[RTDT];
+//  ML_CalcType exptau_f_slow[RTDT];
+//  ML_CalcType f_Ca_inf[RTDT];
+//  ML_CalcType exptau_f_Ca_fast[RTDT];
+//  ML_CalcType exptau_f_Ca_slow[RTDT];
+//  ML_CalcType A_f_Ca_fast[RTDT];
+//  ML_CalcType A_f_Ca_slow[RTDT];
+//  ML_CalcType j_Ca_inf[RTDT];
+//  ML_CalcType exptau_j_Ca[RTDT];
+//  ML_CalcType f_CaMK_inf[RTDT];
+//  ML_CalcType exptau_f_CaMK_fast[RTDT];
+//  ML_CalcType f_Ca_CaMK_inf[RTDT];
+//  ML_CalcType exptau_f_Ca_CaMK_fast[RTDT];
+//  ML_CalcType x_r_inf[RTDT];
+//  ML_CalcType exptau_x_r_fast[RTDT];
+//  ML_CalcType exptau_x_r_slow[RTDT];
+//  ML_CalcType A_x_r_fast[RTDT];
+//  ML_CalcType A_x_r_slow[RTDT];
+//  ML_CalcType C_0[RTDT];
+//  ML_CalcType C_1[RTDT];
+//  ML_CalcType C_2[RTDT];
+//  ML_CalcType O[RTDT];
+//  ML_CalcType I[RTDT];
+//  ML_CalcType R_Kr[RTDT];
+//  ML_CalcType x_s1_inf[RTDT];
+//  ML_CalcType exptau_x_s1[RTDT];
+//  ML_CalcType x_s2_inf[RTDT];
+//  ML_CalcType exptau_x_s2[RTDT];
+//  ML_CalcType x_K1_inf[RTDT];
+//  ML_CalcType exptau_x_K1[RTDT];
+//  ML_CalcType R_K1[RTDT];
+//  ML_CalcType x_Kb[RTDT];
 };  // class TWorldParameters
 
 #endif  // ifndef TWORLDPARAMETERS_H

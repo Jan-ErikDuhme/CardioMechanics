@@ -1,6 +1,6 @@
 CELLMODEL*IBT*KA
 TWorld
-78
+156
 amplitude -53.0
 duration 0.001
 celltype 0.0
@@ -8,25 +8,51 @@ Na_o 140.0
 Ca_o 1.8
 K_o 5.0
 Cl_o 150.0
-
+ICaL_fractionSS 0.8
+INaCa_fractionSS 0.31
 INaF_Multiplier 1.0
 INaL_Multiplier 1.0
 Ito_Multiplier 1.0
-PCa_Multiplier 1.0
+Ito_slow_Multiplier 1.0
+Ito_fast_Multiplier 1.0
+INaL_Multiplier 1.0
 IKr_Multiplier 1.0
 IKs_Multiplier 1.0
 IK1_Multiplier 1.0
+IKb_Multiplier 1.0
 INaCa_Multiplier 1.0
 INaK_Multiplier 1.0
-IKb_Multiplier 1.0
 INab_Multiplier 1.0
 ICab_Multiplier 1.0
 IpCa_Multiplier 1.0
-
-
-
-
-
+ICaCl_Multiplier 1.0
+IClb_Multiplier 1.0
+Jrel_Multiplier 1.0
+Jup_Multiplier 1.0
+CMDN_Multiplier 1.0
+fINa_PKA 0.0
+fICaL_PKA 0.0
+fINaK_PKA 0.0
+fIKs_PKA 0.0
+fIfPLB_PKA 0.0
+fTnI_PKA 0.0
+fMyBPC_PKA 0.0
+PP1_tot 0.13698
+Init_Vm -0.090
+Init_Na_dyad 9.0
+Init_Na_sl 9.0
+Init_Na_myo 9.0
+Init_K_myo 134.0
+Init_Cl_myo 15.0
+Init_Ca_dyad 9.0e-05
+Init_Ca_sl 9.0e-05
+Init_Ca_myo 9.0e-05
+Init_Ca_SR 0.7
+Init_CaMK_trap 0.0
+Init_CaMK_f_ICaL 0.0
+Init_CaMK_f_RyR 0.0
+Init_CaMK_f_PLB 0.0
+Init_casig_serca_trap 0.0
 Init_m 0.0
 Init_A_h 0.0
 Init_B_h 0.0
@@ -44,9 +70,63 @@ Init_j_both 0.0
 Init_m_L 0.0
 Init_h_L 0.0
 Init_h_L_p 0.0
-        
-        
-        
+Init_d 0.0
+Init_f_fast 0.0
+Init_f_slow 0.0
+Init_f_Ca_fast 0.0
+Init_f_Ca_slow 0.0
+Init_j_Ca 0.0
+Init_f_p_fast 0.0
+Init_f_Ca_p_fast 0.0
+Init_d_PKA 0.0
+Init_f_PKA_fast 0.0
+Init_f_PKA_slow 0.0
+Init_f_PKA_fast 0.0
+Init_f_Ca_p_fast 0.0
+Init_n_Ca_dyad 0.0
+Init_n_Ca_sl 0.0
+Init_I_CaL_pureCDI_dyad 0.0
+Init_I_CaL_pureCDI_sl 0.0
+Init_a_slow 0.0
+Init_a_fast 0.0
+Init_i_slow 0.0
+Init_i_fast 0.0
+Init_a_p_slow 0.0
+Init_a_p_fast 0.0
+Init_i_p_slow 0.0
+Init_i_p_fast 0.0
+Init_C_0 0.0
+Init_C_1 0.0
+Init_C_2 0.0
+Init_O 0.0
+Init_I 0.0
+Init_xs_dyad 0.0
+Init_xs_sl 0.0
+Init_J_rel_ICaLdep_act 0.0
+Init_J_rel_ICaLdep_f1 0.0
+Init_J_rel_ICaLdep_f2 0.0
+Init_ryr_R 0.0
+Init_ryr_O 0.0
+Init_ryr_I 0.0
+Init_ryr_CaRI 0.0
+Init_ryr_R_p 0.0
+Init_ryr_O_p 0.0
+Init_ryr_I_p 0.0
+Init_ryr_CaRI_p 0.0
+Init_Buffer_NaBj 0.0
+Init_Buffer_NaBsl 0.0
+Init_Buffer_TnClow 0.0
+Init_Buffer_TnCHc 0.0
+Init_Buffer_TnCHm 0.0
+Init_Buffer_CaM 0.0
+Init_Buffer_Myosin_ca 0.0
+Init_Buffer_Myosin_mg 0.0
+Init_Buffer_SRB 0.0
+Init_Buffer_SLLj 0.0
+Init_Buffer_SLLsl 0.0
+Init_Buffer_SLHj 0.0
+Init_Buffer_SLHsl 0.0
+Init_Buffer_Csqn 0.0
 perm50 0.35
 TRPN_n 2
 koff 0.1
