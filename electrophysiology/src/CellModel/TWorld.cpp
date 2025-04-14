@@ -384,8 +384,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   h_L_p = h_L_p_inf - (h_L_p_inf - h_L_p) * exp(-tinc / tau_h_L_p);
     
   // Putting together the channels behavior and fraction
-  const ML_CalcType phi_INaL_CaMK = phi_INa_CaMK;
-  double G_Na_L = 0.04229 * v(VT_INaL_Multiplier) * (1.0 + phi_INaL_CaMK); //TODO: Ist noch falsch
+  const ML_CalcType phi_INaL_CaMK = CaMK_f_RyR;
+  double G_Na_L = 0.04229 * v(VT_INaL_Multiplier) * (1.0 + phi_INaL_CaMK);
   I_NaL_dyad = Fdyad  * G_Na_L * (V_m - E_Na_dyad) * m_L * ((1.0 - phi_INaL_CaMK) * h_L + phi_INaL_CaMK * h_L_p);;
   I_NaL_sl = Fsl * G_Na_L * (V_m - E_Na_sl) * m_L * ((1.0 - phi_INaL_CaMK) * h_L + phi_INaL_CaMK * h_L_p);;
 
@@ -626,7 +626,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
       G_to_slow = 0.07210 * G_to_slow;
       G_to_fast = 0.01276 * G_to_fast;
   }
-  const ML_CalcType phi_Ito_CaMK = phi_INa_CaMK; //TODO: Hierbei bin ich mir unsicher aus Tomek übernommen (MATLAB -> fItop = camk_f_RyR)
+  const ML_CalcType phi_Ito_CaMK = CaMK_f_RyR;
   I_to_slow = v(VT_Ito_Multiplier) * G_to_slow * (V_m - E_K) * ((1.0 - phi_Ito_CaMK) * a_slow * i_slow + phi_Ito_CaMK * a_p_slow * i_p_slow);
   I_to_fast = v(VT_Ito_Multiplier) * G_to_fast * (V_m - E_K) * ((1.0 - phi_Ito_CaMK) * a_fast * i_fast + phi_Ito_CaMK * a_p_fast * i_p_fast);
   I_to = I_to_slow + I_to_fast;
@@ -1048,7 +1048,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     XW += tinc * diff_XW;
 
     double ca50_     = ((v(VT_ca50) * fPKA_TnI) + v(VT_beta_1) * (lambda_m - 1.0));
-    double diff_TRPN = v(VT_koff) * (pow((Ca_myo/ca50_), v(VT_TRPN_n)) * (1.0 - TRPN) - TRPN);
+    double diff_TRPN = v(VT_koff) * (pow((1000*Ca_myo/ca50_), v(VT_TRPN_n)) * (1.0 - TRPN) - TRPN);
     TRPN += tinc * diff_TRPN;
 
     double trpn_np_       = pow(TRPN, -v(VT_nperm)/2.0);
@@ -1085,7 +1085,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   Buffer_NaBj += tinc * dBuffer_NaBj;
   const ML_CalcType dBuffer_NaBsl = kon_na * Na_sl * (Bmax_Nasl - Buffer_NaBsl) - koff_na * Buffer_NaBsl;
   Buffer_NaBsl += tinc * dBuffer_NaBsl;
-  const ML_CalcType dBuffer_TnClow = Bmax_TnClow; //* d_contraction_Ca_TRPN; //TODO: d_contraction_Ca_TRPN muss noch definiert werden
+  const ML_CalcType dBuffer_TnClow = Bmax_TnClow * diff_TRPN;
   Buffer_TnClow += tinc * dBuffer_TnClow;
   const ML_CalcType dBuffer_TnCHc = kon_tnchca * Ca_myo * (Bmax_TnChigh - Buffer_TnCHc - Buffer_TnCHm) - koff_tnchca * Buffer_TnCHc;
   Buffer_TnCHc += tinc * dBuffer_TnCHc;
