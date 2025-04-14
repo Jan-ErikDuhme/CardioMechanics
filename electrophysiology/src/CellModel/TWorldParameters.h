@@ -21,6 +21,10 @@
 
 namespace NS_TWorldParameters {
 enum varType {
+  
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///       Simulation Parameters
+  ////////////////////////////////////////////////////////////////////////////////////////
   VT_amplitude = vtFirst,
   VT_duration,
   VT_celltype,
@@ -60,18 +64,28 @@ enum varType {
   VT_fIfPLB_PKA,
   VT_fTnI_PKA,
   VT_fMyBPC_PKA,
-
-  /// state variables
+    
+  /////////////////////////////////////////////////////////////////////////////////////////
+  ///       State Variables
+  ////////////////////////////////////////////////////////////////////////////////////////
+  // Transmenbrane Voltage and Concentrations
   VT_Init_Vm,
-  VT_Init_Na_i,
-  VT_Init_Na_ss,
-  VT_Init_K_i,
-  VT_Init_K_ss,
-  VT_Init_Ca_i,
-  VT_Init_Ca_ss,
-  VT_Init_Ca_nsr,
-  VT_Init_Ca_jsr,
-  VT_Init_Cl_i,
+  VT_Init_Na_dyad,
+  VT_Init_Na_sl,
+  VT_Init_Na_myo,
+  VT_Init_K_myo,
+  VT_Init_Cl_myo,
+  VT_Init_Ca_dyad,
+  VT_Init_Ca_sl,
+  VT_Init_Ca_myo,
+  VT_Init_Ca_SR,
+    
+  // CaMK and Ca Signalling
+  VT_Init_CaMK_trap,
+  VT_Init_CaMK_f_ICaL,
+  VT_Init_CaMK_f_RyR,
+  VT_Init_CaMK_f_PLB,
+  VT_Init_casig_serca_trap,
     
   // Sodium current (INa, INaL)
   VT_Init_m,
@@ -93,35 +107,73 @@ enum varType {
   VT_Init_h_L_p,
     
   // L-type calcium current (I_CaL, I_CaNa, I_CaK)
-    
-    
-  VT_Init_a,
-  VT_Init_i_fast,
-  VT_Init_i_slow,
-  VT_Init_a_CaMK,
-  VT_Init_i_CaMK_fast,
-  VT_Init_i_CaMK_slow,
   VT_Init_d,
   VT_Init_f_fast,
   VT_Init_f_slow,
   VT_Init_f_Ca_fast,
   VT_Init_f_Ca_slow,
   VT_Init_j_Ca,
-  VT_Init_n_ss,
-  VT_Init_n_i,
-  VT_Init_f_CaMK_fast,
-  VT_Init_f_Ca_CaMK_fast,
+  VT_Init_f_p_fast,
+  VT_Init_f_Ca_p_fast,
+  VT_Init_d_PKA,
+  VT_Init_f_PKA_fast,
+  VT_Init_f_PKA_slow,
+  VT_Init_f_both_fast,
+  VT_Init_f_Ca_both_fast,
+  VT_Init_n_Ca_dyad,
+  VT_Init_n_Ca_sl,
+  VT_Init_I_CaL_pureCDI_dyad,
+  VT_Init_I_CaL_pureCDI_sl,
+    
+  // Transient outward current (Ito)
+  VT_Init_a_slow,
+  VT_Init_a_fast,
+  VT_Init_i_slow,
+  VT_Init_i_fast,
+  VT_Init_a_p_slow,
+  VT_Init_a_p_fast,
+  VT_Init_i_p_slow,
+  VT_Init_i_p_fast,
+    
+  // Rapid delayed rectifier current (IKr)
   VT_Init_C_0,
   VT_Init_C_1,
   VT_Init_C_2,
   VT_Init_O,
   VT_Init_I,
-  VT_Init_x_s1,
-  VT_Init_x_s2,
-  VT_Init_J_rel_NP,
-  VT_Init_J_rel_CaMK,
-  VT_Init_CaMK_trap,
     
+  // Slow delayed rectifier current (IKs)
+  VT_Init_xs_dyad,
+  VT_Init_xs_sl,
+    
+  // Calcium release from SR (Jrel, Jleak)
+  VT_Init_J_rel_ICaLdep_act,
+  VT_Init_J_rel_ICaLdep_f1,
+  VT_Init_J_rel_ICaLdep_f2,
+  VT_Init_ryr_R,
+  VT_Init_ryr_O,
+  VT_Init_ryr_I,
+  VT_Init_ryr_CaRI,
+  VT_Init_ryr_R_p,
+  VT_Init_ryr_O_p,
+  VT_Init_ryr_I_p,
+  VT_Init_ryr_CaRI_p,
+    
+  // Buffering
+  VT_Init_Buffer_NaBj,
+  VT_Init_Buffer_NaBsl,
+  VT_Init_Buffer_TnClow,
+  VT_Init_Buffer_TnCHc,
+  VT_Init_Buffer_TnCHm,
+  VT_Init_Buffer_CaM,
+  VT_Init_Buffer_Myosin_ca,
+  VT_Init_Buffer_Myosin_mg,
+  VT_Init_Buffer_SRB,
+  VT_Init_Buffer_SLLj,
+  VT_Init_Buffer_SLLsl,
+  VT_Init_Buffer_SLHj,
+  VT_Init_Buffer_SLHsl,
+  VT_Init_Buffer_Csqn,
     
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Land-Niederer model of contraction

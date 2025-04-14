@@ -37,8 +37,6 @@ class TWorld : public vbElphyModel<ML_CalcType> {
     ML_CalcType a_slow, a_fast, i_slow, i_fast, a_p_slow, a_p_fast, i_p_slow, i_p_fast; // Transient outward current (Ito)
     ML_CalcType C_0, C_1, C_2, O, I; // Rapid delayed rectifier current (IKr)
     ML_CalcType xs_dyad, xs_sl; // Slow delayed rectifier current (IKs)
-    ML_CalcType K1_SS; // Inward rectifier current (IK1)
-    ML_CalcType f_NaK; // Sodium-potassium pump (INaK)
     ML_CalcType ryr_R, ryr_O, ryr_I, ryr_CaRI, ryr_R_p, ryr_O_p, ryr_I_p, ryr_CaRI_p; // Calcium release from SR (Jrel, Jleak)
 
   /// currents

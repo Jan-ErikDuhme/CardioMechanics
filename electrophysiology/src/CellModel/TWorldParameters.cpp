@@ -63,8 +63,36 @@ void TWorldParameters::Init(const char *initFile, ML_CalcType tinc) {
 //  P[VT_IClb_Multiplier].name = "IClb_Multiplier";
 //  P[VT_Jrel_Multiplier].name = "Jrel_Multiplier";
     
+    /// PKA Fractions
+    P[VT_fINa_PKA].name = "fINa_PKA";
+    P[VT_fICaL_PKA].name = "fICaL_PKA";
+    P[VT_fINaK_PKA].name = "fINaK_PKA";
+    P[VT_fIKs_PKA].name = "fIKs_PKA";
+    P[VT_fIfPLB_PKA].name = "fIfPLB_PKA";
+    P[VT_fTnI_PKA].name = "fTnI_PKA";
+    P[VT_fMyBPC_PKA].name = "fMyBPC_PKA";
+    
 
   /// state variables
+    // Transmenbrane Voltage and Concentrations
+    P[VT_Init_Vm].name = "Init_Vm";
+    P[VT_Init_Na_dyad].name = "Init_Na_dyad";
+    P[VT_Init_Na_sl].name = "Init_Na_sl";
+    P[VT_Init_Na_myo].name = "Init_Na_myo";
+    P[VT_Init_K_myo].name = "Init_K_myo";
+    P[VT_Init_Cl_myo].name = "Init_Cl_myo";
+    P[VT_Init_Ca_dyad].name = "Init_Ca_dyad";
+    P[VT_Init_Ca_sl].name = "Init_Ca_sl";
+    P[VT_Init_Ca_myo].name = "Init_Ca_myo";
+    P[VT_Init_Ca_SR].name = "Init_Ca_SR";
+
+    // CaMK and Ca Signalling
+    P[VT_Init_CaMK_trap].name = "Init_CaMK_trap";
+    P[VT_Init_CaMK_f_ICaL].name = "Init_CaMK_f_ICaL";
+    P[VT_Init_CaMK_f_RyR].name = "Init_CaMK_f_RyR";
+    P[VT_Init_CaMK_f_PLB].name = "Init_CaMK_f_PLB";
+    P[VT_Init_casig_serca_trap].name = "Init_casig_serca_trap";
+    
     // Sodium current (INa, INaL)
     P[VT_Init_m].name = "Init_m";
     P[VT_Init_A_h].name = "Init_A_h";
@@ -85,59 +113,73 @@ void TWorldParameters::Init(const char *initFile, ML_CalcType tinc) {
     P[VT_Init_h_L_p].name = "Init_h_L_p";
     
     // L-type calcium current (I_CaL, I_CaNa, I_CaK)
+    P[VT_Init_d].name = "Init_d";
+    P[VT_Init_f_fast].name = "Init_f_fast";
+    P[VT_Init_f_slow].name = "Init_f_slow";
+    P[VT_Init_f_Ca_fast].name = "Init_f_Ca_fast";
+    P[VT_Init_f_Ca_slow].name = "Init_f_Ca_slow";
+    P[VT_Init_j_Ca].name = "Init_j_Ca";
+    P[VT_Init_f_p_fast].name = "Init_f_p_fast";
+    P[VT_Init_f_Ca_p_fast].name = "Init_f_Ca_p_fast";
+    P[VT_Init_d_PKA].name = "Init_d_PKA";
+    P[VT_Init_f_PKA_fast].name = "Init_f_PKA_fast";
+    P[VT_Init_f_PKA_slow].name = "Init_f_PKA_slow";
+    P[VT_Init_f_both_fast].name = "Init_f_PKA_fast";
+    P[VT_Init_f_Ca_both_fast].name = "Init_f_Ca_p_fast";
+    P[VT_Init_n_Ca_dyad].name = "Init_n_Ca_dyad";
+    P[VT_Init_n_Ca_sl].name = "Init_n_Ca_sl";
+    P[VT_Init_I_CaL_pureCDI_dyad].name = "Init_I_CaL_pureCDI_dyad";
+    P[VT_Init_I_CaL_pureCDI_sl].name = "Init_I_CaL_pureCDI_sl";
     
+    // Transient outward current (Ito)
+    P[VT_Init_a_slow].name = "Init_a_slow";
+    P[VT_Init_a_fast].name = "Init_a_fast";
+    P[VT_Init_i_slow].name = "Init_i_slow";
+    P[VT_Init_i_fast].name = "Init_i_fast";
+    P[VT_Init_a_p_slow].name = "Init_a_p_slow";
+    P[VT_Init_a_p_fast].name = "Init_a_p_fast";
+    P[VT_Init_i_p_slow].name = "Init_i_p_slow";
+    P[VT_Init_i_p_fast].name = "Init_i_p_fast";
     
+    // Rapid delayed rectifier current (IKr)
+    P[VT_Init_C_0].name = "Init_C_0";
+    P[VT_Init_C_1].name = "Init_C_1";
+    P[VT_Init_C_2].name = "Init_C_2";
+    P[VT_Init_O].name = "Init_O";
+    P[VT_Init_I].name = "Init_I";
     
-//  P[VT_Init_Vm].name             = "Init_Vm";
-//  P[VT_Init_Na_i].name           = "Init_Na_i";
-//  P[VT_Init_Na_ss].name          = "Init_Na_ss";
-//  P[VT_Init_K_i].name            = "Init_K_i";
-//  P[VT_Init_K_ss].name           = "Init_K_ss";
-//  P[VT_Init_Ca_i].name           = "Init_Ca_i";
-//  P[VT_Init_Ca_ss].name          = "Init_Ca_ss";
-//  P[VT_Init_Ca_nsr].name         = "Init_Ca_nsr";
-//  P[VT_Init_Ca_jsr].name         = "Init_Ca_jsr";
-//  P[VT_Init_Cl_i].name           = "Init_Cl_i";
-
-//  P[VT_Init_a].name              = "Init_a";
-//  P[VT_Init_i_fast].name         = "Init_i_fast";
-//  P[VT_Init_i_slow].name         = "Init_i_slow";
-//  P[VT_Init_a_CaMK].name         = "Init_a_CaMK";
-//  P[VT_Init_i_CaMK_fast].name    = "Init_i_CaMK_fast";
-//  P[VT_Init_i_CaMK_slow].name    = "Init_i_CaMK_slow";
-//  P[VT_Init_d].name              = "Init_d";
-//  P[VT_Init_f_fast].name         = "Init_f_fast";
-//  P[VT_Init_f_slow].name         = "Init_f_slow";
-//  P[VT_Init_f_Ca_fast].name      = "Init_f_Ca_fast";
-//  P[VT_Init_f_Ca_slow].name      = "Init_f_Ca_slow";
-//  P[VT_Init_j_Ca].name           = "Init_j_Ca";
-//  P[VT_Init_n_ss].name           = "Init_n_ss";
-//  P[VT_Init_n_i].name            = "Init_n_i";
-//  P[VT_Init_f_CaMK_fast].name    = "Init_f_CaMK_fast";
-//  P[VT_Init_f_Ca_CaMK_fast].name = "Init_f_Ca_CaMK_fast";
-//  P[VT_Init_C_0].name            = "Init_C_0";
-//  P[VT_Init_C_1].name            = "Init_C_1";
-//  P[VT_Init_C_2].name            = "Init_C_2";
-//  P[VT_Init_O].name              = "Init_O";
-//  P[VT_Init_I].name              = "Init_I";
-//  P[VT_Init_x_s1].name           = "Init_x_s1";
-//  P[VT_Init_x_s2].name           = "Init_x_s2";
-//  P[VT_Init_J_rel_NP].name       = "Init_J_rel_NP";
-//  P[VT_Init_J_rel_CaMK].name     = "Init_J_rel_CaMK";
-//  P[VT_Init_CaMK_trap].name      = "Init_CaMK_trap";
-
-
-
-   
+    // Slow delayed rectifier current (IKs)
+    P[VT_Init_xs_dyad].name = "Init_xs_dyad";
+    P[VT_Init_xs_sl].name = "Init_xs_sl";
     
-    /// PKA Fractions
-    P[VT_fINa_PKA].name = "fINa_PKA";
-    P[VT_fICaL_PKA].name = "fICaL_PKA";
-    P[VT_fINaK_PKA].name = "fINaK_PKA";
-    P[VT_fIKs_PKA].name = "fIKs_PKA";
-    P[VT_fIfPLB_PKA].name = "fIfPLB_PKA";
-    P[VT_fTnI_PKA].name = "fTnI_PKA";
-    P[VT_fMyBPC_PKA].name = "fMyBPC_PKA";
+    // Calcium release from SR (Jrel, Jleak)
+    P[VT_Init_J_rel_ICaLdep_act].name = "Init_J_rel_ICaLdep_act";
+    P[VT_Init_J_rel_ICaLdep_f1].name = "Init_J_rel_ICaLdep_f1";
+    P[VT_Init_J_rel_ICaLdep_f2].name = "Init_J_rel_ICaLdep_f2";
+    P[VT_Init_ryr_R].name = "Init_ryr_R";
+    P[VT_Init_ryr_O].name = "Init_ryr_O";
+    P[VT_Init_ryr_I].name = "Init_ryr_I";
+    P[VT_Init_ryr_CaRI].name = "Init_ryr_CaRI";
+    P[VT_Init_ryr_R_p].name = "Init_ryr_R_p";
+    P[VT_Init_ryr_O_p].name = "Init_ryr_O_p";
+    P[VT_Init_ryr_I_p].name = "Init_ryr_I_p";
+    P[VT_Init_ryr_CaRI_p].name = "Init_ryr_CaRI_p";
+    
+    // Buffering
+    P[VT_Init_Buffer_NaBj].name = "Init_Buffer_NaBj";
+    P[VT_Init_Buffer_NaBsl].name = "Init_Buffer_NaBsl";
+    P[VT_Init_Buffer_TnClow].name = "Init_Buffer_TnClow";
+    P[VT_Init_Buffer_TnCHc].name = "Init_Buffer_TnCHc";
+    P[VT_Init_Buffer_TnCHm].name = "Init_Buffer_TnCHm";
+    P[VT_Init_Buffer_CaM].name = "Init_Buffer_CaM";
+    P[VT_Init_Buffer_Myosin_ca].name = "Init_Buffer_Myosin_ca";
+    P[VT_Init_Buffer_Myosin_mg].name = "Init_Buffer_Myosin_mg";
+    P[VT_Init_Buffer_SRB].name = "Init_Buffer_SRB";
+    P[VT_Init_Buffer_SLLj].name = "Init_Buffer_SLLj";
+    P[VT_Init_Buffer_SLLsl].name = "Init_Buffer_SLLsl";
+    P[VT_Init_Buffer_SLHj].name = "Init_Buffer_SLHj";
+    P[VT_Init_Buffer_SLHsl].name = "Init_Buffer_SLHsl";
+    P[VT_Init_Buffer_Csqn].name = "Init_Buffer_Csqn";
     
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Land-Niederer model of contraction

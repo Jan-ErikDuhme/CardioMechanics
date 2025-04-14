@@ -57,6 +57,24 @@ void TWorld::Init() {
   cerr << "#initializing Class: TWorld ... " << endl;
         #endif  // if KADEBUG
     
+    // Concentrations
+    Na_dyad = v(VT_Init_Na_dyad);
+    Na_sl = v(VT_Init_Na_sl);
+    Na_myo = v(VT_Init_Na_myo);
+    K_myo = v(VT_Init_K_myo);
+    Cl_myo = v(VT_Init_Cl_myo);
+    Ca_dyad = v(VT_Init_Ca_dyad);
+    Ca_sl = v(VT_Init_Ca_sl);
+    Ca_myo = v(VT_Init_Ca_myo);
+    Ca_SR = v(VT_Init_Ca_SR);
+    
+    // CaMK and Ca Signalling
+    CaMK_trap = v(VT_Init_CaMK_trap);
+    CaMK_f_ICaL = v(VT_Init_CaMK_f_ICaL);
+    CaMK_f_RyR = v(VT_Init_CaMK_f_RyR);
+    CaMK_f_PLB = v(VT_Init_CaMK_f_PLB);
+    casig_serca_trap = v(VT_Init_casig_serca_trap);
+    
     // Sodium current (INa, INaL)
     m = v(VT_Init_m);
     A_h = v(VT_Init_A_h);
@@ -75,55 +93,73 @@ void TWorld::Init() {
     h_L_p = v(VT_Init_h_L_p);
     
     // L-type calcium current (I_CaL, I_CaNa, I_CaK)
-
-//  m              = v(VT_Init_m);
-//  A_h            = v(VT_Init_A_h);
-//  B_h            = v(VT_Init_B_h);
-//  h              = v(VT_Init_h);
-//  j              = v(VT_Init_j);
-//  h_p            = v(VT_Init_h_p);
-//  j_p            = v(VT_Init_j_p);
-//  m_L            = v(VT_Init_m_L);
-//  h_L            = v(VT_Init_h_L);
-//  h_L_CaMK       = v(VT_Init_h_L_CaMK);
-//  a              = v(VT_Init_a);
-//  i_fast         = v(VT_Init_i_fast);
-//  i_slow         = v(VT_Init_i_slow);
-//  a_CaMK         = v(VT_Init_a_CaMK);
-//  i_CaMK_fast    = v(VT_Init_i_CaMK_fast);
-//  i_CaMK_slow    = v(VT_Init_i_CaMK_slow);
-//  d              = v(VT_Init_d);
-//  f_fast         = v(VT_Init_f_fast);
-//  f_slow         = v(VT_Init_f_slow);
-//  f_Ca_fast      = v(VT_Init_f_Ca_fast);
-//  f_Ca_slow      = v(VT_Init_f_Ca_slow);
-//  j_Ca           = v(VT_Init_j_Ca);
-//  n_ss           = v(VT_Init_n_ss);
-//  n_i            = v(VT_Init_n_i);
-//  f_CaMK_fast    = v(VT_Init_f_CaMK_fast);
-//  f_Ca_CaMK_fast = v(VT_Init_f_Ca_CaMK_fast);
-//  C_0            = v(VT_Init_C_0);
-//  C_1            = v(VT_Init_C_1);
-//  C_2            = v(VT_Init_C_2);
-//  O              = v(VT_Init_O);
-//  I              = v(VT_Init_I);
-//  x_s1           = v(VT_Init_x_s1);
-//  x_s2           = v(VT_Init_x_s2);
-//  Na_i           = v(VT_Init_Na_i);
-//  Na_ss          = v(VT_Init_Na_ss);
-//  K_i            = v(VT_Init_K_i);
-//  K_ss           = v(VT_Init_K_ss);
-//  Ca_i           = v(VT_Init_Ca_i);
-//  Ca_ss          = v(VT_Init_Ca_ss);
-//  Ca_nsr         = v(VT_Init_Ca_nsr);
-//  Ca_jsr         = v(VT_Init_Ca_jsr);
-//  Cl_i           = v(VT_Init_Cl_i);
-//  CaMK_trap      = v(VT_Init_CaMK_trap);
-//  J_rel_NP       = v(VT_Init_J_rel_NP);
-//  J_rel_CaMK     = v(VT_Init_J_rel_CaMK);
+    d = v(VT_Init_d);
+    f_fast = v(VT_Init_f_fast);
+    f_slow = v(VT_Init_f_slow);
+    f_Ca_fast = v(VT_Init_f_Ca_fast);
+    f_Ca_slow = v(VT_Init_f_Ca_slow);
+    j_Ca = v(VT_Init_j_Ca);
+    f_p_fast = v(VT_Init_f_p_fast);
+    f_Ca_p_fast = v(VT_Init_f_Ca_p_fast);
+    d_PKA = v(VT_Init_d_PKA);
+    f_PKA_fast = v(VT_Init_f_PKA_fast);
+    f_PKA_slow = v(VT_Init_f_PKA_slow);
+    f_both_fast = v(VT_Init_f_both_fast);
+    f_Ca_both_fast = v(VT_Init_f_Ca_both_fast);
+    n_Ca_dyad = v(VT_Init_n_Ca_dyad);
+    n_Ca_sl = v(VT_Init_n_Ca_sl);
+    I_CaL_pureCDI_dyad = v(VT_Init_I_CaL_pureCDI_dyad);
+    I_CaL_pureCDI_sl = v(VT_Init_I_CaL_pureCDI_sl);
     
-  
-
+    // Transient outward current (Ito)
+    a_slow = v(VT_Init_a_slow);
+    a_fast = v(VT_Init_a_fast);
+    i_slow = v(VT_Init_i_slow);
+    i_fast = v(VT_Init_i_fast);
+    a_p_slow = v(VT_Init_a_p_slow);
+    a_p_fast = v(VT_Init_a_p_fast);
+    i_p_slow = v(VT_Init_i_p_slow);
+    i_p_fast = v(VT_Init_i_p_fast);
+    
+    // Rapid delayed rectifier current (IKr)
+    C_0 = v(VT_Init_C_0);
+    C_1 = v(VT_Init_C_1);
+    C_2 = v(VT_Init_C_2);
+    O = v(VT_Init_O);
+    I = v(VT_Init_I);
+    
+    // Slow delayed rectifier current (IKs)
+    xs_dyad = v(VT_Init_xs_dyad);
+    xs_sl = v(VT_Init_xs_sl);
+    
+    // Calcium release from SR (Jrel, Jleak)
+    J_rel_ICaLdep_act = v(VT_Init_J_rel_ICaLdep_act);
+    J_rel_ICaLdep_f1 = v(VT_Init_J_rel_ICaLdep_f1);
+    J_rel_ICaLdep_f2 = v(VT_Init_J_rel_ICaLdep_f2);
+    ryr_R = v(VT_Init_ryr_R);
+    ryr_O = v(VT_Init_ryr_O);
+    ryr_I = v(VT_Init_ryr_I);
+    ryr_CaRI = v(VT_Init_ryr_CaRI);
+    ryr_R_p = v(VT_Init_ryr_R_p);
+    ryr_O_p = v(VT_Init_ryr_O_p);
+    ryr_I_p = v(VT_Init_ryr_I_p);
+    ryr_CaRI_p = v(VT_Init_ryr_CaRI_p);
+    
+    // Buffering
+    Buffer_NaBj = v(VT_Init_Buffer_NaBj);
+    Buffer_NaBsl = v(VT_Init_Buffer_NaBsl);
+    Buffer_TnClow = v(VT_Init_Buffer_TnClow);
+    Buffer_TnCHc = v(VT_Init_Buffer_TnCHc);
+    Buffer_TnCHm = v(VT_Init_Buffer_TnCHm);
+    Buffer_CaM = v(VT_Init_Buffer_CaM);
+    Buffer_Myosin_ca = v(VT_Init_Buffer_Myosin_ca);
+    Buffer_Myosin_mg = v(VT_Init_Buffer_Myosin_mg);
+    Buffer_SRB = v(VT_Init_Buffer_SRB);
+    Buffer_SLLj = v(VT_Init_Buffer_SLLj);
+    Buffer_SLLsl = v(VT_Init_Buffer_SLLsl);
+    Buffer_SLHj = v(VT_Init_Buffer_SLHj);
+    Buffer_SLHsl = v(VT_Init_Buffer_SLHsl);
+    Buffer_Csqn = v(VT_Init_Buffer_Csqn);
     
 }  // TWorld::Init
 
@@ -677,7 +713,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   // gating
   const ML_CalcType a_K1 = 4.094 / (1.0 + exp(0.1217 * (V_m - E_K - 49.934)));
   const ML_CalcType b_K1 = (15.72 * exp(0.0674 * (V_m - E_K - 3.257)) + exp(0.0618 * (V_m - E_K - 594.31))) / (1.0 + exp(-0.1629 * (V_m - E_K + 14.207)));
-  K1_SS = (a_K1) / (a_K1 + b_K1);
+  const ML_CalcType K1_SS = (a_K1) / (a_K1 + b_K1);
     
   // Putting together the channels behavior and fraction
   double G_K1 = 0.6992 + v(VT_IK1_Multiplier);
@@ -803,7 +839,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double KmNaip_PKA = 8.4615;
   double KmKo = 1.5;
     
-  f_NaK = 0.75 + (0.00375 - ((140 - v(VT_Na_o)) / 50) * 0.001) * V_m; //Varying the slope mainly based on https://rupress.org/jgp/article-pdf/94/3/539/1814046/539.pdf
+  const ML_CalcType f_NaK = 0.75 + (0.00375 - ((140 - v(VT_Na_o)) / 50) * 0.001) * V_m; //Varying the slope mainly based on https://rupress.org/jgp/article-pdf/94/3/539/1814046/539.pdf
     
   I_NaK_dyad_noPKA = Fdyad * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip / Na_dyad), 4.0)) /(v(VT_K_o) + KmKo);
   I_NaK_dyad_PKA = Fdyad * I_bar_NaK * f_NaK * v(VT_K_o) / (1.0 + pow((KmNaip_PKA / Na_dyad),4.0)) /(v(VT_K_o) + KmKo);
