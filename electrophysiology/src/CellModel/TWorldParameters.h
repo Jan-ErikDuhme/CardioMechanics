@@ -21,7 +21,6 @@
 
 namespace NS_TWorldParameters {
 enum varType {
-  
   /// Simulation Parameters
   VT_amplitude = vtFirst,
   VT_duration,
@@ -209,7 +208,7 @@ enum varType {
   VT_ZETAS_init,
   VT_ZETAW_init,
   VT_Cd_init,
-    
+
   vtLast
 };
 }  // namespace NS_TWorldParameters

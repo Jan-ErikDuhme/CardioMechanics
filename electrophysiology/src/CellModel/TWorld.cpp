@@ -166,7 +166,7 @@ void TWorld::Init() {
 ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  ML_CalcType stretch, int euler) {
   tinc *= 1000.0;  // second to millisecond conversion
   ML_CalcType V_m = V * 1000.0;
-    double VEL = 0.0; //velocity/1000.0;  // 1/s to 1/ms
+  double VEL = 0.0; //velocity/1000.0;  // 1/s to 1/ms
 
   const int Vi = (int)(DivisionTab*(RangeTabhalf+V_m)+.5);  // array position
 
@@ -1173,18 +1173,20 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
 
 void TWorld::Print(ostream &tempstr, double tArg,  ML_CalcType V) {
   tempstr << tArg << ' ' << V << ' ' <<
-    m <<' '<< A_h <<' '<< B_h <<' '<< A_j <<' '<< B_j <<' '<< h <<' '<< j <<' '<< h_p <<' '<< j_p <<' '<< m_PKA <<' '<< h_PKA <<' '<< j_PKA <<' '<< h_both <<' '<< j_both <<' '<< m_L <<' '<< h_L <<' '<< h_L_p <<' '<<
-    d <<' '<< f_fast <<' '<< f_slow <<' '<< f_Ca_fast <<' '<< f_Ca_slow <<' '<< j_Ca <<' '<< f_p_fast <<' '<< f_Ca_p_fast <<' '<< d_PKA <<' '<< f_PKA_fast <<' '<< f_PKA_slow <<' '<< f_Ca_PKA_fast <<' '<< f_Ca_PKA_slow <<' '<< f_both_fast <<' '<< f_Ca_both_fast <<' '<< n_Ca_dyad <<' '<< n_Ca_sl <<' '<<
-    a_slow <<' '<< a_fast <<' '<< i_slow <<' '<< i_fast <<' '<< a_p_slow <<' '<< a_p_fast <<' '<< i_p_slow <<' '<< i_p_fast <<' '<<
-    C_0 <<' '<< C_1 <<' '<< C_2 <<' '<< O <<' '<< I <<' '<<
-    xs_dyad <<' '<< xs_sl <<' '<<
-    ryr_R <<' '<< ryr_O <<' '<< ryr_I <<' '<< ryr_CaRI <<' '<< ryr_R_p <<' '<< ryr_O_p <<' '<< ryr_I_p <<' '<< ryr_CaRI_p <<' '<<
-    Na_dyad <<' '<< Na_sl <<' '<< Na_myo <<' '<< K_myo <<' '<< Cl_myo <<' '<< Ca_dyad <<' '<< Ca_sl <<' '<< Ca_myo <<' '<< Ca_SR << ' ';
+    m << ' ' << A_h << ' ' << B_h << ' ' << A_j << ' ' << B_j << ' ' << h << ' ' << j << ' ' << h_p << ' ' << j_p << ' ' << m_PKA << ' ' << h_PKA << ' ' << j_PKA << ' ' << h_both << ' ' << j_both << ' ' << m_L << ' ' << h_L << ' ' << h_L_p << ' ' <<
+    d << ' ' << f_fast << ' ' << f_slow << ' ' << f_Ca_fast << ' ' << f_Ca_slow << ' ' << j_Ca << ' ' << f_p_fast << ' ' << f_Ca_p_fast << ' ' << d_PKA << ' ' << f_PKA_fast << ' ' << f_PKA_slow << ' ' << f_Ca_PKA_fast << ' ' << f_Ca_PKA_slow << ' ' << f_both_fast << ' ' << f_Ca_both_fast << ' ' << n_Ca_dyad << ' ' << n_Ca_sl << ' ' <<
+    a_slow << ' ' << a_fast << ' ' << i_slow << ' ' << i_fast << ' ' << a_p_slow << ' ' << a_p_fast << ' ' << i_p_slow << ' ' << i_p_fast << ' ' <<
+    C_0 << ' ' << C_1 << ' ' << C_2 << ' ' << O << ' ' << I << ' ' <<
+    xs_dyad << ' ' << xs_sl << ' ' <<
+    ryr_R << ' ' << ryr_O << ' ' << ryr_I << ' ' << ryr_CaRI << ' ' << ryr_R_p << ' ' << ryr_O_p << ' ' << ryr_I_p << ' ' << ryr_CaRI_p << ' ' <<
+    Na_dyad << ' ' << Na_sl << ' ' << Na_myo << ' ' << K_myo << ' ' << Cl_myo << ' ' << Ca_dyad << ' ' << Ca_sl << ' ' << Ca_myo << ' ' << Ca_SR << ' '
+    ;
 }
 
 void TWorld::LongPrint(ostream &tempstr, double tArg,  ML_CalcType V) {
   Print(tempstr, tArg, V);
-    tempstr << I_Na_tot_dyad <<' '<< I_Na_tot_sl <<' '<< I_Na_tot <<' '<< I_K_tot <<' '<< I_Cl_tot <<' '<< I_Ca_tot_dyad <<' '<< I_Ca_tot_sl <<' '<< I_Ca_tot <<' '<< I_tot << ' ';
+    
+  tempstr << I_Na_tot_dyad << ' ' << I_Na_tot_sl << ' ' << I_Na_tot << ' ' << I_K_tot << ' ' << I_Cl_tot << ' ' << I_Ca_tot_dyad << ' ' << I_Ca_tot_sl << ' ' << I_Ca_tot << ' ' << I_tot << ' ';
 }  // TWorld::LongPrint
 
 void TWorld::GetParameterNames(vector<string> &getpara) {
