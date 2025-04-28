@@ -55,7 +55,7 @@ class TWorld : public vbElphyModel<ML_CalcType> {
     ML_CalcType I_pCa_dyad, I_pCa_sl, I_pCa; // Sarcolemmal calcium pump (pCa)
     
   /// ion concentrations
-    ML_CalcType I_Na_tot_dyad, I_Na_tot_sl, I_Na_tot, Na_dyad, Na_sl, Na_myo; // Sodium Concentration
+    ML_CalcType I_Na_tot_dyad, I_Na_tot_sl, I_Na_tot, Na_o, Na_dyad, Na_sl, Na_myo; // Sodium Concentration
     ML_CalcType I_K_tot, K_myo; // Potassium Concentration
     ML_CalcType I_Cl_tot, Cl_myo; // Cloride Concentration
     ML_CalcType I_Ca_tot_dyad, I_Ca_tot_sl, I_Ca_tot, Ca_dyad, Ca_sl, Ca_myo, Ca_SR; // Calcium Concentration
@@ -73,7 +73,7 @@ class TWorld : public vbElphyModel<ML_CalcType> {
     ML_CalcType ZETAS;
     ML_CalcType ZETAW;
     ML_CalcType Ta;
-    ML_CalcType T;
+    ML_CalcType Tension;
     ML_CalcType Cd;
     
 
