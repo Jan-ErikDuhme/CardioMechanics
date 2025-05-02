@@ -162,6 +162,15 @@ void TWorld::Init() {
     Buffer_SLHsl = v(VT_Init_Buffer_SLHsl);
     Buffer_Csqn = v(VT_Init_Buffer_Csqn);
     
+    // Land-Niederer model of contraction
+    XS        = (v(VT_XS_init));
+    XW        = (v(VT_XW_init));
+    CaTRPN    = (v(VT_TRPN_init));
+    TmBlocked = (v(VT_TmBlocked_init));
+    ZETAS     = (v(VT_ZETAS_init));
+    ZETAW     = (v(VT_ZETAW_init));
+    Cd        = (v(VT_Cd_init));
+    
 }  // TWorld::Init
 
 ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  ML_CalcType stretch, int euler) {
@@ -187,7 +196,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   // Cell Tometry
   double cellLength = 100.0; // cell length [um]
   double cellRadius = 10.25; // cell radius [um]
-  double Vcell = 3.14 * pow(cellRadius, 2) * cellLength * 1e-15; // [L]
+  double Vcell = M_PI * pow(cellRadius, 2) * cellLength * 1e-15; // [L]
   double Vmyo = 0.65 * Vcell;
   double Vsr = 0.035 * Vcell;
   double Vsl = 0.02 * Vcell;
@@ -316,14 +325,14 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
       A_h = 0.0;
       B_h = (0.77/(0.13*(1.+exp((-(V_m+10.66)/11.1)))));
       A_j = 0.0;
-      B_j =((0.6*exp((0.057*V_m)))/(1.0+exp((-0.1*(V_m+32.0))))) ;
+      B_j =((0.6*exp((0.057*V_m)))/(1.0+exp((-0.1*(V_m+32.0)))));
   }
   const ML_CalcType tau_h = 1.0/(A_h+B_h);
   const ML_CalcType h_inf = (1.0/((1.0+exp(((V_m+71.55)/7.43)))*(1.0+exp(((V_m+71.55)/7.43)))));
   h = h_inf - (h_inf - h) * exp(-tinc / tau_h);
     
   const ML_CalcType tau_j = 1.0/(A_j+B_j);
-  const ML_CalcType j_inf = (1.0/((1.0+exp(((V_m+71.55)/7.43)))*(1.0+exp(((V_m+71.55)/7.43)))));;
+  const ML_CalcType j_inf = 1.0 / (pow((1.0 + exp( (V_m + 71.55)/7.43 )),2));
   j = j_inf - (j_inf - j) * exp(-tinc / tau_j);
 
   // gating CaMK-P
@@ -387,8 +396,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   // Putting together the channels behavior and fraction
   const ML_CalcType phi_INaL_CaMK = CaMK_f_RyR;
   double G_Na_L = 0.04229 * v(VT_INaL_Multiplier) * (1.0 + phi_INaL_CaMK);
-  I_NaL_dyad = Fdyad  * G_Na_L * (V_m - E_Na_dyad) * m_L * ((1.0 - phi_INaL_CaMK) * h_L + phi_INaL_CaMK * h_L_p);;
-  I_NaL_sl = Fsl * G_Na_L * (V_m - E_Na_sl) * m_L * ((1.0 - phi_INaL_CaMK) * h_L + phi_INaL_CaMK * h_L_p);;
+  I_NaL_dyad = Fdyad  * G_Na_L * (V_m - E_Na_dyad) * m_L * ((1.0 - phi_INaL_CaMK) * h_L + phi_INaL_CaMK * h_L_p);
+  I_NaL_sl = Fsl * G_Na_L * (V_m - E_Na_sl) * m_L * ((1.0 - phi_INaL_CaMK) * h_L + phi_INaL_CaMK * h_L_p);
 
   ///////////// Combinations I_Na and I_NaL //////////
   I_Na_dyad = I_NaFast_dyad + I_NaL_dyad;
@@ -479,8 +488,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     
   // driving force
   const ML_CalcType I_o = (0.5 * (Na_o + v(VT_K_o) + v(VT_Cl_o) + (4.0 * v(VT_Ca_o))) / 1000.0);
-  const ML_CalcType I_dyad = ((0.5 * (Na_dyad + K_myo + Cl_myo + (4.* Ca_dyad))) / 1000.0);
-  const ML_CalcType I_sl = ((0.5 * (Na_sl + K_myo + Cl_myo + (4.* Ca_sl))) / 1000.0);
+  const ML_CalcType I_dyad = ((0.5 * (Na_sl + K_myo + Cl_myo + (4.* Ca_sl))) / 1000.0);
+  const ML_CalcType I_sl = ((0.5 * (Na_myo + K_myo + Cl_myo + (4.* Ca_myo))) / 1000.0);
     
   double dielConstant = 74.0; // water at 37°
   double temp = 310.0; // body temp in kelvins.
@@ -568,7 +577,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   const ML_CalcType phi_ICaL_PKAonly = phi_ICaL_PKA - phi_ICaL_Both;
     
   I_CaL_dyad = ((1.0 - phi_ICaL_CaMKonly - phi_ICaL_PKAonly - phi_ICaL_Both) * I_CaL_dyad_NP + phi_ICaL_CaMKonly * I_CaL_dyad_CaMK + phi_ICaL_PKAonly * I_CaL_dyad_PKA + phi_ICaL_Both * I_CaL_dyad_Both) * I_CaL_pureCDI_dyad;
-  I_CaNa_dyad = ((1.0 - phi_ICaL_CaMKonly - phi_ICaL_PKAonly - phi_ICaL_Both) * I_CaNa_dyad_NP + phi_ICaL_CaMKonly * I_CaNa_dyad_CaMK + phi_ICaL_PKAonly * I_CaNa_dyad_PKA + phi_ICaL_Both * I_CaNa_dyad_Both) * I_CaL_pureCDI_dyad;
+  I_CaNa_dyad= ((1.0 - phi_ICaL_CaMKonly - phi_ICaL_PKAonly - phi_ICaL_Both) * I_CaNa_dyad_NP + phi_ICaL_CaMKonly * I_CaNa_dyad_CaMK + phi_ICaL_PKAonly * I_CaNa_dyad_PKA + phi_ICaL_Both * I_CaNa_dyad_Both) * I_CaL_pureCDI_dyad;
   I_CaK_dyad = ((1.0 - phi_ICaL_CaMKonly - phi_ICaL_PKAonly - phi_ICaL_Both) * I_CaK_dyad_NP + phi_ICaL_CaMKonly * I_CaK_dyad_CaMK + phi_ICaL_PKAonly * I_CaK_dyad_PKA + phi_ICaL_Both * I_CaK_dyad_Both) * I_CaL_pureCDI_dyad;
   I_CaL_sl = ((1.0 - phi_ICaL_CaMKonly - phi_ICaL_PKAonly - phi_ICaL_Both) * I_CaL_sl_NP + phi_ICaL_CaMKonly * I_CaL_sl_CaMK + phi_ICaL_PKAonly * I_CaL_sl_PKA + phi_ICaL_Both * I_CaL_sl_Both) * I_CaL_pureCDI_sl;
   I_CaNa_sl = ((1.0 - phi_ICaL_CaMKonly - phi_ICaL_PKAonly - phi_ICaL_Both) * I_CaNa_sl_NP + phi_ICaL_CaMKonly * I_CaNa_sl_CaMK + phi_ICaL_PKAonly * I_CaNa_sl_PKA + phi_ICaL_Both * I_CaNa_sl_Both) * I_CaL_pureCDI_sl;
@@ -743,92 +752,92 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   const ML_CalcType h_Ca = exp((qca * (V_m - 8.3117) * F) / (R * T));
   const ML_CalcType h_Na = exp((qna * (V_m - 8.3117) * F) / (R * T));
     
-  // calculate I_NaCa_i
-  const ML_CalcType h_1_i = 1.0 + (Na_sl * (1.0 + h_Na)) / kna3;
-  const ML_CalcType h_2_i = (Na_sl * h_Na) / (kna3 * h_1_i);
-  const ML_CalcType h_3_i = 1.0 / h_1_i;
-  const ML_CalcType h_4_i = 1.0 + (Na_sl * (1.0 + Na_sl / kna2)) / kna1;
-  const ML_CalcType h_5_i = (Na_sl * Na_sl) / (h_4_i * kna1 * kna2);
-  const ML_CalcType h_6_i = 1.0 / h_4_i;
-  const ML_CalcType h_7_i = 1.0 + (Na_o * (1.0 + 1.0 / h_Na)) / kna3;
-  const ML_CalcType h_8_i = Na_o / (kna3 * h_Na * h_7_i);
-  const ML_CalcType h_9_i = 1.0 / h_7_i;
-  const ML_CalcType h_10_i = kasymm + 1.0 + Na_o / kna1 * (1.0 + Na_o / kna2);
-  const ML_CalcType h_11_i = Na_o * Na_o / (h_10_i * kna1 * kna2);
-  const ML_CalcType h_12_i = 1.0 / h_10_i;
+  // calculate I_NaCa_sl
+  const ML_CalcType h_1_sl = 1.0 + (Na_myo * (1.0 + h_Na)) / kna3;
+  const ML_CalcType h_2_sl = (Na_myo * h_Na) / (kna3 * h_1_sl);
+  const ML_CalcType h_3_sl = 1.0 / h_1_sl;
+  const ML_CalcType h_4_sl = 1.0 + (Na_myo * (1.0 + Na_myo / kna2)) / kna1;
+  const ML_CalcType h_5_sl = (Na_myo * Na_myo) / (h_4_sl * kna1 * kna2);
+  const ML_CalcType h_6_sl = 1.0 / h_4_sl;
+  const ML_CalcType h_7_sl = 1.0 + (Na_o * (1.0 + 1.0 / h_Na)) / kna3;
+  const ML_CalcType h_8_sl = Na_o / (kna3 * h_Na * h_7_sl);
+  const ML_CalcType h_9_sl = 1.0 / h_7_sl;
+  const ML_CalcType h_10_sl = kasymm + 1.0 + Na_o / kna1 * (1.0 + Na_o / kna2);
+  const ML_CalcType h_11_sl = Na_o * Na_o / (h_10_sl * kna1 * kna2);
+  const ML_CalcType h_12_sl = 1.0 / h_10_sl;
     
-  const ML_CalcType k_1_i = h_12_i * v(VT_Ca_o) * kcaon;
-  const ML_CalcType k_2_i = kcaoff;
-  const ML_CalcType k_3_d_i = h_9_i * wca;
-  const ML_CalcType k_3_dd_i = h_8_i * wnaca;
-  const ML_CalcType k_3_i = k_3_d_i + k_3_dd_i;
-  const ML_CalcType k_4_d_i = (h_3_i * wca) / h_Ca;
-  const ML_CalcType k_4_dd_i = h_2_i * wnaca;
-  const ML_CalcType k_4_i = k_4_d_i + k_4_dd_i;
-  const ML_CalcType k_5_i = kcaoff;
-  const ML_CalcType k_6_i = h_6_i * Ca_sl * kcaon;
-  const ML_CalcType k_7_i = h_5_i * h_2_i * wna;
-  const ML_CalcType k_8_i = h_8_i * h_11_i * wna;
+  const ML_CalcType k_1_sl = h_12_sl * v(VT_Ca_o) * kcaon;
+  const ML_CalcType k_2_sl = kcaoff;
+  const ML_CalcType k_3_d_sl = h_9_sl * wca;
+  const ML_CalcType k_3_dd_sl = h_8_sl * wnaca;
+  const ML_CalcType k_3_sl = k_3_d_sl + k_3_dd_sl;
+  const ML_CalcType k_4_d_sl = (h_3_sl * wca) / h_Ca;
+  const ML_CalcType k_4_dd_sl = h_2_sl * wnaca;
+  const ML_CalcType k_4_sl = k_4_d_sl + k_4_dd_sl;
+  const ML_CalcType k_5_sl = kcaoff;
+  const ML_CalcType k_6_sl = h_6_sl * Ca_myo * kcaon;
+  const ML_CalcType k_7_sl = h_5_sl * h_2_sl * wna;
+  const ML_CalcType k_8_sl = h_8_sl * h_11_sl * wna;
  
-  const ML_CalcType x_1_i = k_2_i * k_4_i * (k_7_i + k_6_i) + k_5_i * k_7_i * (k_2_i + k_3_i);
-  const ML_CalcType x_2_i = k_1_i * k_7_i * (k_4_i + k_5_i) + k_4_i * k_6_i * (k_1_i + k_8_i);
-  const ML_CalcType x_3_i = k_1_i * k_3_i * (k_7_i + k_6_i) + k_8_i * k_6_i * (k_2_i + k_3_i);
-  const ML_CalcType x_4_i = k_2_i * k_8_i * (k_4_i + k_5_i) + k_3_i * k_5_i * (k_1_i + k_8_i);
+  const ML_CalcType x_1_sl = k_2_sl * k_4_sl * (k_7_sl + k_6_sl) + k_5_sl * k_7_sl * (k_2_sl + k_3_sl);
+  const ML_CalcType x_2_sl = k_1_sl * k_7_sl * (k_4_sl + k_5_sl) + k_4_sl * k_6_sl * (k_1_sl + k_8_sl);
+  const ML_CalcType x_3_sl = k_1_sl * k_3_sl * (k_7_sl + k_6_sl) + k_8_sl * k_6_sl * (k_2_sl + k_3_sl);
+  const ML_CalcType x_4_sl = k_2_sl * k_8_sl * (k_4_sl + k_5_sl) + k_3_sl * k_5_sl * (k_1_sl + k_8_sl);
     
-  const ML_CalcType E_1_i = x_1_i / (x_1_i + x_2_i + x_3_i + x_4_i);
-  const ML_CalcType E_2_i = x_2_i / (x_1_i + x_2_i + x_3_i + x_4_i);
-  const ML_CalcType E_3_i = x_3_i / (x_1_i + x_2_i + x_3_i + x_4_i);
-  const ML_CalcType E_4_i = x_4_i / (x_1_i + x_2_i + x_3_i + x_4_i);
+  const ML_CalcType E_1_sl = x_1_sl / (x_1_sl + x_2_sl + x_3_sl + x_4_sl);
+  const ML_CalcType E_2_sl = x_2_sl / (x_1_sl + x_2_sl + x_3_sl + x_4_sl);
+  const ML_CalcType E_3_sl = x_3_sl / (x_1_sl + x_2_sl + x_3_sl + x_4_sl);
+  const ML_CalcType E_4_sl = x_4_sl / (x_1_sl + x_2_sl + x_3_sl + x_4_sl);
     
   double KmCaAct = 150.0e-6;
   const ML_CalcType allo_sl = 1.0 / (1.0 + ((KmCaAct / Ca_sl) * (KmCaAct / Ca_sl)));
   double z_Na = 1.0;
-  const ML_CalcType J_NaCa_Na_sl = 3.0 * (E_4_i * k_7_i - E_1_i * k_8_i) + E_3_i * k_4_dd_i - E_2_i * k_3_dd_i;
-  const ML_CalcType J_NaCa_Ca_sl = E_2_i * k_2_i - E_1_i * k_1_i;
+  const ML_CalcType J_NaCa_Na_sl = 3.0 * (E_4_sl * k_7_sl - E_1_sl * k_8_sl) + E_3_sl * k_4_dd_sl - E_2_sl * k_3_dd_sl;
+  const ML_CalcType J_NaCa_Ca_sl = E_2_sl * k_2_sl - E_1_sl * k_1_sl;
   double G_NaCa = 0.00179 * v(VT_INaCa_Multiplier);
     
   I_NaCa_sl = G_NaCa * allo_sl * (z_Na * J_NaCa_Na_sl + z_Ca * J_NaCa_Ca_sl) * (1-v(VT_INaCa_fractionSS));
     
   // calculate I_NaCa_dyad
-  const ML_CalcType h_1_ss = 1.0 + (Na_dyad * (1.0 + h_Na)) / kna3;
-  const ML_CalcType h_2_ss = (Na_dyad * h_Na) / (kna3 * h_1_ss);
-  const ML_CalcType h_3_ss = 1.0 / h_1_ss;
-  const ML_CalcType h_4_ss = 1.0 + (Na_dyad * (1.0 + Na_dyad / kna2)) / kna1;
-  const ML_CalcType h_5_ss = (Na_dyad * Na_dyad) / (h_4_ss * kna1 * kna2);
-  const ML_CalcType h_6_ss = 1.0 / h_4_ss;
-  const ML_CalcType h_7_ss = 1.0 + Na_o / kna3 * (1.0 + 1.0 / h_Na);
-  const ML_CalcType h_8_ss = Na_o / (kna3 * h_Na * h_7_ss);
-  const ML_CalcType h_9_ss = 1.0 / h_7_ss;
-  const ML_CalcType h_10_ss = kasymm + 1.0 + Na_o / kna1 * (1 + Na_o / kna2);
-  const ML_CalcType h_11_ss = Na_o * Na_o / (h_10_ss * kna1 * kna2);
-  const ML_CalcType h_12_ss = 1.0 / h_10_ss;
+  const ML_CalcType h_1_dyad = 1.0 + (Na_sl * (1.0 + h_Na)) / kna3;
+  const ML_CalcType h_2_dyad = (Na_sl * h_Na) / (kna3 * h_1_dyad);
+  const ML_CalcType h_3_dyad = 1.0 / h_1_dyad;
+  const ML_CalcType h_4_dyad = 1.0 + (Na_sl * (1.0 + Na_sl / kna2)) / kna1;
+  const ML_CalcType h_5_dyad = (Na_sl * Na_sl) / (h_4_dyad * kna1 * kna2);
+  const ML_CalcType h_6_dyad = 1.0 / h_4_dyad;
+  const ML_CalcType h_7_dyad = 1.0 + Na_o / kna3 * (1.0 + 1.0 / h_Na);
+  const ML_CalcType h_8_dyad = Na_o / (kna3 * h_Na * h_7_dyad);
+  const ML_CalcType h_9_dyad = 1.0 / h_7_dyad;
+  const ML_CalcType h_10_dyad = kasymm + 1.0 + Na_o / kna1 * (1 + Na_o / kna2);
+  const ML_CalcType h_11_dyad = Na_o * Na_o / (h_10_dyad * kna1 * kna2);
+  const ML_CalcType h_12_dyad = 1.0 / h_10_dyad;
     
-  const ML_CalcType k_1_ss = h_12_ss * v(VT_Ca_o) * kcaon;
-  const ML_CalcType k_2_ss = kcaoff;
-  const ML_CalcType k_3_d_ss = h_9_ss * wca;
-  const ML_CalcType k_3_dd_ss = h_8_ss * wnaca;
-  const ML_CalcType k_3_ss = k_3_d_ss + k_3_dd_ss;
-  const ML_CalcType k_4_d_ss = (h_3_ss * wca) / h_Ca;
-  const ML_CalcType k_4_dd_ss = h_2_ss * wnaca;
-  const ML_CalcType k_4_ss = k_4_d_ss + k_4_dd_ss;
-  const ML_CalcType k_5_ss = kcaoff;
-  const ML_CalcType k_6_ss = h_6_ss * Ca_dyad * kcaon;
-  const ML_CalcType k_7_ss = h_5_ss * h_2_ss * wna;
-  const ML_CalcType k_8_ss = h_8_ss * h_11_ss * wna;
+  const ML_CalcType k_1_dyad = h_12_dyad * v(VT_Ca_o) * kcaon;
+  const ML_CalcType k_2_dyad = kcaoff;
+  const ML_CalcType k_3_d_dyad = h_9_dyad * wca;
+  const ML_CalcType k_3_dd_dyad = h_8_dyad * wnaca;
+  const ML_CalcType k_3_dyad = k_3_d_dyad + k_3_dd_dyad;
+  const ML_CalcType k_4_d_dyad = (h_3_dyad * wca) / h_Ca;
+  const ML_CalcType k_4_dd_dyad = h_2_dyad * wnaca;
+  const ML_CalcType k_4_dyad = k_4_d_dyad + k_4_dd_dyad;
+  const ML_CalcType k_5_dyad = kcaoff;
+  const ML_CalcType k_6_dyad = h_6_dyad * Ca_sl * kcaon;
+  const ML_CalcType k_7_dyad = h_5_dyad * h_2_dyad * wna;
+  const ML_CalcType k_8_dyad = h_8_dyad * h_11_dyad * wna;
     
-  const ML_CalcType x_1_ss = k_2_ss * k_4_ss * (k_7_ss + k_6_ss) + k_5_ss * k_7_ss * (k_2_ss + k_3_ss);
-  const ML_CalcType x_2_ss = k_1_ss * k_7_ss * (k_4_ss + k_5_ss) + k_4_ss * k_6_ss * (k_1_ss + k_8_ss);
-  const ML_CalcType x_3_ss = k_1_ss * k_3_ss * (k_7_ss + k_6_ss) + k_8_ss * k_6_ss * (k_2_ss + k_3_ss);
-  const ML_CalcType x_4_ss = k_2_ss * k_8_ss * (k_4_ss + k_5_ss) + k_3_ss * k_5_ss * (k_1_ss + k_8_ss);
+  const ML_CalcType x_1_dyad = k_2_dyad * k_4_dyad * (k_7_dyad + k_6_dyad) + k_5_dyad * k_7_dyad * (k_2_dyad + k_3_dyad);
+  const ML_CalcType x_2_dyad = k_1_dyad * k_7_dyad * (k_4_dyad + k_5_dyad) + k_4_dyad * k_6_dyad * (k_1_dyad + k_8_dyad);
+  const ML_CalcType x_3_dyad = k_1_dyad * k_3_dyad * (k_7_dyad + k_6_dyad) + k_8_dyad * k_6_dyad * (k_2_dyad + k_3_dyad);
+  const ML_CalcType x_4_dyad = k_2_dyad * k_8_dyad * (k_4_dyad + k_5_dyad) + k_3_dyad * k_5_dyad * (k_1_dyad + k_8_dyad);
 
-  const ML_CalcType E_1_ss = x_1_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
-  const ML_CalcType E_2_ss = x_2_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
-  const ML_CalcType E_3_ss = x_3_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
-  const ML_CalcType E_4_ss = x_4_ss / (x_1_ss + x_2_ss + x_3_ss + x_4_ss);
+  const ML_CalcType E_1_dyad = x_1_dyad / (x_1_dyad + x_2_dyad + x_3_dyad + x_4_dyad);
+  const ML_CalcType E_2_dyad = x_2_dyad / (x_1_dyad + x_2_dyad + x_3_dyad + x_4_dyad);
+  const ML_CalcType E_3_dyad = x_3_dyad / (x_1_dyad + x_2_dyad + x_3_dyad + x_4_dyad);
+  const ML_CalcType E_4_dyad = x_4_dyad / (x_1_dyad + x_2_dyad + x_3_dyad + x_4_dyad);
     
   const ML_CalcType allo_dyad = 1.0 / (1.0 + (KmCaAct / Ca_dyad) * (KmCaAct / Ca_dyad));
-  const ML_CalcType J_NaCa_Na_dyad = 3.0 * (E_4_ss * k_7_ss - E_1_ss * k_8_ss) + E_3_ss * k_4_dd_ss - E_2_ss * k_3_dd_ss;
-  const ML_CalcType J_NaCa_Ca_dyad = E_2_ss * k_2_ss - E_1_ss * k_1_ss;
+  const ML_CalcType J_NaCa_Na_dyad = 3.0 * (E_4_dyad * k_7_dyad - E_1_dyad * k_8_dyad) + E_3_dyad * k_4_dd_dyad - E_2_dyad * k_3_dd_dyad;
+  const ML_CalcType J_NaCa_Ca_dyad = E_2_dyad * k_2_dyad - E_1_dyad * k_1_dyad;
     
   I_NaCa_dyad = v(VT_INaCa_fractionSS) * G_NaCa * allo_dyad * (z_Na * J_NaCa_Na_dyad + z_Ca * J_NaCa_Ca_dyad);
 
@@ -1049,12 +1058,12 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     XW += tinc * diff_XW;
 
     double ca50_     = (v(VT_ca50) * fPKA_TnI) + v(VT_beta_1) * min(0.2,(lambda_m - 1.0));
-    double diff_TRPN = v(VT_koff) * (pow((1000*Ca_myo/ca50_), v(VT_TRPN_n)) * (1.0 - TRPN) - TRPN);
-    TRPN += tinc * diff_TRPN;
+    double diff_TRPN = v(VT_koff) * (pow((1000*Ca_myo/ca50_), v(VT_TRPN_n)) * (1.0 - CaTRPN) - CaTRPN);
+    CaTRPN += tinc * diff_TRPN;
 
-    double trpn_np_       = pow(TRPN, -v(VT_nperm)/2.0);
+    double trpn_np_       = pow(CaTRPN, -v(VT_nperm)/2.0);
     double trpn_np        = std::min(100.0, trpn_np_);
-    double diff_TmBlocked = v(VT_ktm_block) * trpn_np * XU - v(VT_ktm_unblock) * pow(TRPN, v(VT_nperm)/2.0) * TmBlocked;
+    double diff_TmBlocked = v(VT_ktm_block) * trpn_np * XU - v(VT_ktm_unblock) * pow(CaTRPN, v(VT_nperm)/2.0) * TmBlocked;
     TmBlocked += tinc * diff_TmBlocked;
 
     // Velocity dependence -- assumes distortion resets on W->S
@@ -1166,7 +1175,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Change Membrane Potential (I_tot)
   ////////////////////////////////////////////////////////////////////////////////////////
-    I_tot = -(I_Na_tot + I_Cl_tot + I_Ca_tot + I_K_tot); // + i_external);
+    I_tot = -(I_Na_tot + I_Cl_tot + I_Ca_tot + I_K_tot);// + i_external);
 
     
   return tinc * I_tot;
@@ -1188,7 +1197,7 @@ void TWorld::Print(ostream &tempstr, double tArg,  ML_CalcType V) {
 void TWorld::LongPrint(ostream &tempstr, double tArg,  ML_CalcType V) {
   Print(tempstr, tArg, V);
     
-  tempstr << I_Na_tot_dyad << ' ' << I_Na_tot_sl << ' ' << I_Na_tot << ' ' << I_K_tot << ' ' << I_Cl_tot << ' ' << I_Ca_tot_dyad << ' ' << I_Ca_tot_sl << ' ' << I_Ca_tot << ' ' << I_tot << ' ' << J_up << ' ';
+  tempstr << I_Na_tot_dyad << ' ' << I_Na_tot_sl << ' ' << I_Na_tot << ' ' << I_K_tot << ' ' << I_Cl_tot << ' ' << I_Ca_tot_dyad << ' ' << I_Ca_tot_sl << ' ' << I_Ca_tot << ' ' << I_tot << ' ';
 }  // TWorld::LongPrint
 
 void TWorld::GetParameterNames(vector<string> &getpara) {
@@ -1211,7 +1220,7 @@ void TWorld::GetLongParameterNames(vector<string> &getpara) {
   GetParameterNames(getpara);
   const string ParaNames[] =
   {
-    "I_Na_tot_dyad", "I_Na_tot_sl", "I_Na_tot", "I_K_tot", "I_Cl_tot", "I_Ca_tot_dyad", "I_Ca_tot_sl", "I_Ca_tot", "I_tot", "J_up"
+    "I_Na_tot_dyad", "I_Na_tot_sl", "I_Na_tot", "I_K_tot", "I_Cl_tot", "I_Ca_tot_dyad", "I_Ca_tot_sl", "I_Ca_tot", "I_tot"
   };
   for (int i = 0; i < sizeof(ParaNames)/sizeof(ParaNames[0]); i++)
     getpara.push_back(ParaNames[i]);

@@ -418,7 +418,6 @@ class CellParameters {
       i_external = 0.0;
     }
     Vm += (pem->*csFunction)(tinc, Vm, i_external+i_internal, stretch, 1);
-    //cout << Vm << endl; //TODO: Remove after debugging
     if (std::isnan(Vm))
       throw kaBaseException("Vm is NaN");
 

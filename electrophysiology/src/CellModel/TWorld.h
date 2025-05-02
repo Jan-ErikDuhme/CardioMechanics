@@ -68,7 +68,7 @@ class TWorld : public vbElphyModel<ML_CalcType> {
   /// Land-Niederer model of contraction
     ML_CalcType XS;
     ML_CalcType XW;
-    ML_CalcType TRPN;
+    ML_CalcType CaTRPN;
     ML_CalcType TmBlocked;
     ML_CalcType ZETAS;
     ML_CalcType ZETAW;
