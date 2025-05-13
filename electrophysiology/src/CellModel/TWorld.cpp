@@ -187,9 +187,9 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double R = 8314.0; // [J/kmol*K]
   double F = 96485.0; // [C/mol]
   double T = 310.0; // [K]
-  double FoRT = F / R / T;
-  double ffrt = F * F / (R * T);
-  double vfrt = (V_m / 1000) * (F / (R * T));
+  double frt = F / (R * T);
+  double vfrt = V_m  * frt;
+  double vffrt = V_m * F * frt;
   double Cmem = 1.3810e-10; // [F] membrane capacitance
   double Qpow = (T - 310.0) / 10.0;
     
@@ -211,12 +211,12 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double Mg_myo = 0.5; // Intracellular Mg  [mM]
     
   // Nerst Potentials
-  const ML_CalcType E_Na_dyad = (1.0 / FoRT) * log(Na_o / Na_dyad);
-  const ML_CalcType E_Na_sl = (1.0 / FoRT) * log(Na_o / Na_sl);
-  const ML_CalcType E_K = (1.0 / FoRT) * log(v(VT_K_o) / K_myo);
-  const ML_CalcType E_Ca_dyad = (1.0 / FoRT / 2.0) * log(v(VT_Ca_o) / Ca_dyad);
-  const ML_CalcType E_Ca_sl = (1.0 / FoRT / 2.0) * log(v(VT_Ca_o) / Ca_sl);
-  const ML_CalcType E_Cl = (1.0 / FoRT) * log(Cl_myo / Cl_o);
+  const ML_CalcType E_Na_dyad = (1.0 / frt) * log(Na_o / Na_dyad);
+  const ML_CalcType E_Na_sl = (1.0 / frt) * log(Na_o / Na_sl);
+  const ML_CalcType E_K = (1.0 / frt) * log(v(VT_K_o) / K_myo);
+  const ML_CalcType E_Ca_dyad = (1.0 / frt / 2.0) * log(v(VT_Ca_o) / Ca_dyad);
+  const ML_CalcType E_Ca_sl = (1.0 / frt / 2.0) * log(v(VT_Ca_o) / Ca_sl);
+  const ML_CalcType E_Cl = (1.0 / frt) * log(Cl_myo / Cl_o);
 
     
   /////////////////////////////////////////////////////////////////////////////////////////
@@ -313,8 +313,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   // m gate
   const ML_CalcType m_inf = 1.0 / ((1.0 + exp(-(V_m + 56.86)/9.03))*(1.0 + exp(-(V_m + 56.86)/9.03)));
   const ML_CalcType tau_m = 0.1292 * exp(-(((V_m + 45.79)/15.54) * ((V_m + 45.79)/15.54))) + 0.06487 * exp(-(((V_m - 4.823)/51.12) * ((V_m - 4.823)/51.12)));
-  m = m_inf - (m_inf - m) * exp(-tinc / tau_m);
-
+    m = m_inf - (m_inf - m) * exp(-tinc / tau_m);
+    
   // h and j gate
   if (V_m < -40.0) {
       A_h = (0.057*exp((-(V_m+80.0)/6.8)));
@@ -325,14 +325,14 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
       A_h = 0.0;
       B_h = (0.77/(0.13*(1.+exp((-(V_m+10.66)/11.1)))));
       A_j = 0.0;
-      B_j =((0.6*exp((0.057*V_m)))/(1.0+exp((-0.1*(V_m+32.0)))));
+      B_j =((0.6*exp((0.057*V_m)))/(1.0+exp((-0.1*(V_m+32.0))))) ;
   }
   const ML_CalcType tau_h = 1.0/(A_h+B_h);
   const ML_CalcType h_inf = (1.0/((1.0+exp(((V_m+71.55)/7.43)))*(1.0+exp(((V_m+71.55)/7.43)))));
   h = h_inf - (h_inf - h) * exp(-tinc / tau_h);
     
   const ML_CalcType tau_j = 1.0/(A_j+B_j);
-  const ML_CalcType j_inf = 1.0 / (pow((1.0 + exp( (V_m + 71.55)/7.43 )),2));
+  const ML_CalcType j_inf = (1.0/((1.0+exp(((V_m+71.55)/7.43)))*(1.0+exp(((V_m+71.55)/7.43)))));;
   j = j_inf - (j_inf - j) * exp(-tinc / tau_j);
 
   // gating CaMK-P
@@ -505,12 +505,12 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   const ML_CalcType gamma_K_dyad = pow(10.0, -constA * 1.0 * (sqrt(I_dyad)/(1.0 + sqrt(I_dyad)) - 0.3 * I_dyad));
   const ML_CalcType gamma_K_sl = pow(10.0, -constA * 1.0 * (sqrt(I_sl)/(1.0 + sqrt(I_sl)) - 0.3 * I_sl));
 
-  const ML_CalcType Psi_CaL_dyad = 4.0 * vfrt * (gamma_Ca_dyad * Ca_dyad * exp(2.0 * vfrt) - gamma_Ca_o * v(VT_Ca_o)) / (exp(2.0 * vfrt) - 1.0);
-  const ML_CalcType Psi_CaNa_dyad = 1.0 * vfrt * (gamma_Na_dyad * Na_dyad * exp(1.0 * vfrt) - gamma_Na_o * Na_o) / (exp(1.0 * vfrt) - 1.0);
-  const ML_CalcType Psi_CaK_dyad = 1.0 * vfrt * (gamma_K_dyad * K_myo * exp(1.0 * vfrt) - gamma_K_o * v(VT_K_o)) / (exp(1.0 * vfrt) - 1.0);
-  const ML_CalcType Psi_CaL_sl = 4.0 * vfrt * (gamma_Ca_sl * Ca_sl * exp(2.0 * vfrt) - gamma_Ca_o * v(VT_Ca_o)) / (exp(2.0 * vfrt) - 1.0);
-  const ML_CalcType Psi_CaNa_sl = 1.0 * vfrt * (gamma_Na_sl * Na_sl * exp(1.0 * vfrt) - gamma_Na_o * Na_o) / (exp(1.0 * vfrt) - 1.0);
-  const ML_CalcType Psi_CaK_sl = 1.0 * vfrt * (gamma_K_sl * K_myo * exp(1.0 * vfrt) - gamma_K_o * v(VT_K_o)) / (exp(1.0 * vfrt) - 1.0);
+  const ML_CalcType Psi_CaL_dyad = 4.0 * vffrt * (gamma_Ca_dyad * Ca_dyad * exp(2.0 * vfrt) - gamma_Ca_o * v(VT_Ca_o)) / (exp(2.0 * vfrt) - 1.0);
+  const ML_CalcType Psi_CaNa_dyad = 1.0 * vffrt * (gamma_Na_dyad * Na_dyad * exp(1.0 * vfrt) - gamma_Na_o * Na_o) / (exp(1.0 * vfrt) - 1.0);
+  const ML_CalcType Psi_CaK_dyad = 1.0 * vffrt * (gamma_K_dyad * K_myo * exp(1.0 * vfrt) - gamma_K_o * v(VT_K_o)) / (exp(1.0 * vfrt) - 1.0);
+  const ML_CalcType Psi_CaL_sl = 4.0 * vffrt * (gamma_Ca_sl * Ca_sl * exp(2.0 * vfrt) - gamma_Ca_o * v(VT_Ca_o)) / (exp(2.0 * vfrt) - 1.0);
+  const ML_CalcType Psi_CaNa_sl = 1.0 * vffrt * (gamma_Na_sl * Na_sl * exp(1.0 * vfrt) - gamma_Na_o * Na_o) / (exp(1.0 * vfrt) - 1.0);
+  const ML_CalcType Psi_CaK_sl = 1.0 * vffrt * (gamma_K_sl * K_myo * exp(1.0 * vfrt) - gamma_K_o * v(VT_K_o)) / (exp(1.0 * vfrt) - 1.0);
     
   // Calculating "pure" CDI
   double rateRecovery = 0.02313;
@@ -524,7 +524,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   I_CaL_pureCDI_sl += tinc * dI_CaL_pureCDI_sl;
     
   // Channel conductances
-  double P_Ca = 1.5768e-04 * v(VT_IpCa_Multiplier);
+  double P_Ca = 1.5768e-04 * v(VT_ICaL_Multiplier);
   double P_Ca_PKA = P_Ca * 1.9; // BetaAdrenergic;  (%Gong--> 1.9)
   if (v(VT_celltype) == 1.0) { // epi
       P_Ca = P_Ca * 1.025;
@@ -710,7 +710,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     
   // Nernst potential
   double pNaK = 0.01833;
-  const ML_CalcType E_Ks = FoRT * log((v(VT_K_o) + pNaK * Na_o) / (K_myo + pNaK * Na_myo));
+  const ML_CalcType E_Ks = frt * log((v(VT_K_o) + pNaK * Na_o) / (K_myo + pNaK * Na_myo));
     
   // Putting together the channels behavior and fraction
   I_Ks_dyad = Fdyad * G_Ks_factor_SA * G_Ks_dyad * xs_dyad * xs_dyad * (V_m - E_Ks);
@@ -1162,7 +1162,7 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   I_Ca_tot_dyad = I_CaL_dyad + I_Cab_dyad + I_pCa_dyad - (2 * I_NaCa_dyad);
   I_Ca_tot_sl = I_CaL_sl + I_Cab_sl + I_pCa_sl - (2 * I_NaCa_sl);
   I_Ca_tot = I_Ca_tot_dyad + I_Ca_tot_sl;
-  const ML_CalcType dCa_dyad = -I_Ca_tot_dyad * Cmem / (Vdyad * 2.0 * F) + J_Ca_dyad_sl / Vdyad * (Ca_sl - Ca_dyad) - J_CaBuffer_dyad + (J_SR_Carel) * Vsr / Vdyad + J_SR_leak * Vmyo / Vdyad;
+  const ML_CalcType dCa_dyad = -I_Ca_tot_dyad * Cmem / (Vdyad * 2.0 * F) + J_Ca_dyad_sl / Vdyad * (Ca_sl - Ca_dyad) - J_CaBuffer_dyad + J_SR_Carel * Vsr / Vdyad + J_SR_leak * Vmyo / Vdyad;
   Ca_dyad += tinc * dCa_dyad;
   const ML_CalcType dCa_sl = -I_Ca_tot_sl * Cmem / (Vsl * 2.0 * F) + J_Ca_dyad_sl / Vsl * (Ca_dyad - Ca_sl) + J_Ca_sl_myo / Vsl * (Ca_myo - Ca_sl) - J_CaBuffer_sl;
   Ca_sl += tinc * dCa_sl;
@@ -1175,41 +1175,29 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   /////////////////////////////////////////////////////////////////////////////////////////
   ///        Change Membrane Potential (I_tot)
   ////////////////////////////////////////////////////////////////////////////////////////
-    I_tot = -(I_Na_tot + I_Cl_tot + I_Ca_tot + I_K_tot);// + i_external);
+    I_tot = -(I_Na_tot + I_Cl_tot + I_Ca_tot + I_K_tot); // + i_external;
 
     
-  return tinc * I_tot;
-  //return 0.001 * tinc * I_tot;
+  //return tinc * I_tot;
+  return 0.001 * tinc * I_tot;
 }  // TWorld::Calc
 
 void TWorld::Print(ostream &tempstr, double tArg,  ML_CalcType V) {
   tempstr << tArg << ' ' << V << ' ' <<
-//    m << ' ' << A_h << ' ' << B_h << ' ' << A_j << ' ' << B_j << ' ' << h << ' ' << j << ' ' << h_p << ' ' << j_p << ' ' << m_PKA << ' ' << h_PKA << ' ' << j_PKA << ' ' << h_both << ' ' << j_both << ' ' << m_L << ' ' << h_L << ' ' << h_L_p << ' ' <<
-//    d << ' ' << f_fast << ' ' << f_slow << ' ' << f_Ca_fast << ' ' << f_Ca_slow << ' ' << j_Ca << ' ' << f_p_fast << ' ' << f_Ca_p_fast << ' ' << d_PKA << ' ' << f_PKA_fast << ' ' << f_PKA_slow << ' ' << f_Ca_PKA_fast << ' ' << f_Ca_PKA_slow << ' ' << f_both_fast << ' ' << f_Ca_both_fast << ' ' << n_Ca_dyad << ' ' << n_Ca_sl << ' ' <<
-//    a_slow << ' ' << a_fast << ' ' << i_slow << ' ' << i_fast << ' ' << a_p_slow << ' ' << a_p_fast << ' ' << i_p_slow << ' ' << i_p_fast << ' ' <<
-//    C_0 << ' ' << C_1 << ' ' << C_2 << ' ' << O << ' ' << I << ' ' <<
-//    xs_dyad << ' ' << xs_sl << ' ' <<
-//    ryr_R << ' ' << ryr_O << ' ' << ryr_I << ' ' << ryr_CaRI << ' ' << ryr_R_p << ' ' << ryr_O_p << ' ' << ryr_I_p << ' ' << ryr_CaRI_p << ' ' <<
-    Na_dyad << ' ' << Na_sl << ' ' << Na_myo << ' ' << K_myo << ' ' << Cl_myo << ' ' << Ca_dyad << ' ' << Ca_sl << ' ' << Ca_myo << ' ' << Ca_SR << ' '
+    Na_dyad << ' ' << Na_sl << ' ' << Na_myo << ' ' << K_myo << ' ' << Cl_myo << ' ' << Ca_dyad << ' ' << Ca_sl << ' ' << Ca_myo << ' ' << Ca_SR << ' ' << Ta << ' ' << Tension << ' '
     ;
 }
 
 void TWorld::LongPrint(ostream &tempstr, double tArg,  ML_CalcType V) {
   Print(tempstr, tArg, V);
     
-  tempstr << I_Na_tot_dyad << ' ' << I_Na_tot_sl << ' ' << I_Na_tot << ' ' << I_K_tot << ' ' << I_Cl_tot << ' ' << I_Ca_tot_dyad << ' ' << I_Ca_tot_sl << ' ' << I_Ca_tot << ' ' << I_tot << ' ';
+  tempstr << I_Na_tot_dyad << ' ' << I_Na_tot_sl << ' ';
 }  // TWorld::LongPrint
 
 void TWorld::GetParameterNames(vector<string> &getpara) {
   const string ParaNames[] =
   {
-//    "m", "A_h", "B_h", "A_j", "B_j", "h", "j", "h_p", "j_p", "m_PKA", "h_PKA", "j_PKA", "h_both", "j_both", "m_L", "h_L", "h_L_p",
-//    "d", "f_fast", "f_slow", "f_Ca_fast", "f_Ca_slow", "j_Ca", "f_p_fast", "f_Ca_p_fast", "d_PKA", "f_PKA_fast", "f_PKA_slow", "f_Ca_PKA_fast", "f_Ca_PKA_slow", "f_both_fast", "f_Ca_both_fast", "n_Ca_dyad", "n_Ca_sl",
-//    "a_slow", "a_fast", "i_slow", "i_fast", "a_p_slow", "a_p_fast", "i_p_slow", "i_p_fast",
-//    "C_0", "C_1", "C_2", "O", "I",
-//    "xs_dyad", "xs_sl",
-//    "ryr_R", "ryr_O", "ryr_I", "ryr_CaRI", "ryr_R_p", "ryr_O_p", "ryr_I_p", "ryr_CaRI_p",
-    "Na_dyad", "Na_sl", "Na_myo", "K_myo", "Cl_myo", "Ca_dyad", "Ca_sl", "Ca_myo", "Ca_SR"
+    "Na_dyad", "Na_sl", "Na_myo", "K_myo", "Cl_myo", "Ca_dyad", "Ca_sl", "Ca_myo", "Ca_SR", "Ta", "Tension"
   };
 
   for (int i = 0; i < sizeof(ParaNames)/sizeof(ParaNames[0]); i++)
@@ -1220,7 +1208,7 @@ void TWorld::GetLongParameterNames(vector<string> &getpara) {
   GetParameterNames(getpara);
   const string ParaNames[] =
   {
-    "I_Na_tot_dyad", "I_Na_tot_sl", "I_Na_tot", "I_K_tot", "I_Cl_tot", "I_Ca_tot_dyad", "I_Ca_tot_sl", "I_Ca_tot", "I_tot"
+    "I_Na_tot_dyad", "I_Na_tot_sl"
   };
   for (int i = 0; i < sizeof(ParaNames)/sizeof(ParaNames[0]); i++)
     getpara.push_back(ParaNames[i]);

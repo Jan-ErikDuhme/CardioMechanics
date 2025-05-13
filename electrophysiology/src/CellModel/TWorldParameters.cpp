@@ -45,11 +45,11 @@ void TWorldParameters::Init(const char *initFile, ML_CalcType tinc) {
   P[VT_ICaL_fractionSS].name = "ICaL_fractionSS";
   P[VT_INaCa_fractionSS].name = "INaCa_fractionSS";
   P[VT_INaF_Multiplier].name  = "INaF_Multiplier";
-  P[VT_ICaL_Multiplier].name  = "INaL_Multiplier";
+  P[VT_INaL_Multiplier].name  = "INaL_Multiplier";
   P[VT_Ito_Multiplier].name   = "Ito_Multiplier";
   P[VT_Ito_slow_Multiplier].name = "Ito_slow_Multiplier";
   P[VT_Ito_fast_Multiplier].name = "Ito_fast_Multiplier";
-  P[VT_INaL_Multiplier].name  = "INaL_Multiplier";
+  P[VT_ICaL_Multiplier].name  = "ICaL_Multiplier";
   P[VT_IKr_Multiplier].name   = "IKr_Multiplier";
   P[VT_IKs_Multiplier].name   = "IKs_Multiplier";
   P[VT_IK1_Multiplier].name   = "IK1_Multiplier";

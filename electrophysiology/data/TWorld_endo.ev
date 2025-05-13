@@ -15,7 +15,7 @@ INaL_Multiplier 1.0
 Ito_Multiplier 1.0
 Ito_slow_Multiplier 1.0
 Ito_fast_Multiplier 1.0
-INaL_Multiplier 1.0
+ICaL_Multiplier 1.0
 IKr_Multiplier 1.0
 IKs_Multiplier 1.0
 IK1_Multiplier 1.0
@@ -139,7 +139,7 @@ beta_0 2.3
 gamma 0.0085
 gamma_wu 0.615
 phi 2.23
-nperm 5.0
+nperm 2.036
 ca50 0.7645
 Tref 80
 nu 10.15996
