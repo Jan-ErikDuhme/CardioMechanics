@@ -46,7 +46,7 @@ class TWorld : public vbElphyModel<ML_CalcType> {
     ML_CalcType I_Kr; // Rapid delayed rectifier current (IKr)
     ML_CalcType I_Ks_dyad, I_Ks_sl, I_Ks; // Slow delayed rectifier current (IKs)
     ML_CalcType I_K1; // Inward rectifier current (IK1)
-    ML_CalcType I_NaCa_sl, I_NaCa_dyad; // Sodium-calcium exchanger (INaCa)
+    ML_CalcType I_NaCa_sl, I_NaCa_dyad, I_NaCa; // Sodium-calcium exchanger (INaCa)
     ML_CalcType I_NaK_dyad_noPKA, I_NaK_dyad_PKA, I_NaK_sl_noPKA, I_NaK_sl_PKA, I_NaK_dyad, I_NaK_sl, I_NaK; // Sodium-potassium pump (INaK)
     ML_CalcType I_CaCl_dyad, I_CaCl_sl, I_CaCl, I_Clb; // Chloride currents (ICaCl, IClb)
     ML_CalcType I_Nab_dyad, I_Nab_sl, I_Nab, I_Kb, I_Cab_dyad, I_Cab_sl, I_Cab; // Background currents (INab, ICab, IKb)
