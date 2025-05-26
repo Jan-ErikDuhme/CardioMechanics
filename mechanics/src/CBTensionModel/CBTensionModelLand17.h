@@ -113,6 +113,10 @@ protected:
     // constants that will be calculated once during initialize
     TFloat cw_, cs_, kwu_, ksu_, A_, XSSS_, XWSS_, ktm_block_;
     
+    // PKA fractions from https://doi.org/10.1101/2025.03.24.645031
+    TFloat fTnI_PKA_ = 0.0;
+    TFloat fMyBPC_PKA_ = 0.0;
+    
     // Initial values of state variables
     // XS
     TFloat XS_ = 0.0;

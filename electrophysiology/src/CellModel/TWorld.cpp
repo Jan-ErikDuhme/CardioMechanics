@@ -1088,15 +1088,15 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
 
   // Minimal implementation of the passive cell model
   // Similar to a standard linear solid model. It is used for the viscoelastic response.
-  //double C_s     = (stretch - 1.0) - Cd;
-  //double eta     = (C_s > 0.0) ? v(VT_eta_l) : v(VT_eta_s);
-  //double diff_Cd = v(VT_k) * C_s / eta;
-  //Cd += tinc * diff_Cd;
+  double C_s     = (stretch - 1.0) - Cd;
+  double eta     = (C_s > 0.0) ? v(VT_eta_l) : v(VT_eta_s);
+  double diff_Cd = v(VT_k) * C_s / eta;
+  Cd += tinc * diff_Cd;
 
-  //double F_d = v(VT_a) * v(VT_k) * C_s;
+  double F_d = v(VT_a) * v(VT_k) * C_s;
 
   // Total Tension
-    Tension = Ta;// + F_d;
+  Tension = Ta + F_d;
     
 
   /////////////////////////////////////////////////////////////////////////////////////////

@@ -375,10 +375,15 @@ double CBTensionModelLand17::CalcActiveTension(const math_pack::Matrix3<double> 
     TFloat lambda_m = std::min(1.2, S_.lambda);
     TFloat h = std::max(0.0, Overlap(lambda_m));
     
+    // effect of PKA phosphoryaltion from https://doi.org/10.1101/2025.03.24.645031
+    TFloat PKACaUnbindingMultiplier = (1.45 - 0.45 * (1.0 - fTnI_PKA_)/(1.0 - 0.0031));
+    TFloat PKAForceMultiplier = 1.0 + fMyBPC_PKA_ * 0.26;
+    TFloat PKAXBacceleration = 1.0 + fMyBPC_PKA_/2;
+    
     // unattached available xb = all - tm blocked - already prepowerstroke - already post-poststroke - no overlap
     TFloat XU = (1.0 - S_prev_.TmBlocked) - S_prev_.XW - S_prev_.XS;
-    TFloat xb_ws = kws_ * S_prev_.XW;
-    TFloat xb_uw = kuw_ * XU;
+    TFloat xb_ws = kws_ * S_prev_.XW * PKAXBacceleration;
+    TFloat xb_uw = kuw_ * XU * PKAXBacceleration;
     TFloat xb_wu = kwu_ * S_prev_.XW;
     TFloat xb_su = ksu_ * S_prev_.XS;
     
@@ -394,7 +399,7 @@ double CBTensionModelLand17::CalcActiveTension(const math_pack::Matrix3<double> 
     TFloat xb_wu_gamma = gamma_rate_w * S_prev_.XW;
     S_.XW = S_prev_.XW + S_.delta_t * dXWdt(xb_uw, xb_wu, xb_ws, xb_wu_gamma);
     
-    TFloat Ca50 = Ca50_ + beta1_ * (lambda_m - 1.0);
+    TFloat Ca50 = (Ca50_ * PKACaUnbindingMultiplier) + beta1_ * std::min(0.2,(lambda_m - 1.0)); // min() has been added accoding to TWorld!!!
     S_.TRPN = S_prev_.TRPN + S_.delta_t * dTRPNdt(TRPNk_, Cai(calciumTransientType_, S_.t), Ca50, TRPNn_, S_prev_.TRPN);
     
     TFloat TRPN_NP = pow(S_.TRPN, (-nTM_/2.0));
@@ -409,7 +414,7 @@ double CBTensionModelLand17::CalcActiveTension(const math_pack::Matrix3<double> 
     // ActiveTension in kPa
     // Tmax_ = 1000 should be used to do kPa -> Pa
     // don't allow negative values
-    S_.Ta = std::max(0.0, h * (Tref_ / rs_) * ((S_.ZetaS + 1.0) * S_.XS + S_.ZetaW * S_.XW));
+    S_.Ta = std::max(0.0, PKAForceMultiplier* h * (Tref_ / rs_) * ((S_.ZetaS + 1.0) * S_.XS + S_.ZetaW * S_.XW));
     
     // Minimal implementation of the passive cell model
     // Similar to a standard linear solid model. It is used for the viscoelastic response.
@@ -474,6 +479,8 @@ void CBTensionModelLand17::InitParamsFromXml(ParameterMap *parameters, std::stri
     eta_l_        = InitKey(parameters, parameterKey, parameterKeyFallback, ".eta_l", 200.0);
     eta_s_        = InitKey(parameters, parameterKey, parameterKeyFallback, ".eta_s", 20.0);
     xi_           = InitKey(parameters, parameterKey, parameterKeyFallback, ".xi", 1.0);
+    fTnI_PKA_     = InitKey(parameters, parameterKey, parameterKeyFallback, ".fTnI_PKA", 0.0);
+    fMyBPC_PKA_   = InitKey(parameters, parameterKey, parameterKeyFallback, ".fMyBPC_PKA", 0.0);
     
     // initial values for the state variables as parameters from xml file
     XS_           = InitKey(parameters, parameterKey, parameterKeyFallback, ".XS", 0.0);
