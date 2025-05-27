@@ -146,6 +146,7 @@ class acCELLerate : public ACLTConditions, public ACLTSensors, public CellModelS
   Mat ExtraRHS;               //!< Right-hand side matrix for extracellular domain
   Vec VecDiag;                //!< A Vector that contains the diagonal elements of (I+dt*A)
   Vec VecVCell;               //!< A Vector to hold the change of voltage dVm of the cell calculations
+  Vec VecConc;
   Vec VecICell;
   Vec VecRes;                 //!< A Vector to hold the residuum of the Jacobi-method
   Vec VecVRes;                //!< A Vector to hold the iterative solution of dVm of the Jacobi-method
@@ -244,6 +245,7 @@ class acCELLerate : public ACLTConditions, public ACLTSensors, public CellModelS
   void MonoDomain(acltTime, Vec = NULL, Vec = NULL);
   void BiDomain();
   void TriDomain();
+  void UpdateConcentration();
 
   Vec GetVmVec() {return Intra.X;}
 

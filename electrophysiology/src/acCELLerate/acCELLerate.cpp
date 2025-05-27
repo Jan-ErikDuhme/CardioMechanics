@@ -40,6 +40,7 @@ acCELLerate::acCELLerate() {
     MatImp            = NULL;
     VecDiag           = NULL;
     VecVCell          = NULL;
+    VecConc           = NULL;
     VecICell          = NULL;
     VecRes            = NULL;
     VecVRes           = NULL;
@@ -138,6 +139,9 @@ acCELLerate::~acCELLerate() {
     }
     if (VecVCell) {
         ierr = VecDestroy(&VecVCell); CHKERRQ(ierr);
+    }
+    if (VecConc) {
+        ierr = VecDestroy(&VecConc); CHKERRQ(ierr);
     }
     if (VecRes) {
         ierr = VecDestroy(&VecRes); CHKERRQ(ierr);
@@ -734,6 +738,8 @@ void acCELLerate::InitMono(Vec materials) {
     
     ierr = VecDuplicate(MaterialV, &VecVCell); CHKERRQ(ierr);
     ierr = VecSet(VecVCell, 0.0); CHKERRQ(ierr);
+    ierr = VecDuplicate(MaterialV, &VecConc); CHKERRQ(ierr);
+    ierr = VecSet(VecConc, 0.0); CHKERRQ(ierr);
     ierr = VecDuplicate(MaterialV, &VecICell); CHKERRQ(ierr);
     ierr = VecSet(VecICell, 0.0); CHKERRQ(ierr);
     ierr = VecDuplicate(MaterialV, &VecVRes); CHKERRQ(ierr);
@@ -748,11 +754,15 @@ void acCELLerate::InitMono(Vec materials) {
         CellModelStruct::setForceModel(&pForceIntra[lindex], modelIndex);  // mwk: force model read-in
         PetscScalar Vm = pElphyIntra[lindex]->GetVm();
         ierr = VecSetValues(VecVCell, 1, &Ii, &Vm, INSERT_VALUES); CHKERRQ(ierr);
+        PetscScalar Conc = pElphyIntra[lindex]->GetKo();
+        ierr = VecSetValues(VecConc, 1, &Ii, &Conc, INSERT_VALUES); CHKERRQ(ierr);
         EMIntra.Set((int)lindex, pElphyIntra[lindex], pForceIntra[lindex], forceset);
     }
     
     ierr = VecAssemblyBegin(VecVCell); CHKERRQ(ierr);
     ierr = VecAssemblyEnd(VecVCell); CHKERRQ(ierr);
+    ierr = VecAssemblyBegin(VecConc); CHKERRQ(ierr);
+    ierr = VecAssemblyEnd(VecConc); CHKERRQ(ierr);
     if (GaussInt) {
         // ierr = VecSet(Intra.X, pElphyIntra[0]->GetVm()); CHKERRQ(ierr);
         
@@ -762,12 +772,14 @@ void acCELLerate::InitMono(Vec materials) {
         
         ierr = VecDuplicate(Intra.X, &lse.B); CHKERRQ(ierr);
         ierr = MatMult(GaussInt, VecVCell, lse.B);
+        ierr = MatMult(GaussInt, VecConc, lse.B);
         
         lse.InitSolve(KSPTYPE, PCTYPE, RTOL, ATOL, DTOL, MAXITS);
         lse.Solve(lse.B, Intra.X);
         lse.A = NULL;  /* Otherwise matrix is destroyed */
     } else {
         ierr = VecCopy(VecVCell, Intra.X); CHKERRQ(ierr);
+        ierr = VecCopy(VecConc, Intra.X); CHKERRQ(ierr);
     }
     
     HeteroCMIntra.Set(pElphyIntra, EndCells-StartCells);
@@ -1736,6 +1748,7 @@ void acCELLerate::Run() {
         case 1:
             InitMono();
             MonoDomain(calclen);
+            UpdateConcentration();
             break;
         case 2:
             InitBi();
@@ -2438,6 +2451,23 @@ void acCELLerate::TriDomain() {
     }
     ierr = VecDestroy(&Stim); CHKERRQ(ierr);
 }  // acCELLerate::TriDomain
+
+void acCELLerate::UpdateConcentration(){
+    PetscErrorCode ierr;
+    Vec dConc;
+    ierr = VecDuplicate(VecConc, &dConc); CHKERRV(ierr);
+
+    // Compute dConc = D * DiffusionMat * VecConc
+    ierr = MatMult(Intra.A, VecConc, dConc); CHKERRV(ierr);
+    ierr = VecScale(dConc, 0.1 * (double)dtcell); CHKERRV(ierr);
+
+    // VecConc = VecConc + dConc
+    ierr = VecAXPY(VecConc, 1.0, dConc); CHKERRV(ierr);
+
+    ierr = VecDestroy(&dConc); CHKERRV(ierr);
+}
+
+
 
 PrintParameterModus PrintParameterMode = PrintParameterModeOff;
 
