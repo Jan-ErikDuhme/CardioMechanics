@@ -95,11 +95,7 @@ void TWorldParameters::Init(const char *initFile, ML_CalcType tinc) {
   P[VT_Init_casig_serca_trap].name = "Init_casig_serca_trap";
   // Sodium current (INa, INaL)
   P[VT_Init_m].name = "Init_m";
-  P[VT_Init_A_h].name = "Init_A_h";
-  P[VT_Init_B_h].name = "Init_B_h";
   P[VT_Init_h].name = "Init_h";
-  P[VT_Init_A_j].name = "Init_A_j";
-  P[VT_Init_B_j].name = "Init_B_j";
   P[VT_Init_j].name = "Init_j";
   P[VT_Init_h_p].name = "Init_h_p";
   P[VT_Init_j_p].name = "Init_j_p";
@@ -123,8 +119,10 @@ void TWorldParameters::Init(const char *initFile, ML_CalcType tinc) {
   P[VT_Init_d_PKA].name = "Init_d_PKA";
   P[VT_Init_f_PKA_fast].name = "Init_f_PKA_fast";
   P[VT_Init_f_PKA_slow].name = "Init_f_PKA_slow";
-  P[VT_Init_f_both_fast].name = "Init_f_PKA_fast";
-  P[VT_Init_f_Ca_both_fast].name = "Init_f_Ca_p_fast";
+  P[VT_Init_f_Ca_PKA_fast].name = "Init_f_Ca_PKA_fast";
+  P[VT_Init_f_Ca_PKA_slow].name = "Init_f_Ca_PKA_slow";
+  P[VT_Init_f_both_fast].name = "Init_f_both_fast";
+  P[VT_Init_f_Ca_both_fast].name = "Init_f_Ca_both_fast";
   P[VT_Init_n_Ca_dyad].name = "Init_n_Ca_dyad";
   P[VT_Init_n_Ca_sl].name = "Init_n_Ca_sl";
   P[VT_Init_I_CaL_pureCDI_dyad].name = "Init_I_CaL_pureCDI_dyad";
@@ -205,6 +203,7 @@ void TWorldParameters::Init(const char *initFile, ML_CalcType tinc) {
   P[VT_k_wu].name = "VT_k_wu";
   P[VT_k_su].name = "VT_k_su";
   P[VT_A].name = "VT_A";
+    
   P[VT_XS_init].name = "XS_init";
   P[VT_XW_init].name = "XW_init";
   P[VT_TRPN_init].name = "TRPN_init";

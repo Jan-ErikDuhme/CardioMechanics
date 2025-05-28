@@ -78,8 +78,6 @@ void TWorld::Init() {
     
     // Sodium current (INa, INaL)
     m = v(VT_Init_m);
-    A_h = v(VT_Init_A_h);
-    B_h = v(VT_Init_B_h);
     h = v(VT_Init_h);
     j = v(VT_Init_j);
     h_p = v(VT_Init_h_p);
@@ -105,6 +103,8 @@ void TWorld::Init() {
     d_PKA = v(VT_Init_d_PKA);
     f_PKA_fast = v(VT_Init_f_PKA_fast);
     f_PKA_slow = v(VT_Init_f_PKA_slow);
+    f_Ca_PKA_fast = v(VT_Init_f_Ca_PKA_fast);
+    f_Ca_PKA_slow = v(VT_Init_f_Ca_PKA_slow);
     f_both_fast = v(VT_Init_f_both_fast);
     f_Ca_both_fast = v(VT_Init_f_Ca_both_fast);
     n_Ca_dyad = v(VT_Init_n_Ca_dyad);
@@ -1200,7 +1200,7 @@ void TWorld::Print(ostream &tempstr, double tArg,  ML_CalcType V) {
 void TWorld::LongPrint(ostream &tempstr, double tArg,  ML_CalcType V) {
   Print(tempstr, tArg, V);
     
-  tempstr << I_to << ' ' << I_Kr << ' ' << I_Ks << ' ' << I_K1 << ' ' << I_NaK << ' ' << I_CaK_dyad << ' ' << I_CaK_sl << ' ' << I_Kb << ' ' << I_NaFast << ' ' << I_NaL << ' ' << I_NaCa << ' ' << I_Nab << ' ' << I_CaNa_dyad << ' ' << I_CaNa_sl << ' ' << I_CaL_dyad << ' ' << I_CaL_sl << ' ' << I_Cab << ' ' << I_pCa << ' ' << I_CaCl << ' ' << I_Clb << ' ' << J_SR_Carel << ' ' << J_SR_leak << ' ' << J_up << ' ' << CaTRPN << ' ';
+  tempstr << CaMK_trap << ' ' << CaMK_f_ICaL << ' ' << CaMK_f_RyR << ' ' << CaMK_f_PLB << ' ' << casig_serca_trap << ' ' << m << ' ' << h << ' ' << j << ' ' << h_p << ' ' << j_p << ' ' << m_PKA << ' ' << h_PKA << ' ' << j_PKA << ' ' << h_both << ' ' << j_both << ' ' << m_L << ' ' << h_L << ' ' << h_L_p << ' ' << d << ' ' << f_fast << ' ' << f_slow << ' ' << f_Ca_fast << ' ' << f_Ca_slow << ' ' << j_Ca << ' ' << f_p_fast << ' ' << f_Ca_p_fast << ' ' << d_PKA << ' ' << f_PKA_fast << ' ' << f_PKA_slow << ' ' << f_Ca_PKA_fast << ' ' << f_Ca_PKA_slow << ' ' << f_both_fast << ' ' << f_Ca_both_fast << ' ' << n_Ca_dyad << ' ' << n_Ca_sl << ' ' << I_CaL_pureCDI_dyad << ' ' << I_CaL_pureCDI_sl << ' ' << a_slow << ' ' << a_fast << ' ' << i_slow << ' ' << i_fast << ' ' << a_p_slow << ' ' << a_p_fast << ' ' << i_p_slow << ' ' << i_p_fast << ' ' << C_0 << ' ' << C_1 << ' ' << C_2 << ' ' << O << ' ' << I << ' ' << xs_dyad << ' ' << xs_sl << ' ' << J_rel_ICaLdep_act << ' ' << J_rel_ICaLdep_f1 << ' ' << J_rel_ICaLdep_f2 << ' ' << ryr_R << ' ' << ryr_O << ' ' << ryr_I << ' ' << ryr_CaRI << ' ' << ryr_R_p << ' ' << ryr_O_p << ' ' << ryr_I_p << ' ' << ryr_CaRI_p << ' ' << Buffer_NaBj << ' ' << Buffer_NaBsl << ' ' << Buffer_TnClow << ' ' << Buffer_TnCHc << ' ' << Buffer_TnCHm << ' ' << Buffer_CaM << ' ' << Buffer_Myosin_ca << ' ' << Buffer_Myosin_mg << ' ' << Buffer_SRB << ' ' << Buffer_SLLj << ' ' << Buffer_SLLsl << ' ' << Buffer_SLHj << ' ' << Buffer_SLHsl << ' ' << Buffer_Csqn << ' ' << XS << ' ' << XW << ' ' << CaTRPN << ' ' << TmBlocked << ' ' << ZETAS << ' ' << ZETAW << ' ' << Cd << ' ';
 }  // TWorld::LongPrint
 
 void TWorld::GetParameterNames(vector<string> &getpara) {
@@ -1217,12 +1217,15 @@ void TWorld::GetLongParameterNames(vector<string> &getpara) {
   GetParameterNames(getpara);
   const string ParaNames[] =
   {
-    "I_to", "I_Kr", "I_Ks", "I_K1", "I_NaK", "I_CaK_dyad", "I_CaK_sl", "I_Kb",
-    "I_NaFast", "I_NaL", "I_NaCa", "I_Nab", "I_CaNa_dyad", "I_CaNa_sl",
-    "I_CaL_dyad", "I_CaL_sl", "I_Cab", "I_pCa",
-    "I_CaCl","I_Clb",
-    "J_SR_Carel","J_SR_leak","J_up",
-    "CaTRPN"
+    "CaMK_trap","CaMK_f_ICaL","CaMK_f_RyR","CaMK_f_PLB","casig_serca_trap",
+    "m","h","j","h_p","j_p","m_PKA","h_PKA","j_PKA","h_both","j_both","m_L","h_L","h_L_p",
+    "d","f_fast","f_slow","f_Ca_fast","f_Ca_slow","j_Ca","f_p_fast","f_Ca_p_fast","d_PKA","f_PKA_fast","f_PKA_slow","f_Ca_PKA_fast","f_Ca_PKA_slow","f_both_fast","f_Ca_both_fast","n_Ca_dyad","n_Ca_sl","I_CaL_pureCDI_dyad","I_CaL_pureCDI_sl",
+    "a_slow","a_fast","i_slow","i_fast","a_p_slow","a_p_fast","i_p_slow","i_p_fast",
+    "C_0","C_1","C_2","O","I",
+    "xs_dyad","xs_sl",
+    "J_rel_ICaLdep_act","J_rel_ICaLdep_f1","J_rel_ICaLdep_f2","ryr_R","ryr_O","ryr_I","ryr_CaRI","ryr_R_p","ryr_O_p","ryr_I_p","ryr_CaRI_p",
+    "Buffer_NaBj","Buffer_NaBsl","Buffer_TnClow","Buffer_TnCHc","Buffer_TnCHm","Buffer_CaM","Buffer_Myosin_ca","Buffer_Myosin_mg","Buffer_SRB","Buffer_SLLj","Buffer_SLLsl","Buffer_SLHj","Buffer_SLHsl","Buffer_Csqn",
+    "XS","XW","CaTRPN","TmBlocked","ZETAS","ZETAW","Cd"
   };
   for (int i = 0; i < sizeof(ParaNames)/sizeof(ParaNames[0]); i++)
     getpara.push_back(ParaNames[i]);

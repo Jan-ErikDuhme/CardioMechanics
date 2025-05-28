@@ -1,6 +1,6 @@
 CELLMODEL*IBT*KA
 TWorld
-156
+153
 amplitude -53.0
 duration 0.001
 celltype 0.0
@@ -38,6 +38,28 @@ fIfPLB_PKA 0.0
 fTnI_PKA 0.0
 fMyBPC_PKA 0.0
 PP1_tot 0.13698
+perm50 0.35
+TRPN_n 1.65
+koff 0.07854
+dr 0.25
+wfrac 0.5
+A_eff 25
+ktm_unblock 0.02626
+beta_1 -2.4
+beta_0 2.3
+gamma 0.0085
+gamma_wu 0.615
+phi 2.23
+nperm 2.036
+ca50 0.7645
+Tref 80
+nu 10.15996
+mu 3.94046
+xi 1.0
+a 2.1
+k 7
+eta_l 200
+eta_s 20
 Init_Vm -0.0870655895407835
 Init_Na_dyad 8.88424477947199
 Init_Na_sl 8.88341217642103
@@ -54,11 +76,7 @@ Init_CaMK_f_RyR 5.834300e-02
 Init_CaMK_f_PLB 1.025200e-02
 Init_casig_serca_trap 4.147800e-02
 Init_m 1.160000e-03
-Init_A_h 0.0
-Init_B_h 0.0
 Init_h 7.916600e-01
-Init_A_j 0.0
-Init_B_j 0.0
 Init_j 7.915900e-01
 Init_h_p 0.0
 Init_j_p 0.0
@@ -81,8 +99,10 @@ Init_f_Ca_p_fast 1.000000e+00
 Init_d_PKA 0.0
 Init_f_PKA_fast 0.0
 Init_f_PKA_slow 0.0
-Init_f_PKA_fast 0.0
-Init_f_Ca_p_fast 0.0
+Init_f_Ca_PKA_fast 0.0
+Init_f_Ca_PKA_slow 0.0
+Init_f_both_fast 0.0
+Init_f_Ca_both_fast 0.0
 Init_n_Ca_dyad 5.287900e-03
 Init_n_Ca_sl 6.215500e-03
 Init_I_CaL_pureCDI_dyad 9.983400e-01
@@ -127,29 +147,6 @@ Init_Buffer_SLLsl 8.102300e-03
 Init_Buffer_SLHj 4.976100e-02
 Init_Buffer_SLHsl 9.601900e-02
 Init_Buffer_Csqn 1.323600e+00
-perm50 0.35
-TRPN_n 1.65
-koff 0.07854
-dr 0.25
-wfrac 0.5
-A_eff 25
-ktm_unblock 0.02626
-beta_1 -2.4
-beta_0 2.3
-gamma 0.0085
-gamma_wu 0.615
-phi 2.23
-nperm 2.036
-ca50 0.7645
-Tref 80
-nu 10.15996
-mu 3.94046
-xi 1.0
-a 2.1
-k 7
-eta_l 200
-eta_s 20
-HFM_Multiplier 1.0 # 0.6
 XS_init 1.915100e-03
 XW_init 2.853700e-03
 TRPN_init 3.197800e-02
