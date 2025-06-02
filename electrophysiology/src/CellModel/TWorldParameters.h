@@ -74,7 +74,7 @@ enum varType {
   VT_Init_Cl_myo,
   VT_Init_Ca_dyad,
   VT_Init_Ca_sl,
-  VT_Init_Ca_myo,
+  VT_Init_Ca_i,
   VT_Init_Ca_SR,
   // CaMK and Ca Signalling
   VT_Init_CaMK_trap,

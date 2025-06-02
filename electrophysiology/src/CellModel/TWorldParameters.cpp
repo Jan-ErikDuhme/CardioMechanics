@@ -85,7 +85,7 @@ void TWorldParameters::Init(const char *initFile, ML_CalcType tinc) {
   P[VT_Init_Cl_myo].name = "Init_Cl_myo";
   P[VT_Init_Ca_dyad].name = "Init_Ca_dyad";
   P[VT_Init_Ca_sl].name = "Init_Ca_sl";
-  P[VT_Init_Ca_myo].name = "Init_Ca_myo";
+  P[VT_Init_Ca_i].name = "Init_Ca_i";
   P[VT_Init_Ca_SR].name = "Init_Ca_SR";
   // CaMK and Ca Signalling
   P[VT_Init_CaMK_trap].name = "Init_CaMK_trap";

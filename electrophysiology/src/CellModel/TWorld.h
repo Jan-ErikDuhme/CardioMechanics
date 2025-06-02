@@ -58,7 +58,7 @@ class TWorld : public vbElphyModel<ML_CalcType> {
     ML_CalcType I_Na_tot_dyad, I_Na_tot_sl, I_Na_tot, Na_o, Na_dyad, Na_sl, Na_myo; // Sodium Concentration
     ML_CalcType I_K_tot, K_myo; // Potassium Concentration
     ML_CalcType I_Cl_tot, Cl_myo; // Cloride Concentration
-    ML_CalcType I_Ca_tot_dyad, I_Ca_tot_sl, I_Ca_tot, Ca_dyad, Ca_sl, Ca_myo, Ca_SR; // Calcium Concentration
+    ML_CalcType I_Ca_tot_dyad, I_Ca_tot_sl, I_Ca_tot, Ca_dyad, Ca_sl, Ca_i, Ca_SR; // Calcium Concentration
     ML_CalcType I_tot;
 
   /// Signalling and Buffering
@@ -90,7 +90,7 @@ class TWorld : public vbElphyModel<ML_CalcType> {
 
   virtual inline  ML_CalcType GetVm() {return v(VT_Init_Vm); }
 
-  virtual inline  ML_CalcType GetCai() {return Ca_myo; }
+  virtual inline  ML_CalcType GetCai() {return Ca_i; }
 
   virtual inline  ML_CalcType GetCao() {return v(VT_Ca_o); }
 
