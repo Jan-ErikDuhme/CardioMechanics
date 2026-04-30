@@ -705,7 +705,11 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     
   // conductances
   double G_Ks_factor_SA = 2.97002 * v(VT_IKs_Multiplier);
-  if (v(VT_celltype) == 2.0) { // mid
+  
+  if (v(VT_celltype) == 1.0) { // epi
+      G_Ks_factor_SA = 1.4 * G_Ks_factor_SA;
+  }
+  else if (v(VT_celltype) == 2.0) { // mid
       G_Ks_factor_SA = 0.5 * G_Ks_factor_SA;
   }
   double G_Ks_factor = 0.01;
