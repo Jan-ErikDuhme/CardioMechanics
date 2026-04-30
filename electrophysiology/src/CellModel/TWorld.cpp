@@ -13,6 +13,7 @@
 
 
 #include <TWorld.h>
+#include <algorithm>
 
 TWorld::TWorld(TWorldParameters *pp) {
   ptTeaP = pp;
@@ -312,8 +313,8 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   ///////////// calulate I_Na //////////
   // m gate
   const ML_CalcType m_inf = 1.0 / ((1.0 + exp(-(V_m + 56.86)/9.03))*(1.0 + exp(-(V_m + 56.86)/9.03)));
-  const ML_CalcType tau_m = 0.1292 * exp(-(((V_m + 45.79)/15.54) * ((V_m + 45.79)/15.54))) + 0.06487 * exp(-(((V_m - 4.823)/51.12) * ((V_m - 4.823)/51.12)));
-    m = m_inf - (m_inf - m) * exp(-tinc / tau_m);
+  const ML_CalcType tau_m = std::min(0.02, 0.1292 * exp(-(((V_m + 45.79)/15.54) * ((V_m + 45.79)/15.54))) + 0.06487 * exp(-(((V_m - 4.823)/51.12) * ((V_m - 4.823)/51.12)))); // min set based on discussion with Tomek himself 
+  m = m_inf - (m_inf - m) * exp(-tinc / tau_m);
     
   // h and j gate
   if (V_m < -40.0) {
@@ -878,8 +879,10 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
   double G_CaCl = 0.01615 * v(VT_ICaCl_Multiplier);
   double Kd_CaCl = 100e-03;
     
-  I_CaCl_dyad = 0.5 * Fdyad * G_CaCl / (1.0 + Kd_CaCl / Ca_dyad)*(V_m - E_Cl);
-  I_CaCl_sl = 0.5 * Fsl * G_CaCl / (1.0 + Kd_CaCl / Ca_sl)*(V_m - E_Cl);
+  // I_CaCl_dyad = 0.5 * Fdyad * G_CaCl / (1.0 + Kd_CaCl / Ca_dyad)*(V_m - E_Cl);
+  I_CaCl_dyad = 0.5 * G_CaCl / (1.0 + Kd_CaCl / Ca_dyad)*(V_m - E_Cl); //removed Fdyad based on suggested updates from Tomek himself
+  // I_CaCl_sl = 0.5 * Fsl * G_CaCl / (1.0 + Kd_CaCl / Ca_sl)*(V_m - E_Cl);
+  I_CaCl_sl = 0.5 * G_CaCl / (1.0 + Kd_CaCl / Ca_sl)*(V_m - E_Cl); //remove Fsl based on suggested updates from Tomek himself
   I_CaCl = I_CaCl_dyad + I_CaCl_sl;
     
   // calculate I_Clb
