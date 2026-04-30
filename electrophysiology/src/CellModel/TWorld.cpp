@@ -518,11 +518,11 @@ ML_CalcType TWorld::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_external,  
     
   // Calculating "pure" CDI
   double rateRecovery = 0.02313;
-    const ML_CalcType sigmoidTransition_dyad = 1 - 1/(1 + pow((1.86532 * Ca_dyad/0.032),0.99613));
+    const ML_CalcType sigmoidTransition_dyad = 1 - 1/(1 + (1.86532 * Ca_dyad/0.032));
   const ML_CalcType tauTransition_dyad = 1.09670 + (1.0 - sigmoidTransition_dyad) * 141.42990;
   const ML_CalcType dI_CaL_pureCDI_dyad = -I_CaL_pureCDI_dyad * sigmoidTransition_dyad / tauTransition_dyad + (1.0 - I_CaL_pureCDI_dyad) * rateRecovery;
   I_CaL_pureCDI_dyad += tinc * dI_CaL_pureCDI_dyad;
-    const ML_CalcType sigmoidTransition_sl = 1 - 1/(1 + pow((1.86532 * Ca_sl/0.032),0.99613));
+    const ML_CalcType sigmoidTransition_sl = 1 - 1/(1 + (1.86532 * Ca_sl/0.032));
   const ML_CalcType tauTransition_sl = 1.09670 + (1.0 - sigmoidTransition_sl) * 141.42990;
   const ML_CalcType dI_CaL_pureCDI_sl = -I_CaL_pureCDI_sl * sigmoidTransition_sl / tauTransition_sl + (1.0 - I_CaL_pureCDI_sl) * rateRecovery;
   I_CaL_pureCDI_sl += tinc * dI_CaL_pureCDI_sl;
