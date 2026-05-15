@@ -1526,7 +1526,7 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
     MPI_Reduce(&objectSizeTemp, &sumOfObjectSizes, 1, MPI_LONG, MPI_SUM, 0, PETSC_COMM_WORLD);  // Collect and sum up
                                                                                                 // objectSizeTemp, store in sumOfObjectSizes
     
-    int buSize, buSecondLineLength;
+    long int buSize, buSecondLineLength;
     int seekpos = ReceiveInteger();  // between seekpos=ReceiveInteger() here and SendInteger(seekpos) beneath, all
                                      // functions using MPI_Recv are
                                      // leading to a deadlock with more than one CPU! Avoid coding these functions (e.g. VecCreate()...) in this section!
