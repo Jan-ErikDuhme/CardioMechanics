@@ -118,23 +118,23 @@ ML_CalcType Courtemanche::Calc(double tinc,  ML_CalcType V,  ML_CalcType i_exter
   const double m_w = pCmP->m_w[Vi];
   w = m_w + (w - m_w) * pCmP->exptau_w[Vi];
 
-  const double I_Na  = (v(VT_g_Na))*m*m*m*h*j*VmE_Na;
-  const double I_to  = (v(VT_g_to))*oa*oa*oa*oi*VmE_K;
+  const double I_Na  = (v(VT_g_Na))*m*m*m*h*j*VmE_Na * v(VT_INaL_Multiplier);
+  const double I_to  = (v(VT_g_to))*oa*oa*oa*oi*VmE_K * v(VT_Ito_Multiplier);
   const double I_Kur = pCmP->g_Kur[Vi]*ua*ua*ua*ui*VmE_K;
 
-  const double I_Kr = pCmP->CKr[Vi]*Xr*VmE_K;
-  const double I_Ks  = (v(VT_g_Ks))*Xs*Xs*VmE_K;
-  const double I_CaL = (v(VT_g_CaL))*d*f*f_Ca*(V_int-(v(VT_E_rL)));
+  const double I_Kr = pCmP->CKr[Vi]*Xr*VmE_K * v(VT_IKr_Multiplier);
+  const double I_Ks  = (v(VT_g_Ks))*Xs*Xs*VmE_K * v(VT_IKs_Multiplier);
+  const double I_CaL = (v(VT_g_CaL))*d*f*f_Ca*(V_int-(v(VT_E_rL))) * v(VT_ICaL_Multiplier);
 
-  const double I_K1 = pCmP->CK1[Vi]*VmE_K;
-  const double I_bNa    = (v(VT_g_bNa))*VmE_Na;
-  const double I_bCa    = (v(VT_g_bCa))*VmE_Ca;
+  const double I_K1 = pCmP->CK1[Vi]*VmE_K * v(VT_IK1_Multiplier);
+  const double I_bNa    = (v(VT_g_bNa))*VmE_Na * v(VT_INab_Multiplier);
+  const double I_bCa    = (v(VT_g_bCa))*VmE_Ca * v(VT_ICab_Multiplier);
   const double temp     = (v(VT_k_mNai))*dNa_i;
-  const double I_NaK    = pCmP->CNaK[Vi]/(1.0+temp*sqrt(temp));
-  const double I_pCa    = (v(VT_I_pCamax))*Ca_i/(Ca_i+(v(VT_k_mpCa)));
-  const double I_NaCa   = pCmP->CNaCa[Vi]*((Na_i*Na_i*Na_i*(v(VT_Ca_o)))-pCmP->expVm[Vi]*Ca_i);
-  const double I_rel    = (v(VT_k_rel))*u*u*v*w*(Ca_rel-Ca_i);
-  const double I_up     = (v(VT_I_upmax))*Ca_i/(Ca_i+(v(VT_k_up)));
+  const double I_NaK    = pCmP->CNaK[Vi]/(1.0+temp*sqrt(temp)) * v(VT_INaK_Multiplier);
+  const double I_pCa    = (v(VT_I_pCamax))*Ca_i/(Ca_i+(v(VT_k_mpCa))) * v(VT_IpCa_Multiplier);
+  const double I_NaCa   = pCmP->CNaCa[Vi]*((Na_i*Na_i*Na_i*(v(VT_Ca_o)))-pCmP->expVm[Vi]*Ca_i) * v(VT_INaCa_Multiplier);
+  const double I_rel    = (v(VT_k_rel))*u*u*v*w*(Ca_rel-Ca_i) * v(VT_Jrel_Multiplier);
+  const double I_up     = (v(VT_I_upmax))*Ca_i/(Ca_i+(v(VT_k_up))) * v(VT_Jup_Multiplier);
   const double I_upleak = (v(VT_kupleak))*Ca_up;
   const double I_tr     = (Ca_up-Ca_rel)*(v(VT_dt_tr));
 

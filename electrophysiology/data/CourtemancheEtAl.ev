@@ -1,6 +1,6 @@
 CELLMODEL*IBT*KA
 CourtemancheEtAl
-165
+182
 R 8.3143
 Tx 310
 F 96.4867
@@ -166,3 +166,20 @@ Init_K_i 127.471800
 Init_Ca_up 1.575620
 Init_Ca_rel 0.921569
 Init_Ca_TRPN 0.001315
+INaF_Multiplier 1.0
+INaL_Multiplier 1.0
+Ito_Multiplier 1.0
+Ito_slow_Multiplier 1.0
+Ito_fast_Multiplier 1.0
+ICaL_Multiplier 1.0
+IKr_Multiplier 1.0
+IKs_Multiplier 1.0
+IK1_Multiplier 1.0
+INaCa_Multiplier 1.0
+INaK_Multiplier 1.0
+INab_Multiplier 1.0
+ICab_Multiplier 1.0
+IpCa_Multiplier 1.0
+ICaCl_Multiplier 1.0
+Jrel_Multiplier 1.0
+Jup_Multiplier 1.0

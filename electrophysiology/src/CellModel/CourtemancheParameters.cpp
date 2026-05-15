@@ -174,6 +174,23 @@ void CourtemancheParameters::Init(const char *initFile, ML_CalcType tinc) {
   P[VT_tau_j_mult].name    =        "tau_j_mult";
   P[VT_tau_f_mult].name    =        "tau_f_mult";
   P[VT_E_rL].name          =        "E_rL";
+  /// Multipliers
+  P[VT_INaF_Multiplier].name  = "INaF_Multiplier";
+  P[VT_INaL_Multiplier].name  = "INaL_Multiplier";
+  P[VT_Ito_Multiplier].name   = "Ito_Multiplier";
+  P[VT_Ito_slow_Multiplier].name = "Ito_slow_Multiplier";
+  P[VT_Ito_fast_Multiplier].name = "Ito_fast_Multiplier";
+  P[VT_ICaL_Multiplier].name  = "ICaL_Multiplier";
+  P[VT_IKr_Multiplier].name   = "IKr_Multiplier";
+  P[VT_IKs_Multiplier].name   = "IKs_Multiplier";
+  P[VT_IK1_Multiplier].name   = "IK1_Multiplier";
+  P[VT_INaCa_Multiplier].name = "INaCa_Multiplier";
+  P[VT_INaK_Multiplier].name  = "INaK_Multiplier";
+  P[VT_INab_Multiplier].name  = "INab_Multiplier";
+  P[VT_ICab_Multiplier].name  = "ICab_Multiplier";
+  P[VT_IpCa_Multiplier].name   = "IpCa_Multiplier";
+  P[VT_Jrel_Multiplier].name = "Jrel_Multiplier";
+  P[VT_Jup_Multiplier].name = "Jup_Multiplier";
 #ifdef ISAC
   P[VT_ISAC_SWITCH].name   =     "ISAC_SWITCH";
   P[VT_alpha].name         =     "alpha";
