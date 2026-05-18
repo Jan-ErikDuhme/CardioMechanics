@@ -226,8 +226,7 @@ void acCELLerate::LoadProject(const char *projectFile) {
         args = args.substr(0, args.find_first_of('#'));
         
         // trim trailing whitespace
-        args.erase(std::find_if(args.rbegin(), args.rend(), std::not1(std::ptr_fun<int, int>(
-                                                                                             std::isspace))).base(), args.end());
+        args.erase(args.begin(), std::find_if(args.begin(), args.end(), [](int c) {return !std::isspace(c);}));
         
 #if KADEBUG
         if (!mpirank) {
@@ -1527,7 +1526,7 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
                                                                                                 // objectSizeTemp, store in sumOfObjectSizes
     
     long int buSize, buSecondLineLength;
-    int seekpos = ReceiveInteger();  // between seekpos=ReceiveInteger() here and SendInteger(seekpos) beneath, all
+    fpos_t seekpos = ReceiveInteger();  // between seekpos=ReceiveInteger() here and SendInteger(seekpos) beneath, all
                                      // functions using MPI_Recv are
                                      // leading to a deadlock with more than one CPU! Avoid coding these functions (e.g. VecCreate()...) in this section!
     acltTime timetemp = ReceiveTime();
@@ -1537,14 +1536,14 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
     if (!bu)
         throw kaBaseException("Opening backupfile %s failed. Exiting...", backuploadname.c_str());
     
-    fseek(bu, seekpos, SEEK_SET);
+    fsetpos(bu, &seekpos);
     
     if ((mpirank == 0) && firstdomain) {
         char tempstr[256];
         fscanf(bu, "%s\n", tempstr);
         const char *aBUv = acCELLerateBUVersion.c_str();
         if (strcasecmp(aBUv, tempstr) != 0) {
-            // This exception leads to a deadlock when using MORE THAN ONE PROCESS caused by missing SendInteger()
+            // This exception leads to a deadlock when using MORE THAN ONE PROCESS  caused by missing SendInteger()
             // and SendDouble() needed for Receive...() from above! No Error is displayed!
             throw kaBaseException("Backup file %s is incompatible to acCELLerate backup version 1.0. Exiting...",
                                   backuploadname.c_str());
@@ -1575,7 +1574,7 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
         long int calcSize = sumOfObjectSizes + acCELLerateBUVersion.size()+1 + buSecondLineLength+1;
         
         if (buSize != calcSize)
-            throw kaBaseException(" Backup file %s does not match to project file. Exiting...", backuploadname.c_str());
+            throw kaBaseException(" Backup file %s does not match to project file. Exiting.... Size is %ld, calculated size is %ld", backuploadname.c_str(), buSize, calcSize);
         
         fsetpos(bu, &buPosition2);
     }
@@ -1603,7 +1602,7 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
     }
     ierr = VecRestoreArray(Vvector->X, &pV); CHKERRQ(ierr);
     
-    seekpos = ftell(bu);
+    fgetpos(bu, &seekpos);
     fclose(bu);
     
     SendInteger(seekpos);  //! !!!!!!!! seekpos muss wieder zurueckgegeben werden bei mehreren Domaenen!!!!!
@@ -1619,12 +1618,12 @@ void acCELLerate::WriteBackup(vbElphyModel<double> **ElphyModel, vbForceModel<do
     PetscPrintf(PETSC_COMM_SELF, "[%d] WriteBackup(...)\n", mpirank);  // PrintDebug("WriteBackup(...)");
 #endif  // if PSDEBUG > 0
     
-    int seekpos = ReceiveInteger();
+    fpos_t seekpos = ReceiveInteger();
     FILE *bu    = fopen(backupsavename.c_str(), (mpirank == 0 && firstdomain) ? "w" : "r+");
     if (!bu)
         throw kaBaseException("Opening backupfile %s failed. Exiting...", backupsavename.c_str());
     
-    fseek(bu, seekpos, SEEK_SET);
+    fsetpos(bu, &seekpos);
     
     if ((mpirank == 0) && firstdomain) {
         fprintf(bu, "%s\n", acCELLerateBUVersion.c_str());
@@ -1654,28 +1653,28 @@ void acCELLerate::WriteBackup(vbElphyModel<double> **ElphyModel, vbForceModel<do
     }
     ierr = VecRestoreArray(Vvector->X, &pV); CHKERRQ(ierr);
     
-    seekpos = ftell(bu);
+    fgetpos(bu, &seekpos);
     fclose(bu);
     SendInteger(seekpos);
     MPI_Barrier(PETSC_COMM_WORLD);
 }  // acCELLerate::WriteBackup
 
-void acCELLerate::SendInteger(int valuetosend) {
+void acCELLerate::SendInteger(fpos_t valuetosend) {
 #if PSDEBUG > 0
     PetscPrintf(PETSC_COMM_SELF, "[%d] SendInteger(%d)\n", mpirank, valuetosend);
 #endif  // if PSDEBUG > 0
     if (mpirank != mpisize-1)
-        MPI_Send(&valuetosend, 1, MPI_INT, mpirank+1, 0, PETSC_COMM_WORLD);
+        MPI_Send(&valuetosend, sizeof(fpos_t), MPI_BYTE, mpirank+1, 0, PETSC_COMM_WORLD);
 }
 
-int acCELLerate::ReceiveInteger() {
+fpos_t acCELLerate::ReceiveInteger() {
 #if PSDEBUG > 0
     PetscPrintf(PETSC_COMM_SELF, "[%d] ReceiveInteger()\n", mpirank);  // PrintDebug("ReceiveInteger()");
 #endif  // if PSDEBUG > 0
-    int valuetoreceive = 0;
+    fpos_t valuetoreceive = {};
     if (mpirank != 0) {
         MPI_Status stat;
-        MPI_Recv(&valuetoreceive, 1, MPI_INT, mpirank-1, 0, PETSC_COMM_WORLD, &stat);
+        MPI_Recv(&valuetoreceive, sizeof(fpos_t), MPI_BYTE, mpirank-1, 0, PETSC_COMM_WORLD, &stat);
     }
     return valuetoreceive;
 }

@@ -15,6 +15,7 @@ electrophysiology/src/CellModel/build
 electrophysiology/src/LatticePETSc/build
 mechanics/build
 build
+_build
 
 # binaries
 bin
