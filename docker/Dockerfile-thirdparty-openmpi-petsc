@@ -16,7 +16,7 @@ ENV prefixPath=${THIRDPARTY_HOME}/install
 ENV AUTOMAKE_JOBS=1
 WORKDIR ${THIRDPARTY_HOME}/src
 RUN apt install -y flex
-RUN git clone --depth 1 --branch ${MPI_VERSION} https://github.com/open-mpi/ompi.git openmpi-${MPI_VERSION}
+RUN git clone --recursive --branch ${MPI_VERSION} https://github.com/open-mpi/ompi.git openmpi-${MPI_VERSION}
 
 WORKDIR ${THIRDPARTY_HOME}/src/openmpi-${MPI_VERSION}
 RUN ./autogen.pl && ./configure --prefix=${prefixPath}/openMPI-64bit
