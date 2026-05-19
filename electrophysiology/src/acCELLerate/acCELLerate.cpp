@@ -1526,17 +1526,17 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
                                                                                                 // objectSizeTemp, store in sumOfObjectSizes
     
     long int buSize, buSecondLineLength;
-    fpos_t seekpos = ReceiveInteger();  // between seekpos=ReceiveInteger() here and SendInteger(seekpos) beneath, all
-                                     // functions using MPI_Recv are
-                                     // leading to a deadlock with more than one CPU! Avoid coding these functions (e.g. VecCreate()...) in this section!
+    int64_t seekpos = ReceiveInteger();  // between seekpos=ReceiveInteger() here and SendInteger(seekpos) beneath, all
+                                        // functions using MPI_Recv are
+                                        // leading to a deadlock with more than one CPU! Avoid coding these functions (e.g. VecCreate()...) in this section!
     acltTime timetemp = ReceiveTime();
-    fpos_t   buPosition1, buPosition2;
+    int64_t  buPosition1, buPosition2;
     
     FILE *bu = fopen(backuploadname.c_str(), "r");
     if (!bu)
         throw kaBaseException("Opening backupfile %s failed. Exiting...", backuploadname.c_str());
     
-    fsetpos(bu, &seekpos);
+    fseeko(bu, (off_t)seekpos, SEEK_SET);
     
     if ((mpirank == 0) && firstdomain) {
         char tempstr[256];
@@ -1550,11 +1550,11 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
         }
         
         int indextemp;
-        fgetpos(bu, &buPosition1);
+        buPosition1 = (int64_t)ftello(bu);
         fscanf(bu, "%[^\n]", tempstr);
         buSecondLineLength = strlen(tempstr);  // Stringlength needed for calculation of theoretical size of backup file
                                                // header
-        fsetpos(bu, &buPosition1);
+        fseeko(bu, (off_t)buPosition1, SEEK_SET);
         char ts[64];
         fscanf(bu, "%63s %d\n", ts, &indextemp);
         timetemp = ts;
@@ -1564,9 +1564,9 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
         }
         
         // get size of backupfile
-        fgetpos(bu, &buPosition2);
-        fseek(bu, 0, SEEK_END);
-        buSize = ftell(bu);
+        buPosition2 = (int64_t)ftello(bu);
+        fseeko(bu, 0, SEEK_END);
+        buSize = (long int)ftello(bu);
     }
     
     if ((mpirank == 0) && firstdomain) {
@@ -1576,7 +1576,7 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
         if (buSize != calcSize)
             throw kaBaseException(" Backup file %s does not match to project file. Exiting.... Size is %ld, calculated size is %ld", backuploadname.c_str(), buSize, calcSize);
         
-        fsetpos(bu, &buPosition2);
+        fseeko(bu, (off_t)buPosition2, SEEK_SET);
     }
     
     struct stat file;
@@ -1602,7 +1602,7 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
     }
     ierr = VecRestoreArray(Vvector->X, &pV); CHKERRQ(ierr);
     
-    fgetpos(bu, &seekpos);
+    seekpos = (int64_t)ftello(bu);
     fclose(bu);
     
     SendInteger(seekpos);  //! !!!!!!!! seekpos muss wieder zurueckgegeben werden bei mehreren Domaenen!!!!!
@@ -1618,12 +1618,12 @@ void acCELLerate::WriteBackup(vbElphyModel<double> **ElphyModel, vbForceModel<do
     PetscPrintf(PETSC_COMM_SELF, "[%d] WriteBackup(...)\n", mpirank);  // PrintDebug("WriteBackup(...)");
 #endif  // if PSDEBUG > 0
     
-    fpos_t seekpos = ReceiveInteger();
+    int64_t seekpos = ReceiveInteger();
     FILE *bu    = fopen(backupsavename.c_str(), (mpirank == 0 && firstdomain) ? "w" : "r+");
     if (!bu)
         throw kaBaseException("Opening backupfile %s failed. Exiting...", backupsavename.c_str());
     
-    fsetpos(bu, &seekpos);
+    fseeko(bu, (off_t)seekpos, SEEK_SET);
     
     if ((mpirank == 0) && firstdomain) {
         fprintf(bu, "%s\n", acCELLerateBUVersion.c_str());
@@ -1653,28 +1653,28 @@ void acCELLerate::WriteBackup(vbElphyModel<double> **ElphyModel, vbForceModel<do
     }
     ierr = VecRestoreArray(Vvector->X, &pV); CHKERRQ(ierr);
     
-    fgetpos(bu, &seekpos);
+    seekpos = (int64_t)ftello(bu);
     fclose(bu);
     SendInteger(seekpos);
     MPI_Barrier(PETSC_COMM_WORLD);
 }  // acCELLerate::WriteBackup
 
-void acCELLerate::SendInteger(fpos_t valuetosend) {
+void acCELLerate::SendInteger(int64_t valuetosend) {
 #if PSDEBUG > 0
-    PetscPrintf(PETSC_COMM_SELF, "[%d] SendInteger(%d)\n", mpirank, valuetosend);
+    PetscPrintf(PETSC_COMM_SELF, "[%d] SendInteger(%lld)\n", mpirank, (long long)valuetosend);
 #endif  // if PSDEBUG > 0
     if (mpirank != mpisize-1)
-        MPI_Send(&valuetosend, sizeof(fpos_t), MPI_BYTE, mpirank+1, 0, PETSC_COMM_WORLD);
+        MPI_Send(&valuetosend, sizeof(int64_t), MPI_BYTE, mpirank+1, 0, PETSC_COMM_WORLD);
 }
 
-fpos_t acCELLerate::ReceiveInteger() {
+int64_t acCELLerate::ReceiveInteger() {
 #if PSDEBUG > 0
     PetscPrintf(PETSC_COMM_SELF, "[%d] ReceiveInteger()\n", mpirank);  // PrintDebug("ReceiveInteger()");
 #endif  // if PSDEBUG > 0
-    fpos_t valuetoreceive = {};
+    int64_t valuetoreceive = 0;
     if (mpirank != 0) {
         MPI_Status stat;
-        MPI_Recv(&valuetoreceive, sizeof(fpos_t), MPI_BYTE, mpirank-1, 0, PETSC_COMM_WORLD, &stat);
+        MPI_Recv(&valuetoreceive, sizeof(int64_t), MPI_BYTE, mpirank-1, 0, PETSC_COMM_WORLD, &stat);
     }
     return valuetoreceive;
 }

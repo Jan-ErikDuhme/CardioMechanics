@@ -228,8 +228,8 @@ class acCELLerate : public ACLTConditions, public ACLTSensors, public CellModelS
   bool ReadBackup(vbElphyModel<double> **, vbForceModel<double> **, PETScLSE *, bool firstdomain = true);  //!< Read
   //!< Backup if it matches with input data
   void   WriteBackup(vbElphyModel<double> **, vbForceModel<double> **, PETScLSE *, bool firstdomain = true);
-  void   SendInteger(fpos_t);
-  fpos_t    ReceiveInteger();
+  void      SendInteger(int64_t);
+  int64_t   ReceiveInteger();
   void   SendDouble(double);
   double ReceiveDouble();
   void SendTime(acltTime);  // TODO const&?
