@@ -1525,17 +1525,19 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
     MPI_Reduce(&objectSizeTemp, &sumOfObjectSizes, 1, MPI_LONG, MPI_SUM, 0, PETSC_COMM_WORLD);  // Collect and sum up
                                                                                                 // objectSizeTemp, store in sumOfObjectSizes
     
-    int64_t buSize, buSecondLineLength;
+    long int buSize, buSecondLineLength;
     int64_t seekpos = ReceiveInteger();  // between seekpos=ReceiveInteger() here and SendInteger(seekpos) beneath, all
                                         // functions using MPI_Recv are
                                         // leading to a deadlock with more than one CPU! Avoid coding these functions (e.g. VecCreate()...) in this section!
     acltTime timetemp = ReceiveTime();
-    off_t  buPosition1, buPosition2;
+    fpos_t buPosition1, buPosition2;
     
-    FILE *bu = fopen(backuploadname.c_str(), "r");
+    FILE *bu = fopen(backuploadname.c_str(), "rb");
     if (!bu)
         throw kaBaseException("Opening backupfile %s failed. Exiting...", backuploadname.c_str());
     
+    // seekpos is an int64_t byte offset received from the previous MPI rank (or 0 for rank 0).
+    // fseeko is used here because seekpos is a plain integer, not an opaque fpos_t.
     fseeko(bu, (off_t)seekpos, SEEK_SET);
     
     if ((mpirank == 0) && firstdomain) {
@@ -1550,11 +1552,14 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
         }
         
         int indextemp;
-        buPosition1 = ftello(bu);
+        // Use fgetpos/fsetpos for internal bookmarks: they preserve the full stdio stream state
+        // (including any read-ahead buffer), whereas fseeko would flush the buffer and risk
+        // misaligning subsequent fscanf/fread calls.
+        fgetpos(bu, &buPosition1);
         fscanf(bu, "%[^\n]", tempstr);
         buSecondLineLength = strlen(tempstr);  // Stringlength needed for calculation of theoretical size of backup file
                                                // header
-        fseeko(bu, buPosition1, SEEK_SET);
+        fsetpos(bu, &buPosition1);
         char ts[64];
         fscanf(bu, "%63s %d\n", ts, &indextemp);
         timetemp = ts;
@@ -1564,19 +1569,19 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
         }
         
         // get size of backupfile
-        buPosition2 = ftello(bu);
+        fgetpos(bu, &buPosition2);
         fseeko(bu, 0, SEEK_END);
-        buSize = ftello(bu);
+        buSize = (long int)ftello(bu);
     }
     
     if ((mpirank == 0) && firstdomain) {
         // Calculate theoretical size of backup file: sum of object sizes + header + endl sizes (1 respectively)
-        int64_t calcSize = sumOfObjectSizes + acCELLerateBUVersion.size()+1 + buSecondLineLength+1;
+        long int calcSize = sumOfObjectSizes + acCELLerateBUVersion.size()+1 + buSecondLineLength+1;
         
         if (buSize != calcSize)
             throw kaBaseException(" Backup file %s does not match to project file. Exiting.... Size is %ld, calculated size is %ld", backuploadname.c_str(), buSize, calcSize);
         
-        fseeko(bu, buPosition2, SEEK_SET);
+        fsetpos(bu, &buPosition2);
     }
     
     struct stat file;
@@ -1619,7 +1624,7 @@ void acCELLerate::WriteBackup(vbElphyModel<double> **ElphyModel, vbForceModel<do
 #endif  // if PSDEBUG > 0
     
     int64_t seekpos = ReceiveInteger();
-    FILE *bu    = fopen(backupsavename.c_str(), (mpirank == 0 && firstdomain) ? "w" : "r+");
+    FILE *bu    = fopen(backupsavename.c_str(), (mpirank == 0 && firstdomain) ? "wb" : "rb+");
     if (!bu)
         throw kaBaseException("Opening backupfile %s failed. Exiting...", backupsavename.c_str());
     
