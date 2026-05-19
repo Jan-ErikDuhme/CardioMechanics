@@ -1525,12 +1525,12 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
     MPI_Reduce(&objectSizeTemp, &sumOfObjectSizes, 1, MPI_LONG, MPI_SUM, 0, PETSC_COMM_WORLD);  // Collect and sum up
                                                                                                 // objectSizeTemp, store in sumOfObjectSizes
     
-    long int buSize, buSecondLineLength;
+    int64_t buSize, buSecondLineLength;
     int64_t seekpos = ReceiveInteger();  // between seekpos=ReceiveInteger() here and SendInteger(seekpos) beneath, all
                                         // functions using MPI_Recv are
                                         // leading to a deadlock with more than one CPU! Avoid coding these functions (e.g. VecCreate()...) in this section!
     acltTime timetemp = ReceiveTime();
-    int64_t  buPosition1, buPosition2;
+    off_t  buPosition1, buPosition2;
     
     FILE *bu = fopen(backuploadname.c_str(), "r");
     if (!bu)
@@ -1550,11 +1550,11 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
         }
         
         int indextemp;
-        buPosition1 = (int64_t)ftello(bu);
+        buPosition1 = ftello(bu);
         fscanf(bu, "%[^\n]", tempstr);
         buSecondLineLength = strlen(tempstr);  // Stringlength needed for calculation of theoretical size of backup file
                                                // header
-        fseeko(bu, (off_t)buPosition1, SEEK_SET);
+        fseeko(bu, buPosition1, SEEK_SET);
         char ts[64];
         fscanf(bu, "%63s %d\n", ts, &indextemp);
         timetemp = ts;
@@ -1564,19 +1564,19 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
         }
         
         // get size of backupfile
-        buPosition2 = (int64_t)ftello(bu);
+        buPosition2 = ftello(bu);
         fseeko(bu, 0, SEEK_END);
-        buSize = (long int)ftello(bu);
+        buSize = ftello(bu);
     }
     
     if ((mpirank == 0) && firstdomain) {
         // Calculate theoretical size of backup file: sum of object sizes + header + endl sizes (1 respectively)
-        long int calcSize = sumOfObjectSizes + acCELLerateBUVersion.size()+1 + buSecondLineLength+1;
+        int64_t calcSize = sumOfObjectSizes + acCELLerateBUVersion.size()+1 + buSecondLineLength+1;
         
         if (buSize != calcSize)
             throw kaBaseException(" Backup file %s does not match to project file. Exiting.... Size is %ld, calculated size is %ld", backuploadname.c_str(), buSize, calcSize);
         
-        fseeko(bu, (off_t)buPosition2, SEEK_SET);
+        fseeko(bu, buPosition2, SEEK_SET);
     }
     
     struct stat file;
@@ -1664,7 +1664,7 @@ void acCELLerate::SendInteger(int64_t valuetosend) {
     PetscPrintf(PETSC_COMM_SELF, "[%d] SendInteger(%lld)\n", mpirank, (long long)valuetosend);
 #endif  // if PSDEBUG > 0
     if (mpirank != mpisize-1)
-        MPI_Send(&valuetosend, sizeof(int64_t), MPI_BYTE, mpirank+1, 0, PETSC_COMM_WORLD);
+        MPI_Send(&valuetosend, 1, MPI_INT64_T, mpirank+1, 0, PETSC_COMM_WORLD);
 }
 
 int64_t acCELLerate::ReceiveInteger() {
@@ -1674,7 +1674,7 @@ int64_t acCELLerate::ReceiveInteger() {
     int64_t valuetoreceive = 0;
     if (mpirank != 0) {
         MPI_Status stat;
-        MPI_Recv(&valuetoreceive, sizeof(int64_t), MPI_BYTE, mpirank-1, 0, PETSC_COMM_WORLD, &stat);
+        MPI_Recv(&valuetoreceive, 1, MPI_INT64_T, mpirank-1, 0, PETSC_COMM_WORLD, &stat);
     }
     return valuetoreceive;
 }
