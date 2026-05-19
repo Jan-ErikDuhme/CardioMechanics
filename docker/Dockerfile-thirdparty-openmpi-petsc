@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 WORKDIR /CardioMechanics
 
 RUN apt update && apt install -y build-essential gfortran python3 git cmake autoconf libtool
-ENV MPI_VERSION=v4.1.5
+ENV MPI_VERSION=v5.0.7
 ENV PETSC_VERSION=v3.20.5
 
 # env variables for CardioMechanics
