@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 WORKDIR /CardioMechanics
 
 RUN apt update && apt install -y build-essential gfortran python3 git cmake autoconf libtool
-ENV MPI_VERSION=v4.1.5
+ENV MPI_VERSION=v5.0.7
 ENV PETSC_VERSION=v3.20.5
 
 # env variables for CardioMechanics
@@ -16,7 +16,7 @@ ENV prefixPath=${THIRDPARTY_HOME}/install
 ENV AUTOMAKE_JOBS=1
 WORKDIR ${THIRDPARTY_HOME}/src
 RUN apt install -y flex
-RUN git clone --depth 1 --branch ${MPI_VERSION} https://github.com/open-mpi/ompi.git openmpi-${MPI_VERSION}
+RUN git clone --recursive --branch ${MPI_VERSION} https://github.com/open-mpi/ompi.git openmpi-${MPI_VERSION}
 
 WORKDIR ${THIRDPARTY_HOME}/src/openmpi-${MPI_VERSION}
 RUN ./autogen.pl && ./configure --prefix=${prefixPath}/openMPI-64bit
