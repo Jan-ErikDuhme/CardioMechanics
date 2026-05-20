@@ -1514,7 +1514,7 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
 #endif  // if PSDEBUG > 0
     
     fprintf(stderr, "[%d] ReadBackup: STEP 1 - computing object sizes\n", mpirank); fflush(stderr);
-    
+
     // Calculate theoretical size of backup file without header
     long int objectSizeTemp = 0;
     for (PetscInt Ii = StartCells; Ii < EndCells; Ii++) {
@@ -1526,37 +1526,40 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
     long int sumOfObjectSizes = 0;
     MPI_Reduce(&objectSizeTemp, &sumOfObjectSizes, 1, MPI_LONG, MPI_SUM, 0, PETSC_COMM_WORLD);  // Collect and sum up
                                                                                                 // objectSizeTemp, store in sumOfObjectSizes
-    
+
     fprintf(stderr, "[%d] ReadBackup: STEP 2 - objectSizeTemp=%ld sumOfObjectSizes=%ld\n", mpirank, objectSizeTemp, sumOfObjectSizes); fflush(stderr);
-    
+
     long int buSize, buSecondLineLength;
+    // seekpos: int64_t byte offset received via MPI from the previous rank.
+    // For rank 0 this is always 0.  fseek/ftell use long which equals int64_t on LP64 Linux.
     int64_t seekpos = ReceiveInteger();  // between seekpos=ReceiveInteger() here and SendInteger(seekpos) beneath, all
                                         // functions using MPI_Recv are
                                         // leading to a deadlock with more than one CPU! Avoid coding these functions (e.g. VecCreate()...) in this section!
     acltTime timetemp = ReceiveTime();
     fpos_t buPosition1, buPosition2;
-    
+
     fprintf(stderr, "[%d] ReadBackup: STEP 3 - opening file '%s', seekpos=%lld\n", mpirank, backuploadname.c_str(), (long long)seekpos); fflush(stderr);
-    
-    FILE *bu = fopen(backuploadname.c_str(), "rb");
+
+    FILE *bu = fopen(backuploadname.c_str(), "r");
     if (!bu)
         throw kaBaseException("Opening backupfile %s failed. Exiting...", backuploadname.c_str());
-    
-    fprintf(stderr, "[%d] ReadBackup: STEP 4 - file opened, seeking\n", mpirank); fflush(stderr);
-    
-    // seekpos is an int64_t byte offset received from the previous MPI rank (or 0 for rank 0).
-    // fseeko is used here because seekpos is a plain integer, not an opaque fpos_t.
-    if (fseeko(bu, (off_t)seekpos, SEEK_SET) != 0)
-        throw kaBaseException("fseeko to seekpos=%lld failed in ReadBackup: %s", (long long)seekpos, strerror(errno));
-    
+
+    fprintf(stderr, "[%d] ReadBackup: STEP 4 - file opened, seeking to offset %lld\n", mpirank, (long long)seekpos); fflush(stderr);
+
+    // Use fseek (long, 64-bit on LP64) to reach the position passed by the previous MPI rank.
+    // fseek/ftell are used instead of fseeko/ftello to avoid any macro-remapping side-effects
+    // from _FILE_OFFSET_BITS=64 that may differ between glibc versions.
+    if (fseek(bu, (long)seekpos, SEEK_SET) != 0)
+        throw kaBaseException("fseek to seekpos=%lld failed in ReadBackup: %s", (long long)seekpos, strerror(errno));
+
     fprintf(stderr, "[%d] ReadBackup: STEP 5 - seek done\n", mpirank); fflush(stderr);
-    
+
     if ((mpirank == 0) && firstdomain) {
         char tempstr[256];
         fscanf(bu, "%255s\n", tempstr);
-        
+
         fprintf(stderr, "[%d] ReadBackup: STEP 6 - version string='%s'\n", mpirank, tempstr); fflush(stderr);
-        
+
         const char *aBUv = acCELLerateBUVersion.c_str();
         if (strcasecmp(aBUv, tempstr) != 0) {
             // This exception leads to a deadlock when using MORE THAN ONE PROCESS  caused by missing SendInteger()
@@ -1564,90 +1567,86 @@ bool acCELLerate::ReadBackup(vbElphyModel<double> **ElphyModel, vbForceModel<dou
             throw kaBaseException("Backup file %s is incompatible to acCELLerate backup version 1.0. Exiting...",
                                   backuploadname.c_str());
         }
-        
+
         int indextemp;
-        // Use fgetpos/fsetpos for internal bookmarks: they preserve the full stdio stream state
-        // (including any read-ahead buffer), whereas fseeko would flush the buffer and risk
-        // misaligning subsequent fscanf/fread calls.
         fgetpos(bu, &buPosition1);
         fscanf(bu, "%[^\n]", tempstr);
-        buSecondLineLength = strlen(tempstr);
+        buSecondLineLength = strlen(tempstr);  // Stringlength needed for calculation of theoretical size of backup file
+                                               // header
         fsetpos(bu, &buPosition1);
         char ts[64];
         fscanf(bu, "%63s %d\n", ts, &indextemp);
         timetemp = ts;
-        
-        fprintf(stderr, "[%d] ReadBackup: STEP 7 - header parsed: time='%s' size=%d (expected %d) buSecondLineLength=%ld\n",
+
+        fprintf(stderr, "[%d] ReadBackup: STEP 7 - header: time='%s' size=%d (expected %d) lineLen=%ld\n",
                 mpirank, ts, indextemp, Intra.size, buSecondLineLength); fflush(stderr);
-        
+
         if (indextemp != Intra.size) {
             throw kaBaseException("Dimension of Intra vector is not compatible with Backup file %s. Exiting...",
                                   backuploadname.c_str());
         }
-        
-        // get size of backupfile
+
+        // get size of backupfile — use fseek/ftell (long = 64-bit on LP64), same as original code
         fgetpos(bu, &buPosition2);
-        if (fseeko(bu, 0, SEEK_END) != 0)
-            throw kaBaseException("fseeko SEEK_END failed in ReadBackup: %s", strerror(errno));
-        off_t endpos = ftello(bu);
-        if (endpos == (off_t)-1)
-            throw kaBaseException("ftello failed in ReadBackup: %s", strerror(errno));
-        buSize = (long int)endpos;
-        
+        fseek(bu, 0, SEEK_END);
+        buSize = ftell(bu);
+
         fprintf(stderr, "[%d] ReadBackup: STEP 8 - buSize=%ld\n", mpirank, buSize); fflush(stderr);
     }
-    
+
     if ((mpirank == 0) && firstdomain) {
         // Calculate theoretical size of backup file: sum of object sizes + header + endl sizes (1 respectively)
         long int calcSize = sumOfObjectSizes + acCELLerateBUVersion.size()+1 + buSecondLineLength+1;
-        
+
         fprintf(stderr, "[%d] ReadBackup: STEP 9 - buSize=%ld calcSize=%ld\n", mpirank, buSize, calcSize); fflush(stderr);
-        
+
         if (buSize != calcSize)
             throw kaBaseException(" Backup file %s does not match to project file. Exiting.... Size is %ld, calculated size is %ld", backuploadname.c_str(), buSize, calcSize);
-        
+
         fsetpos(bu, &buPosition2);
-        
+
         fprintf(stderr, "[%d] ReadBackup: STEP 10 - restored to data start\n", mpirank); fflush(stderr);
     }
-    
+
     struct stat file;
     if (stat(backuploadname.c_str(), &file))
         printf("\n bu file size: %i \n", (int)file.st_size);
-    
+
     starttime   = timetemp;
     currenttime = timetemp;
-    
-    fprintf(stderr, "[%d] ReadBackup: STEP 11 - starting data read loop (%lld..%lld)\n",
+
+    fprintf(stderr, "[%d] ReadBackup: STEP 11 - data read loop cells %lld..%lld\n",
             mpirank, (long long)StartCells, (long long)EndCells); fflush(stderr);
-    
+
     PetscErrorCode ierr;
     PetscScalar   *pV, *pVe;
     ierr = VecGetArray(Vvector->X, &pV); CHKERRQ(ierr);
-    
+
     for (PetscInt Ii = StartCells; Ii < EndCells; Ii++) {
         PetscInt lindex = Ii-StartCells;
         if (firstdomain)
             kaRead(&pV[lindex], sizeof(PetscScalar), 1, bu);
-        
+
         ElphyModel[lindex]->ReadStatus(bu);
-        
+
         // fread(NULL, 0, 1, bu);
         // ForceModel[lindex]->ReadStatus(bu); // mwk: force model cannot be read from initializeXCLT backup yet in yet.
     }
     ierr = VecRestoreArray(Vvector->X, &pV); CHKERRQ(ierr);
-    
+
     fprintf(stderr, "[%d] ReadBackup: STEP 12 - data read loop done\n", mpirank); fflush(stderr);
-    
-    seekpos = (int64_t)ftello(bu);
+
+    // Extract current byte offset as int64_t for transmission to the next MPI rank.
+    // ftell returns long which equals int64_t on LP64 Linux.
+    seekpos = (int64_t)ftell(bu);
     fclose(bu);
-    
+
     SendInteger(seekpos);  //! !!!!!!!! seekpos muss wieder zurueckgegeben werden bei mehreren Domaenen!!!!!
     SendTime(timetemp);
     MPI_Barrier(PETSC_COMM_WORLD);
-    
-    fprintf(stderr, "[%d] ReadBackup: STEP 13 - completed successfully\n", mpirank); fflush(stderr);
-    
+
+    fprintf(stderr, "[%d] ReadBackup: STEP 13 - completed, seekpos=%lld\n", mpirank, (long long)seekpos); fflush(stderr);
+
     return true;
 }  // acCELLerate::ReadBackup
 
@@ -1658,11 +1657,11 @@ void acCELLerate::WriteBackup(vbElphyModel<double> **ElphyModel, vbForceModel<do
 #endif  // if PSDEBUG > 0
     
     int64_t seekpos = ReceiveInteger();
-    FILE *bu    = fopen(backupsavename.c_str(), (mpirank == 0 && firstdomain) ? "wb" : "rb+");
+    FILE *bu    = fopen(backupsavename.c_str(), (mpirank == 0 && firstdomain) ? "w" : "r+");
     if (!bu)
         throw kaBaseException("Opening backupfile %s failed. Exiting...", backupsavename.c_str());
-    
-    fseeko(bu, (off_t)seekpos, SEEK_SET);
+
+    fseek(bu, (long)seekpos, SEEK_SET);
     
     if ((mpirank == 0) && firstdomain) {
         fprintf(bu, "%s\n", acCELLerateBUVersion.c_str());
@@ -1692,7 +1691,7 @@ void acCELLerate::WriteBackup(vbElphyModel<double> **ElphyModel, vbForceModel<do
     }
     ierr = VecRestoreArray(Vvector->X, &pV); CHKERRQ(ierr);
     
-    seekpos = (int64_t)ftello(bu);
+    seekpos = (int64_t)ftell(bu);
     fclose(bu);
     SendInteger(seekpos);
     MPI_Barrier(PETSC_COMM_WORLD);
