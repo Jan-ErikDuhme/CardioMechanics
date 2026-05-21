@@ -35,7 +35,7 @@ RUN apt install -y clang
 ENV CC=clang
 ENV CXX=clang++
 
-RUN cmake -S. -B_build -D_FILE_OFFSET_BITS=64 -DCMAKE_BUILD_TYPE=Debug
+RUN cmake -S. -B_build -D_FILE_OFFSET_BITS=64
 RUN cmake --build _build --parallel 4
 
 WORKDIR /CardioMechanics/_build/bin/linux
