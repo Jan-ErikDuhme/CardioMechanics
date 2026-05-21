@@ -88,7 +88,8 @@
 #endif  // if !defined(osIRIX) && !defined(osSolaris) && !defined(osAIX) && !defined(osMac) && !defined(osLinux) &&
         // !defined(osWin32) && !defined(osAIX)
 
-#if defined(osWin32) || (defined(osLinux) && defined(i386)) || (defined(osMac) && defined(i386))
+#if defined(osWin32) || (defined(osLinux) && defined(i386)) || (defined(osMac) && defined(i386)) \
+  || defined(__aarch64__) || defined(__arm64__)
 # define KA_LITTLE_ENDIAN
 #else  // df+ - otherwise ppc-architecture is broken
 # undef LITTLE_ENDIAN
