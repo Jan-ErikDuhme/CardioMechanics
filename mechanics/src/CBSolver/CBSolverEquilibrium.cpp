@@ -48,8 +48,6 @@ CBStatus CBSolverEquilibrium::CalcNodalForces(Vec displacement, Vec forces) {
     
     Vec localDisplacedNodesSeq;
     Vec displacedNodes;
-    VecAssemblyBegin(displacement);
-    VecAssemblyEnd(displacement);
     
     VecDuplicate(Base::nodes_, &displacedNodes);
     
