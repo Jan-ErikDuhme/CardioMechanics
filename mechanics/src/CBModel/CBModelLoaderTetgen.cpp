@@ -49,9 +49,8 @@ CBModel *CBModelLoaderTetgen::Load(std::string nodesFilename, std::string elemen
     model_->ExtractSolidElements();
     Base::model_->ExtractSurfaceElements();
     
-    Base::model_->DetermineNeighbors();
-    
-
+    if (determineNeighbors)
+        Base::model_->DetermineNeighbors();
     
     return Base::model_;
 }
