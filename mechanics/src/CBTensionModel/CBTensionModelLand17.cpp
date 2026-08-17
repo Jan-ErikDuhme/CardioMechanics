@@ -471,6 +471,7 @@ void CBTensionModelLand17::InitParamsFromXml(ParameterMap *parameters, std::stri
     nTM_          = InitKey(parameters, parameterKey, parameterKeyFallback, ".nTM", 5.0);
     TRPN50_       = InitKey(parameters, parameterKey, parameterKeyFallback, ".TRPN50", 0.35);
     kuw_          = InitKey(parameters, parameterKey, parameterKeyFallback, ".kuw", 0.182);
+    lambdaScaling_ = InitKey(parameters, parameterKey, parameterKeyFallback, ".lambdaScaling", 1.0);
     kws_          = InitKey(parameters, parameterKey, parameterKeyFallback, ".kws", 0.012);
     rs_           = InitKey(parameters, parameterKey, parameterKeyFallback, ".rs", 0.25);
     rw_           = InitKey(parameters, parameterKey, parameterKeyFallback, ".rw", 0.5);
