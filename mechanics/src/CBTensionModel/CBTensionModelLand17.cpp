@@ -319,7 +319,7 @@ CBTensionModelLand17::CBTensionModelLand17(CBElementSolid *e, ParameterMap *para
     S_.ZetaS      = ZetaS_;
     S_.ZetaW      = ZetaW_;
     S_.Cd         = Cd_;
-    S_.lambda     = sqrt(deformationTensor.GetCol(0)*deformationTensor.GetCol(0));
+    S_.lambda     = lambdaScaling_ * sqrt(deformationTensor.GetCol(0)*deformationTensor.GetCol(0));
     S_.dlambdadt  = 0.0;
     S_.Ta         = Ta_;
     S_.Tension    = Tension_;
@@ -364,7 +364,7 @@ double CBTensionModelLand17::CalcActiveTension(const math_pack::Matrix3<double> 
     
     // compute / integrate variables
     // update extention ratio (lambda) and exention rate (dlambdadt)
-    S_.lambda = sqrt(deformation.GetCol(0)*deformation.GetCol(0)); // in m/m
+    S_.lambda = lambdaScaling_ * sqrt(deformation.GetCol(0)*deformation.GetCol(0)); // in m/m
     if ((S_.delta_t == 0.0) || (rateDependancy_ == "OFF")) { // Avoid division by 0 in the first time-step
         S_.dlambdadt = 0.0;
     } else {

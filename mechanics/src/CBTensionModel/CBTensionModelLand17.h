@@ -46,6 +46,10 @@ protected:
     std::vector<TFloat> caiQP_;
     
     // CONSTANTS / PARAMETER VALUES
+
+    // scaling factor for lambda
+    TFloat lambdaScaling_ = 1.0;
+    
     // cooperativity of the calcium-troponin C binding rate
     TFloat TRPNn_ = 2.0;
     
