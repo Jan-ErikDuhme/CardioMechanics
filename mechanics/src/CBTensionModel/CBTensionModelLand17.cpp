@@ -416,12 +416,11 @@ double CBTensionModelLand17::CalcActiveTension(const math_pack::Matrix3<double> 
     // don't allow negative values
     S_.Ta = std::max(0.0, PKAForceMultiplier* h * (Tref_ / rs_) * ((S_.ZetaS + 1.0) * S_.XS + S_.ZetaW * S_.XW));
     // scale with sigmoidal function taken from T-World 2
-    TFloat a_sigmoid = 4.0;
-    TFloat b_sigmoid = 2.0;
-    TFloat c_sigmoid = 6.0;
-    TFloat d_sigmoid = 20.0;
-    TFloat sigmoid = (d_sigmoid + (a_sigmoid - d_sigmoid)/(1.0 + pow(S_.Ta/c_sigmoid, b_sigmoid)));
-    S_.Ta = S_.Ta * sigmoid;
+    if (use_sigmoid_scaling)
+    {
+        TFloat sigmoid = (d_sigmoid + (a_sigmoid - d_sigmoid)/(1.0 + pow(S_.Ta/c_sigmoid, b_sigmoid)));
+        S_.Ta = S_.Ta * sigmoid;
+    }
     
     // Minimal implementation of the passive cell model
     // Similar to a standard linear solid model. It is used for the viscoelastic response.
@@ -489,6 +488,12 @@ void CBTensionModelLand17::InitParamsFromXml(ParameterMap *parameters, std::stri
     xi_           = InitKey(parameters, parameterKey, parameterKeyFallback, ".xi", 1.0);
     fTnI_PKA_     = InitKey(parameters, parameterKey, parameterKeyFallback, ".fTnI_PKA", 0.0);
     fMyBPC_PKA_   = InitKey(parameters, parameterKey, parameterKeyFallback, ".fMyBPC_PKA", 0.0);
+    // sigmoid values from TWorld-2 paper, default parameters from Tomek himself
+    use_sigmoid_scaling = parameters->Get<bool>(parameterKey + ".use_sigmoid_scaling", false);
+    a_sigmoid     = InitKey(parameters, parameterKey, parameterKeyFallback, ".a_sigmoid", 4.0);
+    b_sigmoid     = InitKey(parameters, parameterKey, parameterKeyFallback, ".b_sigmoid", 2.0);
+    c_sigmoid     = InitKey(parameters, parameterKey, parameterKeyFallback, ".c_sigmoid", 6.0);
+    d_sigmoid     = InitKey(parameters, parameterKey, parameterKeyFallback, ".d_sigmoid", 20.0);
     
     // initial values for the state variables as parameters from xml file
     XS_           = InitKey(parameters, parameterKey, parameterKeyFallback, ".XS", 0.0);
